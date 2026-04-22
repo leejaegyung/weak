@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>일정판 — 주간업무보고</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design System (Neobrutalist) ── */
+    :root {
+      --cream: #FFF8EE;
+      --cream-dark: #F5EDDB;
+      --orange: #FD4401;
+      --orange-light: #FF6B35;
+      --yellow: #FDCB40;
+      --yellow-light: #FFF0A0;
+      --ink: #1A1100;
+      --ink-light: #4A3F2A;
+      --ink-muted: #9A8F7A;
+      --white: #FFFFFF;
+      --font-display: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+      --font-body: 'Noto Sans KR', 'Space Grotesk', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--cream); font-family: var(--font-body); color: var(--ink); overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+    /* ── App Shell ── */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      grid-column: 1 / -1;
+      background: var(--orange);
+      border-bottom: 2px solid var(--ink);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+    }
+    .topbar-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 800;
+      color: #fff; letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .topbar-logo .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--yellow); border: 2px solid var(--ink);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .topbar-badge {
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: #fff; font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 99px;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-user {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-size: 13px; font-weight: 700; color: #fff;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 8px; color: #fff;
+      padding: 6px 12px; font-size: 12px;
+      font-family: var(--font-body); font-weight: 600;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.28); }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: var(--cream-dark);
+      border-right: 2px solid var(--ink);
+      display: flex; flex-direction: column;
+      padding: 18px 10px;
+      overflow-y: auto;
+    }
+    .sidebar-label {
+      font-size: 10px; color: var(--ink-muted);
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0 10px; margin-bottom: 8px;
+      font-family: var(--font-display);
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px; border-radius: 10px;
+      border: 2px solid transparent;
+      font-size: 13px; font-weight: 500;
+      color: var(--ink); text-decoration: none;
+      transition: all 0.12s; cursor: pointer;
+      margin-bottom: 2px;
+    }
+    .sidebar-item:hover {
+      background: rgba(253,68,1,0.1);
+      border-color: rgba(26,17,0,0.2);
+    }
+    .sidebar-item.active {
+      background: var(--yellow);
+      border: 2px solid var(--ink);
+      font-weight: 700;
+      box-shadow: 2px 2px 0 var(--ink);
+    }
+    .sidebar-icon {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: rgba(26,17,0,0.07);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .sidebar-week { margin-top: auto; padding-top: 14px; }
+    .week-card {
+      background: var(--yellow);
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 var(--ink);
+      padding: 14px;
+    }
+    .week-card-label {
+      font-size: 10px; font-family: var(--font-display);
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--ink-light);
+      margin-bottom: 5px;
+    }
+    .week-card-title {
+      font-family: var(--font-display);
+      font-size: 16px; font-weight: 800;
+      margin-bottom: 2px; color: var(--ink);
+    }
+    .week-card-range {
+      font-size: 11px; color: var(--ink-light); margin-bottom: 10px;
+    }
+    .week-progress { display: flex; align-items: center; gap: 8px; }
+    .week-progress-bar {
+      flex: 1; height: 6px;
+      background: rgba(26,17,0,0.15);
+      border-radius: 99px;
+      border: 1.5px solid var(--ink);
+      overflow: hidden;
+    }
+    .week-progress-fill { height: 100%; background: var(--ink); border-radius: 99px; transition: width 0.4s; }
+    .week-progress-text { font-size: 11px; font-weight: 700; font-family: var(--font-display); white-space: nowrap; }
+
+    /* ── Main ── */
+    .main-content {
+      padding: 28px 32px;
+      overflow-y: auto;
+      background: var(--cream);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-end; flex-wrap: wrap; gap: 12px;
+    }
+    .page-title-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    }
+    .page-icon {
+      width: 32px; height: 32px;
+      background: var(--yellow); border: 2px solid var(--ink);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 700;
+      letter-spacing: -0.03em; color: var(--ink);
+    }
+    .page-sub { font-size: 13px; color: var(--ink-muted); margin-left: 42px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 2px solid var(--ink);
+      cursor: pointer; font-family: var(--font-body);
+      font-weight: 700; border-radius: 10px;
+      font-size: 13px; padding: 8px 16px;
+      text-decoration: none;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn-primary { background: var(--orange); color: #fff; box-shadow: 2px 2px 0 var(--ink); }
+    .btn-primary:hover { background: var(--orange-light); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+    .btn-secondary { background: var(--white); color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+    .btn-secondary:hover { background: var(--cream-dark); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 2px solid var(--ink);
+      border-radius: 14px;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    /* ── Action Row ── */
+    .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Schedule Grid ── */
+    .schedule-wrap { overflow-x: auto; }
+    .schedule-grid { width: 100%; border-collapse: collapse; min-width: 900px; border: 2px solid var(--ink); }
+    .schedule-grid th {
+      background: var(--cream-dark);
+      font-family: var(--font-display);
+      font-size: 11px; font-weight: 700;
+      color: var(--ink-muted);
+      padding: 10px 10px; text-align: center;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--ink);
+      border-right: 1.5px solid rgba(26,17,0,0.25);
+    }
+    .schedule-grid th.name-col {
+      text-align: left; min-width: 90px;
+      border-right: 2px solid var(--ink);
+    }
+    .schedule-grid th.week-header {
+      background: var(--cream);
+      color: var(--orange); font-weight: 800;
+      border-right: 2px solid var(--ink);
+    }
+    .schedule-grid td {
+      padding: 0; vertical-align: middle;
+      border-bottom: 1.5px solid rgba(26,17,0,0.18);
+      border-right: 1.5px solid rgba(26,17,0,0.18);
+    }
+    .schedule-grid td.name-cell {
+      padding: 10px 12px; font-size: 13px; font-weight: 700;
+      background: var(--cream-dark); white-space: nowrap;
+      border-right: 2px solid var(--ink);
+      vertical-align: middle;
+    }
+    .schedule-cell {
+      min-height: 56px; padding: 7px 9px;
+      font-size: 12px; line-height: 1.45;
+      cursor: pointer; transition: background 0.1s;
+      white-space: pre-wrap; word-break: break-all;
+      text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .schedule-cell:empty::before,
+    .schedule-cell:not(:has(*)):not(:not(:empty))::before {
+      content: '—'; color: rgba(26,17,0,0.2); font-size: 11px;
+    }
+    .schedule-cell:hover { background: var(--yellow-light); }
+    .schedule-cell.editable { cursor: text; }
+    .schedule-cell-input {
+      width: 100%; min-height: 56px;
+      padding: 7px 9px; font-size: 12px;
+      font-family: var(--font-body);
+      border: none; outline: none; resize: none;
+      background: #FFF8CC; line-height: 1.45;
+      text-align: center;
+    }
+    .schedule-grid tr:last-child td { border-bottom: none; }
+    .schedule-grid tr:hover .name-cell { background: var(--cream); }
+    .today-col { background: rgba(253,68,1,0.06) !important; }
+    .week-sep { border-left: 2px solid var(--ink) !important; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--ink); color: #fff;
+      padding: 10px 18px;
+      border: 2px solid var(--ink);
+      border-radius: 10px; box-shadow: 4px 4px 0 rgba(26,17,0,0.4);
+      font-size: 13px; font-weight: 600;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; z-index: 9999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Admin-only hide (JS toggles) ── */
+    .admin-only { display: none; }
+
+    @media print {
+      .topbar, .sidebar, .no-print { display: none !important; }
+      .app-shell { display: block; }
+      .main-content { padding: 0; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Topbar -->
+  <header class="topbar">
+    <a class="topbar-logo" href="/index.html">
+      <span class="logo-icon">📋</span>
+      주간업무보고
+    </a>
+    <span class="topbar-badge">팀 일정판</span>
+    <span class="topbar-spacer"></span>
+    <span class="topbar-user" id="topbar-user"></span>
+    <button class="btn-logout" id="btn-logout">로그아웃</button>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-label">메뉴</div>
+    <a class="sidebar-item active" href="/index.html">
+      <span class="sidebar-icon">📅</span> 팀 일정판
+    </a>
+    <a class="sidebar-item" href="/report-list.html">
+      <span class="sidebar-icon">📋</span> 보고서 목록
+    </a>
+    <a class="sidebar-item" href="/write.html">
+      <span class="sidebar-icon">✏️</span> 보고서 작성
+    </a>
+    <a class="sidebar-item" href="/admin.html">
+      <span class="sidebar-icon">⚙️</span> 사용자 관리
+    </a>
+    <a class="sidebar-item" href="/settings.html">
+      <span class="sidebar-icon">🔗</span> Google Drive
+    </a>
+
+    <div class="sidebar-week">
+      <div class="week-card">
+        <div class="week-card-label">이번 주</div>
+        <div class="week-card-title" id="week-card-title">—</div>
+        <div class="week-card-range" id="week-card-range">—</div>
+        <div class="week-progress">
+          <div class="week-progress-bar">
+            <div class="week-progress-fill" id="week-progress-fill" style="width:0%"></div>
+          </div>
+          <span class="week-progress-text" id="week-progress-text">—</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title-row">
+          <div class="page-icon">📅</div>
+          <h1 class="page-title">팀 주간 일정판</h1>
+        </div>
+        <p class="page-sub" id="week-label">로딩 중...</p>
+      </div>
+      <div class="action-row no-print">
+        <button class="btn btn-secondary btn-sm" id="btn-prev">◀ 이전 주</button>
+        <button class="btn btn-secondary btn-sm" id="btn-today">오늘</button>
+        <button class="btn btn-secondary btn-sm" id="btn-next">다음 주 ▶</button>
+        <button class="btn btn-primary btn-sm" id="btn-drive-export">📤 Drive 저장</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="schedule-wrap">
+        <table class="schedule-grid" id="schedule-grid"></table>
+      </div>
+      <p style="padding:10px 16px 14px;font-size:11px;color:var(--ink-muted);">
+        셀을 클릭하면 편집할 수 있습니다 · 본인 행만 수정 가능 (관리자는 전체)
+      </p>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { requireAuth, renderTopbarUser, logout, getUser } from '/js/auth.js';
+import { api, showToast } from '/js/api.js';
+
+requireAuth();
+
+// Render topbar user (with name display in sidebar user pill)
+const me = getUser();
+if (me) {
+  document.getElementById('topbar-user').textContent = me.name || me.username;
+}
+
+// Show elements
+if (me?.role === 'admin') {
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+}
+
+document.getElementById('btn-logout').addEventListener('click', logout);
+
+const currentUser = me;
+
+// ── 날짜 헬퍼 ──────────────────────────────────────────────
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function fmt(date) { return date.toISOString().slice(0,10); }
+function fmtShort(date) {
+  return `${date.getMonth()+1}/${date.getDate()}(${['일','월','화','수','목','금','토'][date.getDay()]})`;
+}
+function fmtMD(date) {
+  return `${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+}
+
+let baseMonday = getMonday(new Date());
+
+// ── 사이드바 주간 카드 업데이트 ────────────────────────────
+function updateWeekCard() {
+  const mon = baseMonday;
+  const fri = addDays(mon, 4);
+  const today = new Date();
+  const todayFmt = fmt(today);
+  const isCurrentWeek = fmt(mon) === fmt(getMonday(new Date()));
+
+  // 주차 계산 (월 기준)
+  let _fd = new Date(mon.getFullYear(), mon.getMonth(), 1);
+  while (_fd.getDay() !== 1) _fd.setDate(_fd.getDate() + 1);
+  const weekNum = Math.max(1, Math.round((mon - _fd) / 604800000) + 1);
+
+  document.getElementById('week-card-title').textContent = `${mon.getMonth()+1}월 ${weekNum}주차`;
+  document.getElementById('week-card-range').textContent = `${fmtMD(mon)} – ${fmtMD(fri)}`;
+
+  if (isCurrentWeek) {
+    const todayDay = today.getDay(); // 1=Mon,5=Fri
+    const dayNum = todayDay >= 1 && todayDay <= 5 ? todayDay : (todayDay === 6 ? 5 : 0);
+    const pct = Math.round((dayNum / 5) * 100);
+    document.getElementById('week-progress-fill').style.width = pct + '%';
+    document.getElementById('week-progress-text').textContent = `${dayNum}/5일`;
+  } else {
+    document.getElementById('week-progress-fill').style.width = '0%';
+    document.getElementById('week-progress-text').textContent = '—';
+  }
+}
+
+// ── 네비 버튼 ───────────────────────────────────────────────
+document.getElementById('btn-prev').addEventListener('click',  () => { baseMonday = addDays(baseMonday, -7); render(); });
+document.getElementById('btn-next').addEventListener('click',  () => { baseMonday = addDays(baseMonday,  7); render(); });
+document.getElementById('btn-today').addEventListener('click', () => { baseMonday = getMonday(new Date()); render(); });
+
+// ── 일정 캐시 ────────────────────────────────────────────────
+const cache = {};
+let allUsers = [];
+
+async function loadData() {
+  const from = fmt(baseMonday);
+  const to   = fmt(addDays(baseMonday, 9));
+
+  const [users, schedules] = await Promise.all([
+    currentUser.role === 'admin' ? api.listUsers() : Promise.resolve(null),
+    api.getSchedules(from, to),
+  ]);
+
+  schedules.forEach(s => { cache[`${s.user_id}_${s.date}`] = s.content; });
+
+  if (users) {
+    allUsers = users.filter(u => u.is_active);
+  } else {
+    const seen = new Map();
+    schedules.forEach(s => seen.set(s.user_id, s.user_name));
+    if (!seen.has(currentUser.id)) seen.set(currentUser.id, currentUser.name);
+    allUsers = [...seen.entries()].map(([id, name]) => ({ id, name }));
+  }
+}
+
+async function render() {
+  await loadData();
+  updateWeekCard();
+
+  const thisMonday = baseMonday;
+  const nextMonday = addDays(thisMonday, 7);
+  const today = fmt(new Date());
+
+  const thisDates = [0,1,2,3,4].map(i => addDays(thisMonday, i));
+  const nextDates = [0,1,2,3,4].map(i => addDays(nextMonday, i));
+  const allDates  = [...thisDates, ...nextDates];
+
+  document.getElementById('week-label').textContent =
+    `금주 ${fmt(thisMonday)} ~ ${fmt(addDays(thisMonday,4))}  ·  차주 ${fmt(nextMonday)} ~ ${fmt(addDays(nextMonday,4))}`;
+
+  const grid = document.getElementById('schedule-grid');
+  const dateHeaderRow = allDates.map((d, i) => {
+    const isToday = fmt(d) === today;
+    return `<th class="${i===5?'week-sep':''} ${isToday?'today-col':''}" style="${isToday?'background:rgba(253,68,1,0.12);color:var(--orange);':''}">${fmtShort(d)}</th>`;
+  }).join('');
+
+  grid.innerHTML = `
+    <thead>
+      <tr>
+        <th class="name-col week-header" rowspan="1" style="background:var(--cream-dark);color:var(--ink-muted);">이름</th>
+        <th colspan="5" class="week-header">금 주</th>
+        <th colspan="5" class="week-header week-sep">차 주</th>
+      </tr>
+      <tr>
+        <th class="name-col" style="background:var(--cream-dark);">　</th>
+        ${dateHeaderRow}
+      </tr>
+    </thead>
+    <tbody id="schedule-body"></tbody>
+  `;
+
+  const tbody = document.getElementById('schedule-body');
+  allUsers.forEach(user => {
+    const canEdit = currentUser.role === 'admin' || currentUser.id === user.id;
+    const cells = allDates.map((d, i) => {
+      const dateStr = fmt(d);
+      const content = cache[`${user.id}_${dateStr}`] || '';
+      const isToday = dateStr === today;
+      return `<td class="${i===5?'week-sep':''} ${isToday?'today-col':''}">
+        <div class="schedule-cell ${canEdit?'editable':''}"
+             data-uid="${user.id}" data-date="${dateStr}"
+             title="${canEdit?'클릭하여 편집':''}">
+          ${content ? escHtml(content) : '<span style="color:rgba(26,17,0,0.2);font-size:11px;">—</span>'}
+        </div>
+      </td>`;
+    }).join('');
+
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td class="name-cell">${escHtml(user.name)}</td>
+        ${cells}
+      </tr>
+    `);
+  });
+
+  document.querySelectorAll('.schedule-cell.editable').forEach(cell => {
+    cell.addEventListener('click', () => startEdit(cell));
+  });
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function startEdit(cell) {
+  if (cell.querySelector('textarea')) return;
+  const uid   = cell.dataset.uid;
+  const date  = cell.dataset.date;
+  const prev  = cache[`${uid}_${date}`] || '';
+  cell.innerHTML = `<textarea class="schedule-cell-input">${prev}</textarea>`;
+  const ta = cell.querySelector('textarea');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+
+  async function save() {
+    const val = ta.value.trim();
+    cache[`${uid}_${date}`] = val;
+    try {
+      if (currentUser.role === 'admin' && String(currentUser.id) !== String(uid)) {
+        await api.adminUpsertSchedule(uid, { date, content: val });
+      } else {
+        await api.upsertSchedule({ date, content: val });
+      }
+    } catch(e) { showToast(e.message); }
+    cell.innerHTML = val
+      ? escHtml(val)
+      : '<span style="color:rgba(26,17,0,0.2);font-size:11px;">—</span>';
+    cell.addEventListener('click', () => startEdit(cell));
+  }
+
+  ta.addEventListener('blur', save);
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && e.ctrlKey) ta.blur(); });
+}
+
+// ── Drive 일정 내보내기 (admin only) ─────────────────────────
+document.getElementById('btn-drive-export')?.addEventListener('click', async () => {
+  if (currentUser.role !== 'admin') return;
+  const btn = document.getElementById('btn-drive-export');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    const from = fmt(baseMonday);
+    const to   = fmt(addDays(baseMonday, 9));
+    const thisMonday = baseMonday;
+    const nextMonday = addDays(thisMonday, 7);
+    const allDates = [
+      ...[0,1,2,3,4].map(i => addDays(thisMonday, i)),
+      ...[0,1,2,3,4].map(i => addDays(nextMonday, i)),
+    ];
+    const dates = allDates.map((d, i) => ({
+      date:  fmt(d),
+      label: fmtShort(d),
+      week:  i < 5 ? '금주' : '차주',
+    }));
+
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/drive/export/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ date_from: from, date_to: to, dates }),
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.detail||'오류'); }
+    const { url } = await res.json();
+    showToast('Google Sheets로 저장되었습니다!');
+    window.open(url, '_blank');
+  } catch(e) { showToast(e.message); }
+  finally { btn.disabled = false; btn.textContent = '📤 Drive 저장'; }
+});
+
+render().catch(e => showToast(e.message));
+</script>
+</body>
+</html>

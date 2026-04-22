@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>보고서 작성 — 주간업무보고</title>
+  <link rel="stylesheet" href="/css/style.css?v=2" />
+  <style>
+    .cat-select {
+      width: 90px; flex-shrink: 0;
+      background: var(--cream); border: 2px solid var(--ink);
+      border-radius: 8px; padding: 7px 8px;
+      font-size: 12px; font-weight: 700;
+      font-family: var(--font-display);
+      color: var(--ink); outline: none;
+    }
+    .cat-select:focus { border-color: var(--orange); }
+    .cat-select::placeholder { color: var(--ink-muted); font-weight: 600; }
+    .task-row { display: flex; gap: 7px; align-items: flex-start; margin-bottom: 8px; }
+    .task-num { font-size: 11px; font-weight: 700; color: var(--ink-muted); width: 18px; text-align: right; flex-shrink: 0; font-family: var(--font-display); margin-top: 10px; }
+    .task-remove { margin-top: 8px; }
+    .task-input {
+      flex: 1; resize: none; overflow: hidden;
+      min-height: 38px; line-height: 1.5;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .task-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-muted); padding: 4px; border-radius: 6px;
+      flex-shrink: 0; transition: color 0.1s; line-height: 1;
+    }
+    .task-remove:hover { color: #DC2626; }
+    .todo-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .todo-check { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: var(--orange); }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <a class="topbar-logo" href="/index.html">
+      <span class="logo-icon">📋</span>
+      주간업무보고
+      <span id="page-badge">보고서 작성</span>
+    </a>
+    <span class="topbar-spacer"></span>
+    <span class="topbar-user" id="topbar-user"></span>
+    <button class="btn-logout" id="btn-logout">로그아웃</button>
+  </header>
+  <nav class="sidebar">
+    <div class="sidebar-label">메뉴</div>
+    <a class="sidebar-item" href="/index.html"><span class="sidebar-icon">📅</span> 팀 일정판</a>
+    <a class="sidebar-item" href="/report-list.html"><span class="sidebar-icon">📋</span> 보고서 목록</a>
+    <a class="sidebar-item active" href="/write.html"><span class="sidebar-icon">✏️</span> 보고서 작성</a>
+    <a class="sidebar-item" href="/admin.html"><span class="sidebar-icon">⚙️</span> 사용자 관리</a>
+    <a class="sidebar-item" href="/settings.html"><span class="sidebar-icon">🔗</span> Google Drive</a>
+    <div class="sidebar-week">
+      <div class="week-card">
+        <div class="week-card-label">이번 주</div>
+        <div class="week-card-title" id="week-card-title">—</div>
+        <div class="week-card-range" id="week-card-range">—</div>
+        <div class="week-progress">
+          <div class="week-progress-bar"><div class="week-progress-fill" id="week-progress-fill" style="width:0%"></div></div>
+          <span class="week-progress-text" id="week-progress-text">—</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="main-content">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div class="page-icon">✏️</div>
+          <h1 class="page-title" id="page-title">보고서 작성</h1>
+        </div>
+        <p class="page-sub" style="margin-left:42px;">주간 업무 내용을 작성해 주세요</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="/report-list.html" class="btn btn-secondary">취소</a>
+        <button class="btn btn-secondary" id="btn-import">📂 불러오기</button>
+        <button class="btn btn-primary" id="btn-submit">제출하기</button>
+      </div>
+    </div>
+
+    <!-- 불러오기 모달 -->
+    <div id="modal-import" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(26,17,0,0.5);align-items:center;justify-content:center;">
+      <div style="background:var(--white);border:2px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--ink);width:min(640px,92vw);max-height:82vh;overflow:hidden;display:flex;flex-direction:column;">
+        <div style="padding:18px 24px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;background:var(--cream);">
+          <div>
+            <div style="font-family:var(--font-display);font-size:16px;font-weight:800;">📂 이전 보고서 불러오기</div>
+            <div style="font-size:11px;color:var(--ink-muted);margin-top:2px;">아이콘을 클릭하면 미리보기 · 불러오기 버튼을 누르면 폼에 채워집니다</div>
+          </div>
+          <button id="modal-import-close" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--ink-muted);line-height:1;padding:4px;">✕</button>
+        </div>
+        <div style="padding:12px 24px;border-bottom:1.5px solid var(--cream-dark);">
+          <input id="import-search" class="form-input" placeholder="🔍 기간 또는 이름 검색..." style="width:100%;margin:0;" />
+        </div>
+        <div id="modal-import-list" style="overflow-y:auto;flex:1;"></div>
+      </div>
+    </div>
+
+    <!-- 미리보기 팝업 -->
+    <div id="modal-preview" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(26,17,0,0.6);align-items:center;justify-content:center;">
+      <div style="background:var(--white);border:2px solid var(--ink);border-radius:16px;box-shadow:8px 8px 0 var(--ink);width:min(700px,95vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
+        <!-- 미리보기 헤더 -->
+        <div style="padding:16px 24px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;background:var(--ink);">
+          <div>
+            <div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#fff;" id="preview-title">—</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;" id="preview-range">—</div>
+          </div>
+          <button id="modal-preview-close" style="background:none;border:none;cursor:pointer;font-size:22px;color:rgba(255,255,255,0.7);line-height:1;padding:4px;">✕</button>
+        </div>
+        <!-- 미리보기 본문 -->
+        <div id="preview-body" style="overflow-y:auto;flex:1;padding:20px 24px;"></div>
+        <!-- 미리보기 푸터 -->
+        <div style="padding:14px 24px;border-top:2px solid var(--ink);display:flex;justify-content:flex-end;gap:10px;background:var(--cream);">
+          <button id="btn-preview-back" style="padding:9px 20px;background:var(--white);border:2px solid var(--ink);border-radius:10px;font-size:13px;font-weight:700;font-family:var(--font-display);cursor:pointer;box-shadow:2px 2px 0 var(--ink);">← 목록으로</button>
+          <button id="btn-preview-load" style="padding:9px 20px;background:var(--orange);color:#fff;border:2px solid var(--ink);border-radius:10px;font-size:13px;font-weight:700;font-family:var(--font-display);cursor:pointer;box-shadow:2px 2px 0 var(--ink);">📂 이 보고서 불러오기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중복 경고 팝업 -->
+    <div id="modal-duplicate" style="display:none;position:fixed;inset:0;z-index:1300;background:rgba(26,17,0,0.6);align-items:center;justify-content:center;">
+      <div style="background:var(--white);border:2px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--ink);width:min(440px,92vw);overflow:hidden;">
+        <!-- 경고 헤더 -->
+        <div style="padding:20px 24px 16px;background:#FEF9E7;border-bottom:2px solid var(--ink);text-align:center;">
+          <div style="font-size:40px;margin-bottom:8px;">⚠️</div>
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:800;">이미 작성된 보고서가 있습니다</div>
+        </div>
+        <!-- 내용 -->
+        <div style="padding:20px 24px;">
+          <div style="background:var(--cream);border:1.5px solid var(--ink);border-radius:10px;padding:14px 16px;margin-bottom:16px;text-align:center;">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--orange);" id="dup-week-label">—</div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:4px;" id="dup-week-range">—</div>
+          </div>
+          <p style="font-size:13px;color:var(--ink-light);line-height:1.6;text-align:center;">
+            해당 주차에 이미 작성된 보고서가 있습니다.<br>
+            기존 보고서를 <strong>수정</strong>하거나 <strong>보기</strong>로 이동하세요.
+          </p>
+        </div>
+        <!-- 버튼 -->
+        <div style="padding:0 24px 20px;display:flex;flex-direction:column;gap:8px;">
+          <button id="btn-dup-edit" style="width:100%;padding:12px;background:var(--orange);color:#fff;border:2px solid var(--ink);border-radius:10px;font-size:14px;font-weight:700;font-family:var(--font-display);cursor:pointer;box-shadow:3px 3px 0 var(--ink);">✏️ 기존 보고서 수정하기</button>
+          <button id="btn-dup-view" style="width:100%;padding:12px;background:var(--white);color:var(--ink);border:2px solid var(--ink);border-radius:10px;font-size:14px;font-weight:700;font-family:var(--font-display);cursor:pointer;box-shadow:3px 3px 0 var(--ink);">👁 기존 보고서 보기</button>
+          <button id="btn-dup-cancel" style="width:100%;padding:10px;background:none;color:var(--ink-muted);border:none;font-size:13px;cursor:pointer;">취소 (작성 계속)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 보고 기간 -->
+    <div class="card" style="background:var(--yellow-light);">
+      <div class="section-title">보고 기간</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">이번 주 시작</label>
+          <input class="form-input" type="date" id="curr-start" required />
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">이번 주 종료</label>
+          <input class="form-input" type="date" id="curr-end" required />
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">다음 주 시작</label>
+          <input class="form-input" type="date" id="prev-start" required />
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">다음 주 종료</label>
+          <input class="form-input" type="date" id="prev-end" required />
+        </div>
+      </div>
+    </div>
+
+    <!-- 업무 섹션 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <!-- 이번 주 결과 -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="section-title" style="margin-bottom:2px;">이번 주 결과</div>
+            <div id="curr-count" style="font-size:11px;color:var(--ink-muted);">0건 입력됨</div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-add-curr">+ 추가</button>
+        </div>
+        <div id="curr-list"></div>
+      </div>
+
+      <!-- 다음 주 계획 -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="section-title" style="margin-bottom:2px;">다음 주 계획</div>
+            <div id="prev-count" style="font-size:11px;color:var(--ink-muted);">0건 입력됨</div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-add-prev">+ 추가</button>
+        </div>
+        <div id="prev-list"></div>
+      </div>
+    </div>
+
+    <!-- Todo -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <div class="section-title" style="margin-bottom:0;">Todo 목록</div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-add-todo">+ 추가</button>
+      </div>
+      <div id="todo-list"></div>
+      <div class="text-muted" id="todo-empty" style="padding:4px 0;">항목을 추가하세요</div>
+    </div>
+
+    <!-- 특이사항 / 요청사항 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="card">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">특이사항</label>
+          <textarea class="form-textarea" id="internal-work" placeholder="이번 주 특이사항을 입력해주세요" style="min-height:100px;"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">요청사항</label>
+          <textarea class="form-textarea" id="shared" placeholder="관리자에게 전달할 요청사항" style="min-height:100px;"></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { requireAuth, renderTopbarUser, logout, getUser } from '/js/auth.js';
+import { api, showToast } from '/js/api.js';
+
+requireAuth();
+renderTopbarUser();
+document.getElementById('btn-logout').addEventListener('click', logout);
+
+const params = new URLSearchParams(location.search);
+const editId = params.get('id');
+if (editId) {
+  document.getElementById('page-title').textContent = '보고서 수정';
+  document.getElementById('page-badge').textContent = '보고서 수정';
+}
+
+const CATS = ['개발','디자인','기획','회의','리서치','기타'];
+const CAT_COLORS = {'개발':'#1D6FE9','디자인':'#9333EA','기획':'#16A34A','회의':'#FD4401','리서치':'#DB2777','기타':'#6B7280'};
+
+function getMonday(d = new Date()) {
+  const day = d.getDay() || 7;
+  const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+  return mon.toISOString().slice(0, 10);
+}
+function addDays(iso, n) {
+  const d = new Date(iso); d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function escVal(str) { return (str||'').replace(/"/g,'&quot;'); }
+
+let currSupport = [];
+let prevSupport = [];
+let todoItems   = [];
+
+function renderTaskList(items, listId, countId, side) {
+  const el = document.getElementById(listId);
+  const countEl = document.getElementById(countId);
+  el.innerHTML = '';
+  countEl.textContent = `${items.length}건 입력됨`;
+
+  items.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'task-row';
+
+    const catColor = CAT_COLORS[item.title] || '#6B7280';
+    div.innerHTML = `
+      <span class="task-num">${i+1}</span>
+      <input type="text" class="cat-select" placeholder="구분"
+        data-side="${side}" data-field="title" data-idx="${i}"
+        value="${escVal(item.title)}"
+        style="color:${catColor};background:${catColor}18;" />
+      <textarea class="form-input task-input" placeholder="업무 내용을 입력하세요"
+        data-side="${side}" data-field="content" data-idx="${i}"
+        rows="1">${escVal(item.content)}</textarea>
+      <button type="button" class="task-remove" data-side="${side}" data-remove="${i}">✕</button>
+    `;
+    el.appendChild(div);
+  });
+
+  el.querySelectorAll('[data-field]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const arr = e.target.dataset.side === 'curr' ? currSupport : prevSupport;
+      arr[+e.target.dataset.idx][e.target.dataset.field] = e.target.value;
+      if (e.target.dataset.field === 'title') {
+        const color = CAT_COLORS[e.target.value] || '#6B7280';
+        e.target.style.color = color;
+        e.target.style.background = color + '18';
+      }
+      // textarea 자동 높이
+      if (e.target.tagName === 'TEXTAREA') {
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+      }
+    });
+    // 기존 내용 있을 때 초기 높이 적용
+    if (inp.tagName === 'TEXTAREA') {
+      inp.style.height = 'auto';
+      inp.style.height = inp.scrollHeight + 'px';
+    }
+  });
+  el.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const arr = e.target.dataset.side === 'curr' ? currSupport : prevSupport;
+      arr.splice(+e.target.dataset.remove, 1);
+      if (e.target.dataset.side === 'curr') renderCurr(); else renderPrev();
+    });
+  });
+}
+
+function renderCurr() { renderTaskList(currSupport, 'curr-list', 'curr-count', 'curr'); }
+function renderPrev() { renderTaskList(prevSupport, 'prev-list', 'prev-count', 'prev'); }
+
+document.getElementById('btn-add-curr').addEventListener('click', () => {
+  currSupport.push({ title: '', content: '' });
+  renderCurr();
+  document.querySelector('#curr-list .task-row:last-child .cat-select')?.focus();
+});
+document.getElementById('btn-add-prev').addEventListener('click', () => {
+  prevSupport.push({ title: '', content: '' });
+  renderPrev();
+  document.querySelector('#prev-list .task-row:last-child .cat-select')?.focus();
+});
+
+function renderTodo() {
+  const el = document.getElementById('todo-list');
+  const emptyEl = document.getElementById('todo-empty');
+  el.innerHTML = '';
+  emptyEl.style.display = todoItems.length ? 'none' : '';
+
+  todoItems.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'todo-row';
+    div.innerHTML = `
+      <input type="checkbox" class="todo-check" data-idx="${i}" ${item.done?'checked':''} />
+      <input class="form-input" placeholder="할 일을 입력하세요"
+        value="${escVal(item.content)}" data-idx="${i}"
+        style="${item.done?'text-decoration:line-through;color:var(--ink-muted);':''}" />
+      <button type="button" class="task-remove" data-remove="${i}">✕</button>
+    `;
+    el.appendChild(div);
+  });
+
+  el.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      todoItems[+e.target.dataset.idx].done = e.target.checked;
+      renderTodo();
+    });
+  });
+  el.querySelectorAll('input[type=text], input:not([type])').forEach(inp => {
+    if (inp.type === 'checkbox') return;
+    inp.addEventListener('input', e => {
+      todoItems[+e.target.dataset.idx].content = e.target.value;
+    });
+  });
+  el.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      todoItems.splice(+e.target.dataset.remove, 1);
+      renderTodo();
+    });
+  });
+}
+
+document.getElementById('btn-add-todo').addEventListener('click', () => {
+  todoItems.push({ content: '', done: false });
+  renderTodo();
+  document.querySelector('#todo-list .todo-row:last-child input:not([type=checkbox])')?.focus();
+});
+
+async function init() {
+  if (editId) {
+    const r = await api.getReport(editId);
+    document.getElementById('curr-start').value = r.curr_start;
+    document.getElementById('curr-end').value   = r.curr_end;
+    document.getElementById('prev-start').value = r.prev_start;
+    document.getElementById('prev-end').value   = r.prev_end;
+    currSupport = r.curr_support.map(i => ({ title: i.title||'기타', content: i.content||'' }));
+    prevSupport = r.prev_support.map(i => ({ title: i.title||'기타', content: i.content||'' }));
+    todoItems   = r.todo_items.map(i => ({ content: i.content||'', done: false }));
+    document.getElementById('internal-work').value = r.internal_work;
+    document.getElementById('shared').value        = r.shared;
+  } else {
+    const thisMonday = getMonday();
+    const nextMonday = addDays(thisMonday, 7);
+    document.getElementById('curr-start').value = thisMonday;
+    document.getElementById('curr-end').value   = addDays(thisMonday, 4);
+    document.getElementById('prev-start').value = nextMonday;
+    document.getElementById('prev-end').value   = addDays(nextMonday, 4);
+    currSupport = [{ title: '기타', content: '' }];
+    prevSupport = [{ title: '기타', content: '' }];
+  }
+  renderCurr();
+  renderPrev();
+  renderTodo();
+}
+
+function isoWeek(iso) {
+  const d = new Date(iso);
+  const thu = new Date(d); thu.setDate(d.getDate() + (4 - (d.getDay()||7)));
+  const yr  = thu.getFullYear();
+  const jan1 = new Date(yr, 0, 1);
+  return `${yr}-W${String(Math.ceil(((thu - jan1) / 86400000 + 1) / 7)).padStart(2,'0')}`;
+}
+
+// ── 중복 경고 팝업 ─────────────────────────────────────
+const dupModal = document.getElementById('modal-duplicate');
+let dupExistingId = null;
+
+function openDupModal(existingId, weekLabel, weekRange) {
+  dupExistingId = existingId;
+  document.getElementById('dup-week-label').textContent = weekLabel;
+  document.getElementById('dup-week-range').textContent = weekRange;
+  dupModal.style.display = 'flex';
+}
+function closeDupModal() { dupModal.style.display = 'none'; }
+
+document.getElementById('btn-dup-edit').addEventListener('click', () => {
+  if (dupExistingId) location.href = `/write.html?id=${dupExistingId}`;
+});
+document.getElementById('btn-dup-view').addEventListener('click', () => {
+  if (dupExistingId) location.href = `/view.html?id=${dupExistingId}`;
+});
+document.getElementById('btn-dup-cancel').addEventListener('click', closeDupModal);
+dupModal.addEventListener('click', e => { if (e.target === dupModal) closeDupModal(); });
+
+// ── 제출 ──────────────────────────────────────────────
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const currStart = document.getElementById('curr-start').value;
+  const currEnd   = document.getElementById('curr-end').value;
+  const prevStart = document.getElementById('prev-start').value;
+  const prevEnd   = document.getElementById('prev-end').value;
+  if (!currStart || !currEnd || !prevStart || !prevEnd) {
+    showToast('보고 기간을 모두 입력해주세요'); return;
+  }
+
+  // 신규 작성일 때만 중복 사전 체크
+  if (!editId) {
+    try {
+      const week = isoWeek(currStart);
+      const me = getUser();
+      const all = await api.listReports(200);
+      const dup = all.find(r => r.author_id === me.id && r.week === week);
+      if (dup) {
+        const wl    = getWeekLabelFromDate(currStart);
+        const range = `${fmtShort(currStart)} ~ ${fmtShort(currEnd)}`;
+        openDupModal(dup.id, wl, range);
+        return;
+      }
+    } catch(_) { /* 체크 실패 시 서버에서 막음 */ }
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const body = {
+    week:          isoWeek(currStart),
+    curr_start:    currStart,
+    curr_end:      currEnd,
+    prev_start:    prevStart,
+    prev_end:      prevEnd,
+    curr_support:  currSupport.filter(i => i.content.trim()),
+    prev_support:  prevSupport.filter(i => i.content.trim()),
+    todo_items:    todoItems.filter(i => i.content.trim()).map(i => ({ content: i.content })),
+    internal_work: document.getElementById('internal-work').value,
+    shared:        document.getElementById('shared').value,
+  };
+
+  try {
+    const result = editId
+      ? await api.updateReport(editId, body)
+      : await api.createReport(body);
+    showToast('저장되었습니다');
+    setTimeout(() => location.href = `/view.html?id=${result.id}`, 500);
+  } catch(err) {
+    // 서버 409 중복 응답 처리
+    if (err.message?.startsWith('DUPLICATE:')) {
+      const existId = err.message.split(':')[1];
+      const wl    = getWeekLabelFromDate(currStart);
+      const range = `${fmtShort(currStart)} ~ ${fmtShort(currEnd)}`;
+      openDupModal(existId, wl, range);
+    } else {
+      showToast(err.message);
+    }
+    btn.disabled = false; btn.textContent = '제출하기';
+  }
+});
+
+init().catch(e => showToast(e.message));
+
+// ── 불러오기 모달 ─────────────────────────────────────
+const modal      = document.getElementById('modal-import');
+const importList = document.getElementById('modal-import-list');
+const importSearch = document.getElementById('import-search');
+
+let importReports = []; // 전체 목록 캐시
+
+function getWeekLabelFromDate(iso) {
+  const d = new Date(iso);
+  const day = d.getDay() || 7;
+  const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+  let fd = new Date(mon.getFullYear(), mon.getMonth(), 1);
+  while (fd.getDay() !== 1) fd.setDate(fd.getDate() + 1);
+  const wn = Math.max(1, Math.round((mon - fd) / 604800000) + 1);
+  return `${mon.getMonth()+1}월 ${wn}주차`;
+}
+function fmtShort(iso) {
+  if (!iso) return '';
+  const [,m,d] = iso.split('-');
+  return `${+m}/${+d}`;
+}
+
+function renderImportList(q = '') {
+  const me = getUser();
+  const keyword = q.trim().toLowerCase();
+
+  // 자신의 보고서만 (수정 중인 보고서는 제외)
+  const list = importReports.filter(r => {
+    if (r.author_id !== me.id) return false;
+    if (editId && String(r.id) === String(editId)) return false;
+    if (!keyword) return true;
+    return r.curr_start.includes(keyword)
+      || r.curr_end.includes(keyword)
+      || getWeekLabelFromDate(r.curr_start).includes(keyword)
+      || (r.author_name||'').toLowerCase().includes(keyword);
+  });
+
+  if (!list.length) {
+    importList.innerHTML = `<div style="padding:48px;text-align:center;color:var(--ink-muted);font-size:13px;">${keyword ? '검색 결과가 없습니다' : '불러올 보고서가 없습니다'}</div>`;
+    return;
+  }
+
+  // 주별 그룹
+  const groups = {};
+  list.forEach(r => {
+    const key = r.curr_start;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+  const sortedKeys = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+  let html = '';
+  sortedKeys.forEach(key => {
+    const r = groups[key][0];
+    const wl = getWeekLabelFromDate(r.curr_start);
+    const range = `${fmtShort(r.curr_start)} ~ ${fmtShort(r.curr_end)}`;
+    const taskCnt = (r.curr_support?.length || 0) + (r.prev_support?.length || 0);
+    const todoCnt = r.todo_items?.length || 0;
+    const pillCls = r.status === '검토완료' ? 'color:#16A34A;background:#DCFCE7;border-color:#16A34A'
+      : r.status === '반려됨' ? 'color:#DC2626;background:#FEE2E2;border-color:#DC2626'
+      : 'color:#1D6FE9;background:#DBEAFE;border-color:#1D6FE9';
+
+    html += `
+      <div style="padding:14px 24px;border-bottom:1.5px solid var(--cream-dark);display:flex;justify-content:space-between;align-items:center;gap:16px;">
+        <!-- 아이콘 (클릭 → 미리보기) -->
+        <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;">
+          <button class="preview-icon-btn" data-id="${r.id}" title="미리보기" style="
+            width:48px;height:48px;border:2px solid var(--ink);border-radius:12px;background:var(--yellow);
+            display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;
+            cursor:pointer;transition:all .12s;box-shadow:2px 2px 0 var(--ink);
+          ">📋</button>
+          <div style="min-width:0;">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:800;">${wl}</div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">${range}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <div style="font-size:11px;color:var(--ink-muted);">업무 <strong style="color:var(--ink);">${taskCnt}</strong>건</div>
+          <div style="font-size:11px;color:var(--ink-muted);">todo <strong style="color:var(--ink);">${todoCnt}</strong>건</div>
+          <span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid;${pillCls}">${r.status||'제출됨'}</span>
+          <button class="load-btn" data-id="${r.id}" style="padding:7px 16px;background:var(--orange);color:#fff;border:2px solid var(--ink);border-radius:8px;
+            font-size:12px;font-weight:700;font-family:var(--font-display);cursor:pointer;
+            box-shadow:2px 2px 0 var(--ink);white-space:nowrap;">불러오기</button>
+        </div>
+      </div>`;
+  });
+  importList.innerHTML = html;
+
+  // 아이콘 → 미리보기
+  importList.querySelectorAll('.preview-icon-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => { btn.style.background='var(--orange)'; btn.style.transform='scale(1.08)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.background='var(--yellow)'; btn.style.transform=''; });
+    btn.addEventListener('click', async () => {
+      const rid = btn.dataset.id;
+      try {
+        const r = await api.getReport(rid);
+        openPreview(r);
+      } catch(e) { showToast(e.message); }
+    });
+  });
+
+  // 불러오기 버튼
+  importList.querySelectorAll('.load-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const rid = btn.dataset.id;
+      try {
+        const r = await api.getReport(rid);
+        applyImport(r);
+        closeModal();
+        showToast('보고서 내용을 불러왔습니다 ✅');
+      } catch(e) { showToast(e.message); }
+    });
+  });
+}
+
+function applyImport(r) {
+  // 날짜
+  document.getElementById('curr-start').value = r.curr_start || '';
+  document.getElementById('curr-end').value   = r.curr_end   || '';
+  document.getElementById('prev-start').value = r.prev_start || '';
+  document.getElementById('prev-end').value   = r.prev_end   || '';
+  // 업무 항목
+  currSupport = (r.curr_support || []).map(i => ({ title: i.title||'', content: i.content||'' }));
+  prevSupport = (r.prev_support || []).map(i => ({ title: i.title||'', content: i.content||'' }));
+  todoItems   = (r.todo_items   || []).map(i => ({ content: i.content||'', done: false }));
+  // 텍스트 필드
+  document.getElementById('internal-work').value = r.internal_work || '';
+  document.getElementById('shared').value        = r.shared        || '';
+  renderCurr(); renderPrev(); renderTodo();
+}
+
+function openModal() {
+  modal.style.display = 'flex';
+  importSearch.value = '';
+  if (!importReports.length) {
+    importList.innerHTML = `<div style="padding:48px;text-align:center;color:var(--ink-muted);">로딩 중...</div>`;
+    api.listReports(200).then(list => {
+      importReports = list || [];
+      renderImportList();
+    }).catch(e => showToast(e.message));
+  } else {
+    renderImportList();
+  }
+}
+function closeModal() {
+  modal.style.display = 'none';
+}
+
+document.getElementById('btn-import').addEventListener('click', openModal);
+document.getElementById('modal-import-close').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+importSearch.addEventListener('input', e => renderImportList(e.target.value));
+
+// ── 미리보기 팝업 ─────────────────────────────────────
+const previewModal = document.getElementById('modal-preview');
+let previewReport  = null;
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openPreview(r) {
+  previewReport = r;
+  const wl    = getWeekLabelFromDate(r.curr_start);
+  const range = `${r.curr_start} ~ ${r.curr_end}`;
+  document.getElementById('preview-title').textContent = `📋 ${wl} 주간업무보고`;
+  document.getElementById('preview-range').textContent = range;
+
+  function renderItems(items) {
+    if (!items?.length) return `<span style="color:var(--ink-muted);font-style:italic;font-size:12px;">없음</span>`;
+    return items.map((item, i) => `
+      <div style="margin-bottom:${i < items.length-1 ? '10px':'0'};">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--white);
+            background:var(--ink);border-radius:4px;padding:1px 6px;flex-shrink:0;margin-top:1px;">${i+1}</span>
+          <div>
+            ${item.title ? `<span style="display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:4px;background:var(--yellow);border:1.5px solid var(--ink);margin-bottom:3px;">${esc(item.title)}</span>` : ''}
+            ${item.content ? `<div style="font-size:13px;white-space:pre-wrap;line-height:1.6;color:var(--ink-light);">${esc(item.content)}</div>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  const sections = [
+    { label: '이번 주 결과', sub: `${fmtShort(r.curr_start)} ~ ${fmtShort(r.curr_end)}`, content: renderItems(r.curr_support) },
+    { label: '다음 주 계획', sub: `${fmtShort(r.prev_start)} ~ ${fmtShort(r.prev_end)}`, content: renderItems(r.prev_support) },
+  ];
+
+  const todoHtml = r.todo_items?.length
+    ? r.todo_items.map(t => `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--cream-dark);">
+        <span style="font-size:16px;">${t.done ? '✅' : '⬜'}</span>
+        <span style="font-size:13px;${t.done?'text-decoration:line-through;color:var(--ink-muted);':''}">${esc(t.content)}</span>
+      </div>`).join('')
+    : `<span style="color:var(--ink-muted);font-style:italic;font-size:12px;">없음</span>`;
+
+  let html = `<div style="display:flex;flex-direction:column;gap:16px;">`;
+
+  // 이번 주 / 다음 주 그리드
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+  sections.forEach(s => {
+    html += `<div style="border:2px solid var(--ink);border-radius:12px;overflow:hidden;">
+      <div style="padding:10px 14px;background:var(--cream);border-bottom:1.5px solid var(--ink);display:flex;align-items:baseline;gap:8px;">
+        <span style="font-family:var(--font-display);font-size:13px;font-weight:800;">${s.label}</span>
+        <span style="font-size:11px;color:var(--ink-muted);">${s.sub}</span>
+      </div>
+      <div style="padding:12px 14px;">${s.content}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Todo
+  html += `<div style="border:2px solid var(--ink);border-radius:12px;overflow:hidden;">
+    <div style="padding:10px 14px;background:var(--cream);border-bottom:1.5px solid var(--ink);">
+      <span style="font-family:var(--font-display);font-size:13px;font-weight:800;">Todo 목록</span>
+    </div>
+    <div style="padding:12px 14px;">${todoHtml}</div>
+  </div>`;
+
+  // 특이사항 / 요청사항
+  if (r.internal_work || r.shared) {
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+    if (r.internal_work) html += `<div style="border:2px solid var(--ink);border-radius:12px;overflow:hidden;">
+      <div style="padding:10px 14px;background:var(--cream);border-bottom:1.5px solid var(--ink);">
+        <span style="font-family:var(--font-display);font-size:13px;font-weight:800;">특이사항</span>
+      </div>
+      <div style="padding:12px 14px;font-size:13px;white-space:pre-wrap;line-height:1.6;">${esc(r.internal_work)}</div>
+    </div>`;
+    if (r.shared) html += `<div style="border:2px solid var(--ink);border-radius:12px;overflow:hidden;">
+      <div style="padding:10px 14px;background:var(--cream);border-bottom:1.5px solid var(--ink);">
+        <span style="font-family:var(--font-display);font-size:13px;font-weight:800;">요청사항</span>
+      </div>
+      <div style="padding:12px 14px;font-size:13px;white-space:pre-wrap;line-height:1.6;">${esc(r.shared)}</div>
+    </div>`;
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('preview-body').innerHTML = html;
+  previewModal.style.display = 'flex';
+}
+
+function closePreview() {
+  previewModal.style.display = 'none';
+  previewReport = null;
+}
+
+document.getElementById('modal-preview-close').addEventListener('click', closePreview);
+previewModal.addEventListener('click', e => { if (e.target === previewModal) closePreview(); });
+document.getElementById('btn-preview-back').addEventListener('click', closePreview);
+document.getElementById('btn-preview-load').addEventListener('click', () => {
+  if (!previewReport) return;
+  applyImport(previewReport);
+  closePreview();
+  closeModal();
+  showToast('보고서 내용을 불러왔습니다 ✅');
+});
+
+(function updateWeekCard() {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+  let _fd = new Date(mon.getFullYear(), mon.getMonth(), 1);
+  while (_fd.getDay() !== 1) _fd.setDate(_fd.getDate() + 1);
+  const weekNum = Math.max(1, Math.round((mon - _fd) / 604800000) + 1);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  document.getElementById('week-card-title').textContent = `${mon.getMonth()+1}월 ${weekNum}주차`;
+  document.getElementById('week-card-range').textContent = `${fmt(mon)} – ${fmt(fri)}`;
+  const wd = now.getDay();
+  if (wd >= 1 && wd <= 5) {
+    document.getElementById('week-progress-fill').style.width = Math.round((wd/5)*100)+'%';
+    document.getElementById('week-progress-text').textContent = `${wd}/5일`;
+  } else {
+    document.getElementById('week-progress-fill').style.width = '0%';
+    document.getElementById('week-progress-text').textContent = '—';
+  }
+})();
+</script>
+</body>
+</html>

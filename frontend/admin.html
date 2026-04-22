@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>사용자 관리 — 주간업무보고</title>
+  <link rel="stylesheet" href="/css/style.css?v=2" />
+  <style>
+    .user-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 20px; padding: 4px 4px 8px 4px; }
+    .user-card {
+      border: 2px solid var(--ink); border-radius: 14px; padding: 20px;
+      box-shadow: 4px 4px 0 var(--ink); cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .user-card:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); z-index: 2; position: relative; }
+    .user-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .uc-avatar {
+      width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: #fff; font-family: var(--font-display); flex-shrink: 0;
+    }
+    .uc-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .uc-id { font-size: 12px; color: var(--ink-light); margin-bottom: 12px; }
+    .uc-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .uc-tag-role {
+      background: var(--orange); color: #fff; font-size: 10px; font-weight: 700;
+      padding: 2px 9px; border-radius: 99px; border: 1.5px solid var(--ink);
+      font-family: var(--font-display);
+    }
+    .uc-tag-pos {
+      background: rgba(26,17,0,0.06); color: var(--ink-light); font-size: 10px; font-weight: 600;
+      padding: 2px 9px; border-radius: 99px; border: 1.5px solid rgba(26,17,0,0.15);
+    }
+
+    /* 탭 */
+    .tab-bar {
+      display: flex; border: 2px solid var(--ink); border-radius: 12px;
+      overflow: hidden; width: fit-content; margin-bottom: 24px;
+    }
+    .tab-btn {
+      display: inline-flex !important; align-items: center !important;
+      padding: 10px 22px !important; height: 42px !important;
+      font-family: var(--font-display) !important; font-size: 13px !important;
+      font-weight: 700 !important; cursor: pointer; background: var(--cream-dark) !important;
+      color: var(--ink-muted) !important; border: none !important;
+      border-right: 2px solid var(--ink) !important; transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+    .tab-btn:last-child { border-right: none !important; }
+    .tab-btn.tab-active { background: var(--ink) !important; color: #fff !important; }
+
+    /* 권한 관리 */
+    .perm-tbl { width: 100%; border-collapse: collapse; }
+    .perm-tbl thead th {
+      background: var(--cream); font-family: var(--font-display); font-size: 11px;
+      font-weight: 700; color: var(--ink-muted); padding: 10px 20px;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      border-bottom: 2px solid var(--ink); text-align: left;
+    }
+    .perm-tbl tbody td {
+      padding: 13px 20px; font-size: 13px;
+      border-bottom: 1.5px solid var(--cream-dark); vertical-align: middle;
+    }
+    .perm-tbl tbody tr:hover td { background: var(--cream); }
+    .role-seg {
+      display: inline-flex; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden;
+    }
+    .role-seg-btn {
+      display: inline-flex !important; align-items: center !important;
+      padding: 5px 14px !important; height: 32px !important;
+      font-size: 12px !important; font-weight: 700 !important;
+      font-family: var(--font-display) !important; cursor: pointer;
+      border: none !important; background: var(--cream-dark) !important;
+      color: var(--ink-muted) !important; transition: background .12s, color .12s;
+    }
+    .role-seg-btn:first-child { border-right: 2px solid var(--ink) !important; }
+    .role-seg-btn.seg-active { background: var(--orange) !important; color: #fff !important; }
+    .status-seg-btn {
+      display: inline-flex !important; align-items: center !important;
+      padding: 5px 14px !important; height: 32px !important;
+      font-size: 12px !important; font-weight: 700 !important;
+      font-family: var(--font-display) !important; cursor: pointer;
+      border: 2px solid var(--ink) !important; border-radius: 8px !important;
+      transition: background .12s;
+    }
+    .status-on  { background: #DCFCE7 !important; color: #16A34A !important; border-color: #16A34A !important; }
+    .status-off { background: #F3F4F6 !important; color: #6B7280 !important; border-color: #D1D5DB !important; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <a class="topbar-logo" href="/index.html">
+      <span class="logo-icon">📋</span>
+      주간업무보고
+      <span>사용자 관리</span>
+    </a>
+    <span class="topbar-spacer"></span>
+    <span class="topbar-user" id="topbar-user"></span>
+    <button class="btn-logout" id="btn-logout">로그아웃</button>
+  </header>
+  <nav class="sidebar">
+    <div class="sidebar-label">메뉴</div>
+    <a class="sidebar-item" href="/index.html"><span class="sidebar-icon">📅</span> 팀 일정판</a>
+    <a class="sidebar-item" href="/report-list.html"><span class="sidebar-icon">📋</span> 보고서 목록</a>
+    <a class="sidebar-item" href="/write.html"><span class="sidebar-icon">✏️</span> 보고서 작성</a>
+    <a class="sidebar-item active" href="/admin.html"><span class="sidebar-icon">⚙️</span> 사용자 관리</a>
+    <a class="sidebar-item" href="/settings.html"><span class="sidebar-icon">🔗</span> Google Drive</a>
+    <div class="sidebar-week">
+      <div class="week-card">
+        <div class="week-card-label">이번 주</div>
+        <div class="week-card-title" id="week-card-title">—</div>
+        <div class="week-card-range" id="week-card-range">—</div>
+        <div class="week-progress">
+          <div class="week-progress-bar"><div class="week-progress-fill" id="week-progress-fill" style="width:0%"></div></div>
+          <span class="week-progress-text" id="week-progress-text">—</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="main-content">
+    <!-- 페이지 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="page-icon" style="background:var(--orange);">⚙️</div>
+        <div>
+          <h1 class="page-title">사용자 관리</h1>
+          <p class="page-sub" id="user-count-sub" style="margin-top:2px;">팀원 계정을 추가하고 관리합니다</p>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-add">+ 사용자 추가</button>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tab-bar">
+      <button class="tab-btn tab-active" id="tab-users" onclick="switchTab('users')">👥 사용자 목록</button>
+      <button class="tab-btn" id="tab-perms" onclick="switchTab('perms')">🔑 권한 관리</button>
+    </div>
+
+    <!-- ── 사용자 목록 패널 ── -->
+    <div id="panel-users">
+      <div class="user-cards" id="user-cards"></div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 20px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;background:var(--cream);">
+          <span style="font-family:var(--font-display);font-size:13px;font-weight:700;">전체 목록</span>
+          <span class="text-muted" id="table-count"></span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>이름</th><th>직급</th><th>아이디</th><th>권한</th>
+              <th>상태</th><th>최근 로그인</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="user-tbody">
+            <tr><td colspan="7" style="padding:32px;text-align:center;" class="text-muted">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 권한 관리 패널 ── -->
+    <div id="panel-perms" style="display:none;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:2px solid var(--ink);background:var(--cream);display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔑</span>
+          <div>
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:700;">권한 관리</div>
+            <div style="font-size:11px;color:var(--ink-muted);margin-top:1px;">사용자별 역할과 계정 상태를 즉시 변경합니다</div>
+          </div>
+        </div>
+        <table class="perm-tbl">
+          <thead>
+            <tr>
+              <th>사용자</th><th>직급</th><th>아이디</th>
+              <th>역할</th><th>계정 상태</th><th>최근 로그인</th>
+            </tr>
+          </thead>
+          <tbody id="perm-tbody">
+            <tr><td colspan="6" style="padding:32px;text-align:center;" class="text-muted">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 사용자 추가/수정 모달 -->
+<div class="modal-backdrop" id="modal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">사용자 추가</div>
+    <form id="user-form">
+      <input type="hidden" id="edit-id" />
+      <div class="form-group">
+        <label class="form-label">이름</label>
+        <input class="form-input" id="f-name" placeholder="홍길동" required />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label">직급</label>
+          <select class="form-select" id="f-position">
+            <option>사원</option><option>주임</option><option>대리</option>
+            <option>과장</option><option>차장</option><option>부장</option>
+            <option>팀장</option><option>이사</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">권한</label>
+          <select class="form-select" id="f-role">
+            <option value="member">일반 (member)</option>
+            <option value="admin">관리자 (admin)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="username-group">
+        <label class="form-label">아이디</label>
+        <input class="form-input" id="f-username" placeholder="영문/숫자" />
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label" id="pw-label">비밀번호</label>
+        <input class="form-input" type="password" id="f-password" placeholder="8자 이상 권장" />
+      </div>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn btn-primary" id="btn-save">추가하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { requireAdmin, renderTopbarUser, logout } from '/js/auth.js';
+import { api, showToast } from '/js/api.js';
+
+requireAdmin();
+renderTopbarUser();
+document.getElementById('btn-logout').addEventListener('click', logout);
+
+const AVATAR_COLORS = ['#FD4401','#1D6FE9','#9333EA','#16A34A','#DB2777','#D97706'];
+const CARD_COLORS   = ['var(--yellow-light)','#EEF2FF','#F0FDF4','#FFF0F3','#F5F3FF','#FFF7ED'];
+function avatarColor(name) {
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+let users = [];
+
+// ── 탭 전환 ─────────────────────────────────────
+window.switchTab = (tab) => {
+  document.getElementById('tab-users').classList.toggle('tab-active', tab === 'users');
+  document.getElementById('tab-perms').classList.toggle('tab-active', tab === 'perms');
+  document.getElementById('panel-users').style.display = tab === 'users' ? '' : 'none';
+  document.getElementById('panel-perms').style.display = tab === 'perms' ? '' : 'none';
+  document.getElementById('btn-add').style.display = tab === 'users' ? '' : 'none';
+  if (tab === 'perms') renderPerms();
+};
+
+// ── 데이터 로드 ──────────────────────────────────
+async function load() {
+  users = await api.listUsers();
+  document.getElementById('user-count-sub').textContent = `총 ${users.length}명이 등록되어 있습니다`;
+  document.getElementById('table-count').textContent = `${users.length}명`;
+  renderCards();
+  renderTable();
+}
+
+function renderCards() {
+  const el = document.getElementById('user-cards');
+  if (!users.length) { el.innerHTML = ''; return; }
+  el.innerHTML = users.map((u, i) => {
+    const color = avatarColor(u.name);
+    const bg = CARD_COLORS[i % CARD_COLORS.length];
+    const activeStyle = u.is_active
+      ? 'background:#DCFCE7;color:#16A34A;border-color:#16A34A;'
+      : 'background:#F3F4F6;color:#6B7280;border-color:#D1D5DB;';
+    return `
+      <div class="user-card" style="background:${bg};" onclick="openEdit(${u.id})">
+        <div class="user-card-top">
+          <div class="uc-avatar" style="background:${color};">${u.name[0]}</div>
+          <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;font-family:var(--font-display);border:1.5px solid;${activeStyle}">
+            ${u.is_active ? '활성' : '비활성'}
+          </span>
+        </div>
+        <div class="uc-name">${u.name}</div>
+        <div class="uc-id">@${u.username}</div>
+        <div class="uc-tags">
+          <span class="uc-tag-role">${u.role === 'admin' ? '관리자' : '일반'}</span>
+          <span class="uc-tag-pos">${u.position}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--ink-muted);">${u.last_login ? u.last_login.slice(0,10) : '—'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTable() {
+  const tbody = document.getElementById('user-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;" class="text-muted">사용자 없음</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);background:${avatarColor(u.name)};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:var(--font-display);flex-shrink:0;">${u.name[0]}</div>
+          <span style="font-weight:700;">${u.name}</span>
+        </div>
+      </td>
+      <td class="text-muted">${u.position}</td>
+      <td class="text-muted">${u.username}</td>
+      <td><span class="role-badge role-${u.role}">${u.role === 'admin' ? '관리자' : '일반'}</span></td>
+      <td><span class="status-badge ${u.is_active ? 'status-active' : 'status-inactive'}">${u.is_active ? '활성' : '비활성'}</span></td>
+      <td class="text-muted">${u.last_login ? u.last_login.slice(0,16) : '—'}</td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="openEdit(${u.id})">수정</button>
+          <button class="btn ${u.is_active ? 'btn-danger' : 'btn-secondary'} btn-sm"
+            onclick="toggleActive(${u.id},${!u.is_active})">
+            ${u.is_active ? '비활성화' : '활성화'}
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ── 권한 관리 ────────────────────────────────────
+function renderPerms() {
+  const tbody = document.getElementById('perm-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;" class="text-muted">사용자 없음</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const color = avatarColor(u.name);
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;border:2px solid var(--ink);background:${color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:var(--font-display);flex-shrink:0;">${u.name[0]}</div>
+            <span style="font-weight:700;">${u.name}</span>
+          </div>
+        </td>
+        <td class="text-muted" style="font-size:12px;">${u.position}</td>
+        <td class="text-muted" style="font-size:12px;">${u.username}</td>
+        <td>
+          <div class="role-seg">
+            <button class="role-seg-btn ${u.role==='member'?'seg-active':''}" onclick="setRole(${u.id},'member')">일반</button>
+            <button class="role-seg-btn ${u.role==='admin'?'seg-active':''}"  onclick="setRole(${u.id},'admin')">관리자</button>
+          </div>
+        </td>
+        <td>
+          <button class="status-seg-btn ${u.is_active?'status-on':'status-off'}" onclick="toggleActive(${u.id},${!u.is_active})">
+            ${u.is_active ? '● 활성' : '○ 비활성'}
+          </button>
+        </td>
+        <td class="text-muted" style="font-size:12px;">${u.last_login ? u.last_login.slice(0,16) : '—'}</td>
+      </tr>`;
+  }).join('');
+}
+
+window.setRole = async (id, role) => {
+  const u = users.find(u => u.id === id);
+  if (!u || u.role === role) return;
+  if (!confirm(`${u.name}님의 권한을 "${role==='admin'?'관리자':'일반'}"으로 변경할까요?`)) return;
+  try {
+    await api.updateUser(id, { role });
+    showToast('권한이 변경되었습니다');
+    await load();
+    renderPerms();
+  } catch(e) { showToast(e.message); }
+};
+
+window.toggleActive = async (id, active) => {
+  if (!confirm(`이 사용자를 ${active?'활성화':'비활성화'}하시겠습니까?`)) return;
+  try {
+    await api.updateUser(id, { is_active: active });
+    showToast(active ? '활성화되었습니다' : '비활성화되었습니다');
+    await load();
+    renderPerms();
+  } catch(e) { showToast(e.message); }
+};
+
+// ── 모달 ────────────────────────────────────────
+document.getElementById('btn-add').addEventListener('click', () => {
+  document.getElementById('modal-title').textContent = '사용자 추가';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-position').value = '사원';
+  document.getElementById('f-role').value = 'member';
+  document.getElementById('f-username').value = '';
+  document.getElementById('f-password').value = '';
+  document.getElementById('f-password').placeholder = '8자 이상 권장';
+  document.getElementById('username-group').style.display = '';
+  document.getElementById('f-username').required = true;
+  document.getElementById('pw-label').textContent = '비밀번호';
+  document.getElementById('btn-save').textContent = '추가하기';
+  document.getElementById('modal').style.display = 'flex';
+});
+
+window.openEdit = (id) => {
+  const u = users.find(u => u.id === id);
+  if (!u) return;
+  document.getElementById('modal-title').textContent = '사용자 수정';
+  document.getElementById('edit-id').value = u.id;
+  document.getElementById('f-name').value = u.name;
+  document.getElementById('f-position').value = u.position;
+  document.getElementById('f-role').value = u.role;
+  document.getElementById('f-username').value = u.username;
+  document.getElementById('f-password').value = '';
+  document.getElementById('f-password').placeholder = '변경 시에만 입력';
+  document.getElementById('username-group').style.display = 'none';
+  document.getElementById('f-username').required = false;
+  document.getElementById('pw-label').textContent = '새 비밀번호 (변경 시에만)';
+  document.getElementById('btn-save').textContent = '저장하기';
+  document.getElementById('modal').style.display = 'flex';
+};
+
+document.getElementById('btn-cancel').addEventListener('click', () => {
+  document.getElementById('modal').style.display = 'none';
+});
+
+document.getElementById('user-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const editId = document.getElementById('edit-id').value;
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  try {
+    if (editId) {
+      const body = {
+        name: document.getElementById('f-name').value,
+        position: document.getElementById('f-position').value,
+        role: document.getElementById('f-role').value,
+      };
+      const pw = document.getElementById('f-password').value;
+      if (pw) body.password = pw;
+      await api.updateUser(editId, body);
+      showToast('수정되었습니다');
+    } else {
+      await api.createUser({
+        username: document.getElementById('f-username').value.trim(),
+        password: document.getElementById('f-password').value,
+        name: document.getElementById('f-name').value,
+        position: document.getElementById('f-position').value,
+        role: document.getElementById('f-role').value,
+      });
+      showToast('사용자가 추가되었습니다');
+    }
+    document.getElementById('modal').style.display = 'none';
+    await load();
+  } catch(e) { showToast(e.message); }
+  finally { btn.disabled = false; }
+});
+
+load().catch(e => showToast(e.message));
+
+(function updateWeekCard() {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+  let _fd = new Date(mon.getFullYear(), mon.getMonth(), 1);
+  while (_fd.getDay() !== 1) _fd.setDate(_fd.getDate() + 1);
+  const weekNum = Math.max(1, Math.round((mon - _fd) / 604800000) + 1);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  document.getElementById('week-card-title').textContent = `${mon.getMonth()+1}월 ${weekNum}주차`;
+  document.getElementById('week-card-range').textContent = `${fmt(mon)} – ${fmt(fri)}`;
+  const wd = now.getDay();
+  if (wd >= 1 && wd <= 5) {
+    document.getElementById('week-progress-fill').style.width = Math.round((wd/5)*100)+'%';
+    document.getElementById('week-progress-text').textContent = `${wd}/5일`;
+  } else {
+    document.getElementById('week-progress-fill').style.width = '0%';
+    document.getElementById('week-progress-text').textContent = '—';
+  }
+})();
+</script>
+</body>
+</html>

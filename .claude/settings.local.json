@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python -c ' *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(netsh advfirewall *)",
+      "Bash(tasklist)",
+      "Bash(findstr \":8000\")",
+      "Bash(findstr \":80 \")",
+      "Bash(findstr \":443\")",
+      "Bash(dir \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\\\\nginx\" /s /b)",
+      "Bash(findstr /i \"nginx\")",
+      "Bash(nginx.exe)",
+      "PowerShell(Start-Process -FilePath $nginxPath -WorkingDirectory \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\���� ȭ��\\\\���� ������Ʈ\\\\�ְ�����\\\\nginx\" -WindowStyle Hidden)",
+      "PowerShell($nginxPath = \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\���� ȭ��\\\\���� ������Ʈ\\\\�ְ�����\\\\nginx\\\\nginx.exe\")",
+      "PowerShell(netstat -ano)",
+      "Bash(dir \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\" /a /b)",
+      "WebSearch"
+    ]
+  }
+}

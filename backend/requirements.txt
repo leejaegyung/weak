@@ -1,0 +1,9 @@
+fastapi>=0.111.0
+openpyxl>=3.1.0
+uvicorn>=0.29.0
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+python-multipart>=0.0.9
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.1.0

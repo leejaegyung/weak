@@ -1,0 +1,180 @@
+<template>
+  <div style="display:flex;flex-direction:column;height:100vh;background:#FFF8EE;overflow:hidden;">
+
+    <!-- ── 오렌지 상단 헤더 ── -->
+    <header style="height:56px;background:#FD4401;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:30;position:relative;">
+      <!-- 로고 -->
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:8px;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            </svg>
+          </div>
+          <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;">주간업무보고</span>
+        </div>
+        <span style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;">
+          {{ pageTitle || auth?.user?.name }}
+        </span>
+      </div>
+
+      <!-- 우측: 알림 + 유저 + 로그아웃 -->
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 8px;cursor:pointer;color:#fff;display:flex;align-items:center;position:relative;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1A1100;flex-shrink:0;">
+            {{ auth?.user?.name?.charAt(0) }}
+          </div>
+          <span style="font-size:13px;font-weight:700;color:#fff;">{{ auth?.user?.name }}</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.7);">{{ auth?.user?.role === 'admin' ? '관리자' : '사원' }}</span>
+        </div>
+        <button @click="logout"
+          style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.8);display:flex;align-items:center;padding:4px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- ── 사이드바 ── -->
+      <aside style="width:230px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 12px;flex-shrink:0;overflow-y:auto;">
+
+        <div style="font-size:10px;color:#9A8F7A;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0 8px;margin-bottom:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
+          메뉴
+        </div>
+
+        <nav style="display:flex;flex-direction:column;gap:4px;">
+          <Link href="/schedules"
+            class="nav-item"
+            :style="isActive('/schedules') ? { background:'#FDCB40', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/schedules'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
+              </svg>
+            </div>
+            팀 일정판
+          </Link>
+
+          <Link href="/reports"
+            class="nav-item"
+            :style="isActive('/reports') && !isActive('/reports/create') ? { background:'#DBEAFE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/reports') && !isActive('/reports/create'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+            </div>
+            보고서 목록
+          </Link>
+
+          <Link href="/reports/create"
+            class="nav-item"
+            :style="isActive('/reports/create') ? { background:'#F0FDF4', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/reports/create'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            보고서 작성
+          </Link>
+
+          <Link v-if="auth?.user?.role === 'admin'"
+            href="/admin/users"
+            class="nav-item"
+            :style="isActive('/admin/users')
+              ? { background:'#FFF0F3', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' }
+              : pendingCount > 0 ? { background:'#FEE2E2', borderColor:'#DC2626', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/admin/users'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            사용자 관리
+            <span v-if="pendingCount > 0"
+              style="margin-left:auto;background:#DC2626;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;font-family:'Space Grotesk',sans-serif;">
+              {{ pendingCount }}
+            </span>
+          </Link>
+        </nav>
+
+        <!-- 이번 주 위젯 -->
+        <div style="margin-top:auto;padding-top:20px;">
+          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:16px;box-shadow:4px 4px 0 #1A1100;padding:16px;">
+            <div style="font-size:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#4A3F2A;margin-bottom:8px;">이번 주</div>
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:18px;font-weight:800;margin-bottom:3px;letter-spacing:-0.02em;">{{ currentWeek?.label }}</div>
+            <div style="font-size:12px;color:#4A3F2A;margin-bottom:12px;">{{ currentWeek?.dateRange }}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;height:6px;background:rgba(26,17,0,0.15);border-radius:99px;border:1.5px solid #1A1100;overflow:hidden;">
+                <div :style="`width:${currentWeek?.progress ?? 0}%;height:100%;background:#1A1100;border-radius:99px;`"></div>
+              </div>
+              <span style="font-size:11px;font-weight:700;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ currentWeek?.dayOfWeek }}/5일</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ── 메인 콘텐츠 ── -->
+      <main style="flex:1;overflow-y:auto;background:#FFF8EE;display:flex;flex-direction:column;">
+
+        <!-- 플래시 메시지 -->
+        <div v-if="flash.success && showFlash" style="margin:16px 32px 0;">
+          <div style="background:#DCFCE7;border:2px solid #16A34A;border-radius:12px;padding:12px 16px;font-size:13px;color:#15803D;display:flex;justify-content:space-between;align-items:center;">
+            {{ flash.success }}
+            <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#16A34A;font-weight:700;font-size:16px;line-height:1;">✕</button>
+          </div>
+        </div>
+        <div v-if="flash.error && showFlash" style="margin:16px 32px 0;">
+          <div style="background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;padding:12px 16px;font-size:13px;color:#DC2626;display:flex;justify-content:space-between;align-items:center;">
+            {{ flash.error }}
+            <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#DC2626;font-weight:700;font-size:16px;line-height:1;">✕</button>
+          </div>
+        </div>
+
+        <div style="padding:28px 32px;flex:1;">
+          <slot />
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { Link, usePage, router } from '@inertiajs/vue3'
+
+defineProps({ pageTitle: { type: String, default: '' } })
+
+const page         = usePage()
+const auth         = computed(() => page.props.auth)
+const flash        = computed(() => page.props.flash ?? {})
+const currentWeek  = computed(() => page.props.currentWeek)
+const pendingCount = computed(() => page.props.pendingCount ?? 0)
+
+const showFlash = ref(true)
+watch(() => page.props.flash, () => { showFlash.value = true })
+
+const isActive = (path) => {
+  const loc = window.location.pathname
+  if (path === '/reports') return loc === '/reports' || (loc.startsWith('/reports') && !loc.includes('/create') && /\/reports\/\d+/.test(loc))
+  return loc === path || loc.startsWith(path + '/')
+}
+
+const navIconStyle = (active) => ({
+  width: '26px',
+  height: '26px',
+  borderRadius: '7px',
+  background: active ? 'rgba(26,17,0,0.1)' : 'rgba(26,17,0,0.06)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: '0',
+})
+
+const logout = () => router.post('/logout')
+</script>

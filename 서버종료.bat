@@ -1,9 +1,13 @@
 @echo off
-title Weekly Report Server - Stop
+chcp 65001 >nul
+title 주간업무보고 서버 종료
 
-C:\weeklyrpt\nginx\nginx.exe -s stop 2>nul
-taskkill /fi "windowtitle eq FastAPI" /f >nul 2>&1
-taskkill /im python.exe /f >nul 2>&1
+echo  [Nginx] 종료 중...
+C:\weeklyrpt\nginx\nginx.exe -s stop >nul 2>&1
 
-echo Server stopped.
+echo  [Laravel] 종료 중...
+taskkill /fi "windowtitle eq Laravel 8001" /f >nul 2>&1
+
+echo  [완료] 서버가 종료되었습니다.
+echo.
 pause

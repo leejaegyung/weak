@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FFF8EE;
+  --color-cream-dark: #F5EDDB;
+  --color-orange: #FD4401;
+  --color-orange-light: #FF6B35;
+  --color-yellow: #FDCB40;
+  --color-yellow-light: #FFF0A0;
+  --color-ink: #1A1100;
+  --color-ink-light: #4A3F2A;
+  --color-ink-muted: #9A8F7A;
+  --font-family-sans: 'Noto Sans KR', 'Space Grotesk', sans-serif;
+  --font-family-display: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background-color: #FFF8EE;
+    color: #1A1100;
+    font-family: 'Noto Sans KR', 'Space Grotesk', sans-serif;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(26,17,0,0.15); border-radius: 3px; }
+}
+
+@layer components {
+
+  /* ── 카드 ── */
+  .card {
+    background: #ffffff;
+    border: 2px solid #1A1100;
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 #1A1100;
+    padding: 22px;
+  }
+
+  /* ── 버튼 기본 ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #FD4401;
+    color: #ffffff;
+    border: 2px solid #1A1100;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 18px;
+    box-shadow: 2px 2px 0 #1A1100;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .btn-primary:hover {
+    background: #FF6B35;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #1A1100;
+  }
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 2px 2px 0 #1A1100;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #1A1100;
+    border: 2px solid #1A1100;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 18px;
+    box-shadow: 2px 2px 0 #1A1100;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .btn-secondary:hover {
+    background: #F5EDDB;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #1A1100;
+  }
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* small variant - add this class alongside btn-primary/secondary */
+  .btn-sm {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 8px;
+  }
+
+  /* ── 인풋 ── */
+  .input-field {
+    width: 100%;
+    background: #FFF8EE;
+    border: 2px solid #1A1100;
+    border-radius: 8px;
+    padding: 8px 11px;
+    color: #1A1100;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.12s;
+  }
+  .input-field:focus { border-color: #FD4401; }
+  .input-field::placeholder { color: #9A8F7A; }
+  .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── 네비 아이템 ── */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+    color: #1A1100;
+    text-align: left;
+    width: 100%;
+    transition: all 0.12s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-item:hover:not(.nav-item-active) {
+    background: rgba(253, 203, 64, 0.35);
+    border-color: rgba(26, 17, 0, 0.2);
+  }
+  .nav-item-active {
+    font-weight: 700;
+    border-color: #1A1100 !important;
+    box-shadow: 2px 2px 0 #1A1100;
+  }
+
+  /* ── 배지 ── */
+  .badge-draft {
+    display: inline-flex;
+    align-items: center;
+    background: #F3F4F6;
+    color: #6B7280;
+    border: 1.5px solid #D1D5DB;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-submitted {
+    display: inline-flex;
+    align-items: center;
+    background: #DBEAFE;
+    color: #1D6FE9;
+    border: 1.5px solid #1D6FE9;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-reviewed {
+    display: inline-flex;
+    align-items: center;
+    background: #DCFCE7;
+    color: #16A34A;
+    border: 1.5px solid #16A34A;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-rejected {
+    display: inline-flex;
+    align-items: center;
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1.5px solid #DC2626;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-not-submitted {
+    display: inline-flex;
+    align-items: center;
+    background: #FFF0A0;
+    color: #92400E;
+    border: 1.5px solid #D97706;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}

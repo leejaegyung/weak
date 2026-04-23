@@ -1,19 +1,23 @@
 @echo off
-title Weekly Report Server
+set PHP=C:\Users\leejk\AppData\Local\Microsoft\WinGet\Packages\PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe\php.exe
+set APP=C:\weeklyrpt\app
+set NGINX=C:\weeklyrpt\nginx
 
-:: nginx start/reload
+:: Nginx
 tasklist /fi "imagename eq nginx.exe" 2>nul | find /i "nginx.exe" >nul
-if not errorlevel 1 (
-    C:\weeklyrpt\nginx\nginx.exe -s reload
+if %errorlevel% equ 0 (
+    "%NGINX%\nginx.exe" -s reload
 ) else (
-    start "" C:\weeklyrpt\nginx\nginx.exe
+    start "" "%NGINX%\nginx.exe"
 )
 
-:: FastAPI - check python first, then run
-start "FastAPI" cmd /k "cd /d C:\weeklyrpt\backend && python --version && echo Starting FastAPI... && python main.py"
+:: Laravel
+cd /d "%APP%"
+start "Laravel 8001" "%PHP%" artisan serve --host=127.0.0.1 --port=8001
 
 echo.
-echo Local  : http://localhost:7700
-echo Network: http://10.92.21.64:7700
+echo  http://localhost:7700
+echo  http://192.168.0.187:7700
+echo  admin / admin1234
 echo.
 pause

@@ -14,3 +14,8 @@
 2026/04/21 14:35:06 [error] 30652#14572: *6 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 10.92.21.64, server: _, request: "POST /api/auth/login HTTP/1.1", upstream: "http://127.0.0.1:8000/api/auth/login", host: "10.92.21.64:7700", referrer: "http://10.92.21.64:7700/login.html"
 2026/04/21 14:36:07 [error] 30652#14572: *6 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 10.92.21.64, server: _, request: "POST /api/auth/login HTTP/1.1", upstream: "http://127.0.0.1:8000/api/auth/login", host: "10.92.21.64:7700", referrer: "http://10.92.21.64:7700/login.html"
 2026/04/21 14:36:08 [error] 30652#14572: *14 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 10.92.21.64, server: _, request: "POST /api/auth/login HTTP/1.1", upstream: "http://127.0.0.1:8000/api/auth/login", host: "10.92.21.64:7700", referrer: "http://10.92.21.64:7700/login.html"
+2026/04/22 10:25:01 [notice] 27852#4808: signal process started
+2026/04/22 10:43:47 [notice] 31696#27484: signal process started
+2026/04/22 14:04:09 [notice] 30776#35300: signal process started
+2026/04/22 14:21:51 [notice] 38796#24448: signal process started
+2026/04/22 16:48:28 [notice] 39084#20076: signal process started

@@ -54,6 +54,8 @@ class ScheduleController extends Controller
             ->pluck('id', 'user_id')
             ->toArray();
 
+        $mySites = $user->sites->pluck('name')->toArray();
+
         return Inertia::render('Schedule/Index', [
             'users'          => $users,
             'teamSchedules'  => $teamSchedules,
@@ -66,6 +68,7 @@ class ScheduleController extends Controller
             'nextWeek'       => $monday->copy()->addDays(7)->format('Y-m-d'),
             'isCurrentWeek'  => $monday->isSameDay($now->copy()->startOfWeek(Carbon::MONDAY)),
             'weekReportMap'  => $weekReportMap,
+            'mySites'        => $mySites,
         ]);
     }
 

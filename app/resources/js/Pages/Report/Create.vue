@@ -161,16 +161,18 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
           :canPaste="jiWonClipboard !== null"
+          :suggestions="mySites"
           @copy="() => copyJiWon('curr')"
           @paste="() => pasteJiWon('curr')" />
         <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
           :canPaste="jiWonClipboard !== null"
+          :suggestions="mySites"
           @copy="() => copyJiWon('next')"
           @paste="() => pasteJiWon('next')" />
       </div>
 
       <!-- 내부작업 (전체 폭) -->
-      <SupportSection title="내부작업" v-model="form.naebu" />
+      <SupportSection title="내부작업" v-model="form.naebu" :suggestions="mySites" />
 
       <!-- Todo -->
       <div class="card">
@@ -196,10 +198,10 @@
       </div>
 
       <!-- 공유 (전체 폭) -->
-      <SupportSection title="공유" v-model="form.gongyu" />
+      <SupportSection title="공유" v-model="form.gongyu" :suggestions="mySites" />
 
       <!-- 기타 (전체 폭) -->
-      <SupportSection title="기타" v-model="form.gita" />
+      <SupportSection title="기타" v-model="form.gita" :suggestions="mySites" />
 
       <!-- 특이사항 / 요청사항 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-bottom:16px;">
@@ -411,6 +413,7 @@ const props = defineProps({
   prevReports:    { type: Array,  default: () => [] },
   existingReport: { type: Object, default: null },
   mySchedules:    { type: Object, default: () => ({}) },
+  mySites:        { type: Array,  default: () => [] },
 })
 
 // 중복 보고서 팝업 (제출 시점에만 표시)

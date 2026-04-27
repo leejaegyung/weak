@@ -93,15 +93,34 @@
           <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">
             {{ idx + 1 }}.
           </span>
-          <input
-            :ref="el => { if (el) titleRefs[idx] = el }"
-            v-model="item.title"
-            @input="emitUpdate"
-            @keydown.enter.prevent
-            type="text"
-            class="input-field"
-            placeholder="항목명"
-            style="flex:1;font-weight:700;font-size:13px;" />
+          <div style="flex:1;position:relative;">
+            <input
+              :ref="el => { if (el) titleRefs[idx] = el }"
+              v-model="item.title"
+              @input="emitUpdate"
+              @focus="onTitleFocus(idx)"
+              @blur="onTitleBlur"
+              @keydown.enter.prevent
+              @keydown.escape="suggestVisible = false"
+              type="text"
+              class="input-field"
+              placeholder="항목명"
+              style="width:100%;font-weight:700;font-size:13px;" />
+            <!-- 자동완성 드롭다운 -->
+            <div v-if="suggestVisible && focusedTitleIdx === idx && activeSuggestions.length"
+              style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:2px solid #1A1100;border-radius:10px;box-shadow:3px 3px 0 #1A1100;z-index:100;overflow:hidden;">
+              <div v-for="(s, si) in activeSuggestions" :key="si"
+                @mousedown.prevent="selectSuggestion(idx, s)"
+                style="padding:8px 14px;font-size:12px;font-weight:600;color:#1A1100;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background 0.08s;"
+                @mouseenter="e=>e.currentTarget.style.background='#FFF0A0'"
+                @mouseleave="e=>e.currentTarget.style.background='transparent'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                {{ s }}
+              </div>
+            </div>
+          </div>
           <button type="button" @click="removeItem(idx)"
             style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
             @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
@@ -156,13 +175,14 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 
 const props = defineProps({
-  title:      { type: String,  default: '' },
-  modelValue: { type: Array,   default: () => [] },
-  error:      { type: String,  default: '' },
-  canPaste:   { type: Boolean, default: false },
+  title:       { type: String,  default: '' },
+  modelValue:  { type: Array,   default: () => [] },
+  error:       { type: String,  default: '' },
+  canPaste:    { type: Boolean, default: false },
+  suggestions: { type: Array,   default: () => [] },   // 자동완성 후보 목록 (mySites)
 })
 const emit = defineEmits(['update:modelValue', 'copy', 'paste', 'cancel'])
 
@@ -189,6 +209,37 @@ const handleCancel = () => {
 }
 
 const titleRefs = ref({})
+
+// ── 자동완성 ──────────────────────────────────────────
+const focusedTitleIdx = ref(-1)   // 현재 포커스된 타이틀 input 인덱스
+const suggestVisible  = ref(false)
+
+const activeSuggestions = computed(() => {
+  if (focusedTitleIdx.value < 0 || !props.suggestions?.length) return []
+  const query = (props.modelValue[focusedTitleIdx.value]?.title ?? '').toLowerCase().trim()
+  if (!query) return props.suggestions.slice(0, 8)
+  return props.suggestions.filter(s => s.toLowerCase().includes(query)).slice(0, 8)
+})
+
+const onTitleFocus = (idx) => {
+  focusedTitleIdx.value = idx
+  suggestVisible.value  = true
+}
+
+const onTitleBlur = () => {
+  // mousedown으로 선택 처리 후 blur → 약간 딜레이
+  setTimeout(() => { suggestVisible.value = false; focusedTitleIdx.value = -1 }, 150)
+}
+
+const selectSuggestion = (idx, text) => {
+  const arr = props.modelValue.map((item, i) => {
+    if (i !== idx) return item
+    return { ...item, title: text }
+  })
+  emit('update:modelValue', arr)
+  suggestVisible.value  = false
+  focusedTitleIdx.value = -1
+}
 
 const autoResize = (el) => {
   if (!el) return

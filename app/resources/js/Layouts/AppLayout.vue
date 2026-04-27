@@ -89,13 +89,17 @@
             </div>
           </Transition>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;">
+        <Link href="/profile"
+          style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;text-decoration:none;transition:background 0.1s;"
+          title="개인설정"
+          @mouseenter="e=>e.currentTarget.style.background='rgba(255,255,255,0.25)'"
+          @mouseleave="e=>e.currentTarget.style.background='rgba(255,255,255,0.15)'">
           <div style="width:24px;height:24px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1A1100;flex-shrink:0;">
             {{ auth?.user?.name?.charAt(0) }}
           </div>
           <span style="font-size:13px;font-weight:700;color:#fff;">{{ auth?.user?.name }}</span>
           <span style="font-size:11px;color:rgba(255,255,255,0.7);">{{ auth?.user?.role === 'admin' ? '관리자' : '사원' }}</span>
-        </div>
+        </Link>
         <button @click="logout"
           style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.8);display:flex;align-items:center;padding:4px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,6 +150,17 @@
               </svg>
             </div>
             보고서 작성
+          </Link>
+
+          <Link href="/profile"
+            class="nav-item"
+            :style="isActive('/profile') ? { background:'#FFF0F0', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/profile'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+              </svg>
+            </div>
+            개인설정
           </Link>
 
           <Link v-if="auth?.user?.role === 'admin'"

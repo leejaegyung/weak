@@ -273,6 +273,28 @@
                 </span>
               </label>
 
+                <!-- 내 사이트 빠른 선택 -->
+              <div v-if="mySites.length" style="margin-bottom:10px;">
+                <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:7px;letter-spacing:0.03em;">🔗 내 사이트</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button v-for="site in mySites" :key="site" type="button"
+                    @click="toggleQuickTag({ label: site, icon: '', bg: '#F5EDDB', color: '#1A1100' })"
+                    :style="{
+                      display:'inline-flex', alignItems:'center', gap:'4px',
+                      padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
+                      border: isSiteActive(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: isSiteActive(site) ? '#FDCB40' : '#fff',
+                      color: isSiteActive(site) ? '#1A1100' : '#9A8F7A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                      boxShadow: isSiteActive(site) ? '2px 2px 0 #1A1100' : 'none',
+                    }"
+                    @mouseenter="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                    @mouseleave="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                    {{ site }}
+                  </button>
+                </div>
+              </div>
+
               <!-- 빠른 선택 태그 -->
               <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
                 <button v-for="tag in QUICK_TAGS" :key="tag.label" type="button"
@@ -359,6 +381,7 @@ const props = defineProps({
   nextWeek:       { type: String,  default: '' },
   isCurrentWeek:  { type: Boolean, default: true },
   weekReportMap:  { type: Object,  default: () => ({}) },
+  mySites:        { type: Array,   default: () => [] },
 })
 
 const DAY_KR = ['월', '화', '수', '목', '금']
@@ -441,6 +464,12 @@ const QUICK_TAGS = [
 const isTagActive = (tag) => {
   const lines = modalContent.value.split('\n').map(l => l.trim())
   return lines.includes(tag.label)
+}
+
+// 내 사이트 활성 여부
+const isSiteActive = (siteName) => {
+  const lines = modalContent.value.split('\n').map(l => l.trim())
+  return lines.includes(siteName)
 }
 
 // 태그 토글: 없으면 추가, 있으면 제거

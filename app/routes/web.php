@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingController;
@@ -39,6 +40,12 @@ Route::middleware('auth')->group(function () {
     // 일정 (팀 일정판)
     Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules/upsert', [ScheduleController::class, 'upsert'])->name('schedules.upsert');
+
+    // 개인설정
+    Route::get('/profile',                        [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile',                        [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/sites',                 [ProfileController::class, 'storeSite'])->name('profile.sites.store');
+    Route::delete('/profile/sites/{site}',        [ProfileController::class, 'destroySite'])->name('profile.sites.destroy');
 
     // 인앱 알림
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

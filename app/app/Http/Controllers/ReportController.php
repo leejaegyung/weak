@@ -106,11 +106,14 @@ class ReportController extends Controller
                 => is_array($s) ? ($s['content'] ?? '') : ($s->content ?? '')
             ])->toArray();
 
+        $mySites = $user->sites->pluck('name')->toArray();
+
         return Inertia::render('Report/Create', [
             'weekInfo'       => $weekInfo,
             'prevReports'    => $prevReports,
             'existingReport' => $existing ? ['id' => $existing->id, 'week' => $existing->week] : null,
             'mySchedules'    => $mySchedules,
+            'mySites'        => $mySites,
         ]);
     }
 

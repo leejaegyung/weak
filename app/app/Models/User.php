@@ -52,6 +52,11 @@ class User extends Authenticatable
         return $this->hasMany(Schedule::class);
     }
 
+    public function sites()
+    {
+        return $this->hasMany(UserSite::class)->orderBy('created_at');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

@@ -273,30 +273,43 @@
                 </span>
               </label>
 
-                <!-- 내 사이트 빠른 선택 -->
-              <div v-if="mySites.length" style="margin-bottom:10px;">
-                <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:7px;letter-spacing:0.03em;">🔗 내 사이트</div>
+                <!-- ── 내 사이트 빠른 선택 ── -->
+              <div v-if="mySites.length"
+                style="background:#FFFBF0;border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">내 사이트</span>
+                </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
-                    @click="toggleQuickTag({ label: site, icon: '', bg: '#F5EDDB', color: '#1A1100' })"
+                    @click="toggleQuickTag({ label: site, icon: '', bg: '#FDCB40', color: '#1A1100' })"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
                       border: isSiteActive(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
                       background: isSiteActive(site) ? '#FDCB40' : '#fff',
-                      color: isSiteActive(site) ? '#1A1100' : '#9A8F7A',
+                      color: isSiteActive(site) ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
                       boxShadow: isSiteActive(site) ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                    @mouseleave="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                    @mouseenter="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
                     {{ site }}
                   </button>
                 </div>
               </div>
 
-              <!-- 빠른 선택 태그 -->
-              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
+              <!-- ── 상태 빠른 선택 ── -->
+              <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
+                </div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;">
                 <button v-for="tag in QUICK_TAGS" :key="tag.label" type="button"
                   @click="toggleQuickTag(tag)"
                   :style="{
@@ -313,6 +326,7 @@
                   <span>{{ tag.icon }}</span>
                   {{ tag.label }}
                 </button>
+              </div>
               </div>
 
               <textarea

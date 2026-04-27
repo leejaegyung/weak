@@ -119,9 +119,9 @@ psql --version
 
 ```bash
 sudo -u postgres psql <<'EOF'
-CREATE USER sehub WITH PASSWORD '비밀번호를_변경하세요';
-CREATE DATABASE sehub OWNER sehub ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8' TEMPLATE template0;
-GRANT ALL PRIVILEGES ON DATABASE sehub TO sehub;
+CREATE USER weak WITH PASSWORD '비밀번호를_변경하세요';
+CREATE DATABASE weak OWNER weak ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8' TEMPLATE template0;
+GRANT ALL PRIVILEGES ON DATABASE weak TO weak;
 EOF
 ```
 
@@ -161,12 +161,12 @@ sudo mkdir -p /data
 cd /data
 
 # 저장소 클론
-sudo git clone git@github.com:leejaegyung/weak.git sehub
-cd /data/sehub/app
+sudo git clone git@github.com:leejaegyung/weak.git weak
+cd /data/weak/app
 
 # 소유권 설정
-sudo chown -R nginx:nginx /data/sehub
-sudo chmod -R 755 /data/sehub
+sudo chown -R nginx:nginx /data/weak
+sudo chmod -R 755 /data/weak
 ```
 
 ---
@@ -174,7 +174,7 @@ sudo chmod -R 755 /data/sehub
 ### 8단계 — 애플리케이션 초기 설정
 
 ```bash
-cd /data/sehub/app
+cd /data/weak/app
 
 # Composer 패키지 설치
 sudo -u nginx composer install --no-dev --optimize-autoloader
@@ -199,8 +199,8 @@ APP_TIMEZONE=Asia/Seoul
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=sehub
-DB_USERNAME=sehub
+DB_DATABASE=weak
+DB_USERNAME=weak
 DB_PASSWORD=비밀번호를_변경하세요
 
 SESSION_DRIVER=database
@@ -231,7 +231,7 @@ sudo -u nginx php artisan view:cache
 ### 9단계 — 프론트엔드 빌드
 
 ```bash
-cd /data/sehub/app
+cd /data/weak/app
 
 # npm 패키지 설치 및 빌드
 sudo -u nginx npm ci
@@ -243,14 +243,14 @@ sudo -u nginx npm run build
 ### 10단계 — PHP-FPM 설정
 
 ```bash
-sudo vi /etc/php-fpm.d/sehub.conf
+sudo vi /etc/php-fpm.d/weak.conf
 ```
 
 ```ini
-[sehub]
+[weak]
 user = nginx
 group = nginx
-listen = /run/php-fpm/sehub.sock
+listen = /run/php-fpm/weak.sock
 listen.owner = nginx
 listen.group = nginx
 listen.mode = 0660
@@ -262,7 +262,7 @@ pm.min_spare_servers = 3
 pm.max_spare_servers = 10
 pm.max_requests = 500
 
-php_admin_value[error_log] = /var/log/php-fpm/sehub-error.log
+php_admin_value[error_log] = /var/log/php-fpm/weak-error.log
 php_admin_flag[log_errors] = on
 ```
 
@@ -276,7 +276,7 @@ sudo systemctl enable php-fpm
 ### 11단계 — Nginx 설정
 
 ```bash
-sudo vi /etc/nginx/conf.d/sehub.conf
+sudo vi /etc/nginx/conf.d/weak.conf
 ```
 
 ```nginx
@@ -284,7 +284,7 @@ server {
     listen 80;
     server_name 서버IP또는도메인;
 
-    root /data/sehub/app/public;
+    root /data/weak/app/public;
     index index.php;
 
     charset utf-8;
@@ -305,7 +305,7 @@ server {
     location = /robots.txt  { access_log off; log_not_found off; }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php-fpm/sehub.sock;
+        fastcgi_pass unix:/run/php-fpm/weak.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
         fastcgi_hide_header X-Powered-By;
@@ -315,8 +315,8 @@ server {
         deny all;
     }
 
-    access_log /var/log/nginx/sehub_access.log;
-    error_log  /var/log/nginx/sehub_error.log;
+    access_log /var/log/nginx/weak_access.log;
+    error_log  /var/log/nginx/weak_error.log;
 }
 ```
 
@@ -338,10 +338,10 @@ sudo setsebool -P httpd_can_network_connect 1
 sudo setsebool -P httpd_unified 1
 
 # 애플리케이션 디렉터리 컨텍스트 적용
-sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/sehub/app/storage(/.*)?"
-sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/sehub/app/bootstrap/cache(/.*)?"
-sudo restorecon -Rv /data/sehub/app/storage
-sudo restorecon -Rv /data/sehub/app/bootstrap/cache
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/weak/app/storage(/.*)?"
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/weak/app/bootstrap/cache(/.*)?"
+sudo restorecon -Rv /data/weak/app/storage
+sudo restorecon -Rv /data/weak/app/bootstrap/cache
 ```
 
 ---
@@ -363,7 +363,7 @@ sudo firewall-cmd --reload
 ### 14단계 — 관리자 계정 생성
 
 ```bash
-cd /data/sehub/app
+cd /data/weak/app
 
 sudo -u nginx php artisan tinker --execute="
 \App\Models\User::create([
@@ -383,7 +383,7 @@ sudo -u nginx php artisan tinker --execute="
 ## 업데이트 배포
 
 ```bash
-cd /data/sehub/app
+cd /data/weak/app
 
 # 코드 업데이트
 sudo -u nginx git pull origin main
@@ -408,7 +408,7 @@ sudo -u nginx php artisan view:cache
 
 ```
 /data/
-└── sehub/                        # 프로젝트 루트
+└── weak/                        # 프로젝트 루트
     └── app/                      # Laravel 애플리케이션
         ├── app/
         │   ├── Http/Controllers/

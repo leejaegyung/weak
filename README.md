@@ -10,7 +10,7 @@ Laravel 11 + Inertia.js v3 + Vue 3 기반의 사내 주간업무보고 웹 애�
 |------|------|
 | Backend | PHP 8.2+, Laravel 11 |
 | Frontend | Vue 3, Inertia.js v3, Vite |
-| Database | SQLite (기본) / MariaDB 10.6+ |
+| Database | PostgreSQL 14~17 (기본 17) |
 | Web Server | Nginx + PHP-FPM |
 | OS | Rocky Linux 8 / 9 |
 
@@ -94,25 +94,61 @@ sudo systemctl start nginx
 
 ---
 
-### 6단계 — MariaDB 설치 (선택 — SQLite 사용 시 건너뜁니다)
-
-기본 설정은 SQLite를 사용합니다. MariaDB가 필요한 경우에만 진행합니다.
+### 6단계 — PostgreSQL 17 설치
 
 ```bash
-sudo dnf install -y mariadb-server
-sudo systemctl enable mariadb
-sudo systemctl start mariadb
+# PostgreSQL 공식 저장소 추가
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %rhel)-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
-# 보안 초기 설정 (root 비밀번호 설정 등)
-sudo mysql_secure_installation
+# Rocky Linux 내장 PostgreSQL 모듈 비활성화 (버전 충돌 방지)
+sudo dnf -qy module disable postgresql
 
-# DB 및 사용자 생성
-sudo mysql -u root -p <<'EOF'
-CREATE DATABASE sehub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'sehub'@'localhost' IDENTIFIED BY '비밀번호를_변경하세요';
-GRANT ALL PRIVILEGES ON sehub.* TO 'sehub'@'localhost';
-FLUSH PRIVILEGES;
+# PostgreSQL 17 설치
+sudo dnf install -y postgresql17-server postgresql17
+
+# DB 초기화 및 서비스 등록
+sudo /usr/pgsql-17/bin/postgresql-17-setup initdb
+sudo systemctl enable postgresql-17
+sudo systemctl start postgresql-17
+
+# 버전 확인
+psql --version
+```
+
+**DB 및 사용자 생성:**
+
+```bash
+sudo -u postgres psql <<'EOF'
+CREATE USER sehub WITH PASSWORD '비밀번호를_변경하세요';
+CREATE DATABASE sehub OWNER sehub ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8' TEMPLATE template0;
+GRANT ALL PRIVILEGES ON DATABASE sehub TO sehub;
 EOF
+```
+
+**PostgreSQL 인증 방식 설정 (`pg_hba.conf`):**
+
+```bash
+sudo vi /var/lib/pgsql/17/data/pg_hba.conf
+```
+
+`127.0.0.1` 줄의 인증 방식을 `ident` → `md5` 로 변경합니다:
+
+```
+# 변경 전
+host    all    all    127.0.0.1/32    ident
+# 변경 후
+host    all    all    127.0.0.1/32    md5
+```
+
+```bash
+sudo systemctl restart postgresql-17
+```
+
+**PHP PostgreSQL 드라이버 설치:**
+
+```bash
+sudo dnf install -y php-pgsql php-pdo
+sudo systemctl restart php-fpm
 ```
 
 ---
@@ -160,17 +196,12 @@ APP_DEBUG=false
 APP_URL=http://서버IP또는도메인
 APP_TIMEZONE=Asia/Seoul
 
-# SQLite 사용 시 (기본값)
-DB_CONNECTION=sqlite
-# DB_DATABASE=/var/www/sehub/app/database/database.sqlite
-
-# MariaDB 사용 시 (SQLite 설정 주석 처리 후 아래 활성화)
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=sehub
-# DB_USERNAME=sehub
-# DB_PASSWORD=비밀번호를_변경하세요
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=sehub
+DB_USERNAME=sehub
+DB_PASSWORD=비밀번호를_변경하세요
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=480
@@ -401,7 +432,7 @@ sudo -u nginx php artisan view:cache
 |------|------|------|
 | 500 Internal Server Error | `.env` 미설정 또는 권한 문제 | `storage/`, `bootstrap/cache/` 권한 확인 |
 | 페이지 Not Found (404) | Nginx `try_files` 설정 누락 | Nginx conf의 `try_files $uri /index.php` 확인 |
-| DB 연결 실패 | `.env` DB 설정 오류 | `php artisan config:clear` 후 `.env` 재확인 |
+| DB 연결 실패 | `.env` DB 설정 오류 또는 pg_hba.conf 인증 방식 | `php artisan config:clear` 후 `.env` 재확인, `pg_hba.conf` md5 설정 확인 |
 | SELinux Permission Denied | SELinux 컨텍스트 미적용 | 12단계 SELinux 설정 재실행 |
 | npm run build 실패 | Node.js 버전 낮음 | Node.js 22 이상 설치 확인 |
 | 세션 만료가 너무 빠름 | `SESSION_LIFETIME` 기본값 | `.env`에서 `SESSION_LIFETIME=480` 설정 |

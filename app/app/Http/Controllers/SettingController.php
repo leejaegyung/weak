@@ -47,6 +47,7 @@ class SettingController extends Controller
 
         // 임시로 URL을 직접 사용해 테스트 메시지 발송
         $response = \Illuminate\Support\Facades\Http::timeout(5)
+            ->asJson()
             ->post($request->webhook_url, ['text' => '✅ 주간업무보고 시스템 Webhook 연결 테스트입니다.']);
 
         return response()->json(['ok' => $response->successful()]);

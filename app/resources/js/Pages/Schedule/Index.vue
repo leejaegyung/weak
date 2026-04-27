@@ -18,7 +18,7 @@
         </div>
       </div>
 
-      <!-- 주차 네비게이션 -->
+      <!-- 주차 네비게이션 + 일정 추가 버튼 -->
       <div style="display:flex;gap:8px;align-items:center;">
         <Link :href="`/schedules?week=${prevWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -36,12 +36,21 @@
           다음 주
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </Link>
+
+        <!-- 일정 추가 버튼 -->
+        <button type="button" @click="openModal(null, '')"
+          style="display:inline-flex;align-items:center;gap:6px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          일정 추가
+        </button>
       </div>
     </div>
 
     <!-- 안내 -->
     <p style="font-size:12px;color:#9A8F7A;margin-bottom:12px;">
-      셀을 클릭하면 편집할 수 있습니다 (본인 행만 수정 가능{{ isAdmin ? ', 관리자는 전체 수정 가능' : '' }})
+      본인 일정 셀을 클릭하거나 <strong style="color:#1A1100;">일정 추가</strong> 버튼으로 일정을 등록할 수 있습니다
       <span v-if="isAdmin" style="margin-left:8px;color:#FDCB40;background:#1A1100;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">
         ≡ 드래그하여 순서 변경 가능
       </span>
@@ -99,7 +108,6 @@
             <!-- 이름 열 -->
             <td style="padding:10px 14px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;white-space:nowrap;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <!-- 드래그 핸들 (관리자만) -->
                 <div v-if="isAdmin"
                   style="cursor:grab;color:#C5BAA8;flex-shrink:0;padding:2px;display:flex;align-items:center;user-select:none;"
                   title="드래그하여 순서 변경">
@@ -109,7 +117,6 @@
                     <rect x="4" y="18" width="16" height="2" rx="1"/>
                   </svg>
                 </div>
-                <!-- 이름 + 아바타 (보고서 있으면 클릭 이동) -->
                 <div
                   @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
                   :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
@@ -121,7 +128,6 @@
                     <div :style="{ fontSize:'12px', fontWeight:'700', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
                     <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
                   </div>
-                  <!-- 보고서 있음 표시 -->
                   <span v-if="weekReportMap[user.id]"
                     style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">
                     보고서
@@ -130,35 +136,38 @@
               </div>
             </td>
 
-            <!-- 날짜 셀들 -->
+            <!-- 날짜 셀들 (읽기 전용 + 본인 셀 클릭 → 모달) -->
             <td v-for="(date, di) in [...currDates, ...nextDates]" :key="date"
+              @click="user.id === currentUserId ? openModal(date, localSchedules[user.id][date]) : null"
               :style="{
                 borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                padding:'4px',
+                padding:'6px',
                 verticalAlign:'top',
                 minWidth:'80px',
-              }">
-              <textarea
-                v-model="localSchedules[user.id][date]"
-                rows="3"
-                :disabled="!canEdit(user.id)"
-                :placeholder="canEdit(user.id) ? '일정 입력...' : ''"
-                @blur="saveCell(user.id, date)"
-                style="width:100%;border:2px solid transparent;border-radius:6px;padding:5px 7px;background:transparent;color:#1A1100;font-size:11px;font-family:inherit;outline:none;resize:none;line-height:1.5;transition:border-color 0.1s,background 0.1s;"
-                :style="!canEdit(user.id) ? { cursor:'default', color:'#4A3F2A' } : {}"
-                @focus="e=>{ if(canEdit(user.id)){e.target.style.background='#fff';e.target.style.borderColor='#FD4401';} }"
-                @blur.capture="e=>{ e.target.style.background='transparent';e.target.style.borderColor='transparent'; }"
-              ></textarea>
-              <!-- 저장 상태 표시 -->
-              <div style="height:14px;text-align:right;padding-right:4px;">
-                <span v-if="savingKey===`${user.id}:${date}`" style="font-size:10px;color:#9A8F7A;">저장 중...</span>
-                <span v-else-if="savedKey===`${user.id}:${date}`" style="font-size:10px;color:#16A34A;font-weight:700;">✓</span>
+                cursor: user.id === currentUserId ? 'pointer' : 'default',
+                transition:'background 0.1s',
+                position:'relative',
+              }"
+              @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
+              @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
+
+              <!-- 내용 표시 -->
+              <div style="min-height:48px;font-size:11.5px;color:#1A1100;line-height:1.6;white-space:pre-wrap;word-break:break-word;padding:3px 4px;">
+                {{ localSchedules[user.id]?.[date] || '' }}
+              </div>
+
+              <!-- 본인 셀: 내용 없으면 + 힌트, 있으면 연필 아이콘 -->
+              <div v-if="user.id === currentUserId" style="text-align:right;height:16px;padding-right:2px;margin-top:2px;">
+                <span v-if="!localSchedules[user.id]?.[date]"
+                  style="font-size:10px;color:#C5BAA8;font-weight:600;">+ 추가</span>
+                <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#C5BAA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
               </div>
             </td>
           </tr>
 
-          <!-- 사용자 없을 때 -->
           <tr v-if="orderedUsers.length === 0">
             <td colspan="11" style="padding:48px;text-align:center;color:#9A8F7A;font-size:13px;">등록된 팀원이 없습니다</td>
           </tr>
@@ -174,11 +183,146 @@
         팀원 순서가 저장되었습니다
       </div>
     </Transition>
+
+    <!-- 저장 완료 토스트 -->
+    <Transition name="toast">
+      <div v-if="saveDone"
+        style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1100;color:#FDCB40;border-radius:12px;padding:10px 22px;font-size:13px;font-weight:700;font-family:'Space Grotesk','Noto Sans KR',sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,0.3);z-index:200;display:flex;align-items:center;gap:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        일정이 저장되었습니다
+      </div>
+    </Transition>
+
+    <!-- 일정 추가/수정 모달 -->
+    <Transition name="modal-fade">
+      <div v-if="showModal"
+        style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px);"
+        @click.self="closeModal">
+        <div class="card" style="width:460px;max-width:95vw;padding:0;overflow:hidden;">
+          <!-- 모달 헤더 -->
+          <div style="padding:16px 20px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
+                </svg>
+              </div>
+              <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">일정 추가</span>
+              <span style="font-size:12px;color:#9A8F7A;">내 일정만 추가·수정됩니다</span>
+            </div>
+            <button type="button" @click="closeModal"
+              style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;"
+              @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+              @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- 모달 본문 -->
+          <div style="padding:22px 24px;display:flex;flex-direction:column;gap:18px;">
+
+            <!-- 날짜 선택 -->
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">날짜 선택</label>
+              <!-- 금주 -->
+              <div style="margin-bottom:8px;">
+                <div style="font-size:11px;color:#9A8F7A;font-weight:600;margin-bottom:6px;padding-left:2px;">
+                  금주 ({{ fmtRange(currDates[0], currDates[4]) }})
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button v-for="(date, i) in currDates" :key="date" type="button"
+                    @click="modalDate = date"
+                    :style="{
+                      padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                      background: modalDate === date ? (isToday(date) ? '#FDCB40' : '#1A1100') : (isToday(date) ? '#FFF0A0' : '#fff'),
+                      color: modalDate === date ? (isToday(date) ? '#1A1100' : '#FDCB40') : '#4A3F2A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                    }">
+                    {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
+                  </button>
+                </div>
+              </div>
+              <!-- 차주 -->
+              <div>
+                <div style="font-size:11px;color:#9A8F7A;font-weight:600;margin-bottom:6px;padding-left:2px;">
+                  차주 ({{ fmtRange(nextDates[0], nextDates[4]) }})
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button v-for="(date, i) in nextDates" :key="date" type="button"
+                    @click="modalDate = date"
+                    :style="{
+                      padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                      background: modalDate === date ? '#1A1100' : '#fff',
+                      color: modalDate === date ? '#FDCB40' : '#4A3F2A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                    }">
+                    {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 내용 입력 -->
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase;">
+                일정 내용
+                <span v-if="modalDate" style="font-weight:600;color:#1A1100;text-transform:none;font-size:12px;margin-left:6px;">
+                  — {{ modalDate.substring(5).replace('-','/') }} ({{ DAY_KR[allDates.indexOf(modalDate) % 5] }})
+                </span>
+              </label>
+              <textarea
+                v-model="modalContent"
+                rows="4"
+                class="input-field"
+                placeholder="이 날의 일정을 입력하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
+                style="resize:vertical;line-height:1.65;font-size:13px;"
+                @keydown.meta.enter.prevent="saveModal"
+                @keydown.ctrl.enter.prevent="saveModal"
+              ></textarea>
+              <p style="font-size:11px;color:#9A8F7A;margin-top:6px;">Ctrl+Enter 또는 ⌘+Enter로 빠르게 저장</p>
+            </div>
+          </div>
+
+          <!-- 모달 푸터 -->
+          <div style="padding:14px 24px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+            <!-- 삭제 버튼 (기존 내용 있을 때) -->
+            <button v-if="modalDate && localSchedules[currentUserId]?.[modalDate]"
+              type="button" @click="deleteSchedule"
+              style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
+              @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
+              @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+              삭제
+            </button>
+            <div v-else></div>
+
+            <div style="display:flex;gap:8px;">
+              <button type="button" @click="closeModal" class="btn-secondary btn-sm">취소</button>
+              <button type="button" @click="saveModal"
+                :disabled="!modalDate || modalSaving"
+                style="display:inline-flex;align-items:center;gap:5px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+                :style="{ opacity: !modalDate || modalSaving ? 0.5 : 1, cursor: !modalDate || modalSaving ? 'not-allowed' : 'pointer' }"
+                @mouseenter="e=>{ if(modalDate && !modalSaving){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+                @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
+                <svg v-if="modalSaving" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                {{ modalSaving ? '저장 중...' : '저장' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </AppLayout>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -201,10 +345,10 @@ const DAY_KR = ['월', '화', '수', '목', '금']
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 const avatarColor = (id) => AVATAR_COLORS[id % AVATAR_COLORS.length]
 
-const today = new Date().toISOString().slice(0, 10)
-const isToday = (d) => d === today
+const today    = new Date().toISOString().slice(0, 10)
+const isToday  = (d) => d === today
+const allDates = computed(() => [...props.currDates, ...props.nextDates])
 
-// 이름 열 공통 스타일 (드래그 핸들 유무에 따라 너비 조정)
 const nameColStyle = {
   width: props.isAdmin ? '130px' : '100px',
   padding: '10px 14px',
@@ -221,65 +365,40 @@ const nameColStyle = {
 
 // ── 순서 관리 ──────────────────────────────────────────
 const orderedUsers = ref([...props.users])
-
-const dragSrcIdx  = ref(null)
-const dragOverIdx = ref(null)
-const orderSaved  = ref(false)
+const dragSrcIdx   = ref(null)
+const dragOverIdx  = ref(null)
+const orderSaved   = ref(false)
 let orderSavedTimer = null
 
 const onDragStart = (e, idx) => {
   dragSrcIdx.value = idx
   e.dataTransfer.effectAllowed = 'move'
 }
-
-const onDragOver = (idx) => {
-  dragOverIdx.value = idx
-}
-
-const onDragLeave = () => {
-  // dragOver 인덱스는 drop 시 확정, leave 시 초기화하지 않음 (깜빡임 방지)
-}
-
+const onDragOver  = (idx) => { dragOverIdx.value = idx }
+const onDragLeave = () => {}
 const onDrop = async (targetIdx) => {
   const src = dragSrcIdx.value
-  if (src === null || src === targetIdx) {
-    dragSrcIdx.value  = null
-    dragOverIdx.value = null
-    return
-  }
-
-  // 로컬 순서 즉시 변경
+  if (src === null || src === targetIdx) { dragSrcIdx.value = null; dragOverIdx.value = null; return }
   const arr = [...orderedUsers.value]
   const [moved] = arr.splice(src, 1)
   arr.splice(targetIdx, 0, moved)
   orderedUsers.value = arr
   dragSrcIdx.value   = null
   dragOverIdx.value  = null
-
-  // 서버에 순서 저장
   try {
-    await window.axios.post('/admin/users/reorder', {
-      order: arr.map(u => u.id),
-    })
+    await window.axios.post('/admin/users/reorder', { order: arr.map(u => u.id) })
     clearTimeout(orderSavedTimer)
     orderSaved.value = true
     orderSavedTimer  = setTimeout(() => { orderSaved.value = false }, 2500)
-  } catch (e) {
-    console.error('순서 저장 실패', e)
-  }
+  } catch (e) { console.error('순서 저장 실패', e) }
 }
+const onDragEnd = () => { dragSrcIdx.value = null; dragOverIdx.value = null }
 
-const onDragEnd = () => {
-  dragSrcIdx.value  = null
-  dragOverIdx.value = null
-}
-
-// ── 스케줄 편집 ────────────────────────────────────────
+// ── 로컬 일정 데이터 ───────────────────────────────────
 const localSchedules = reactive({})
 for (const user of props.users) {
   localSchedules[user.id] = {}
-  const allDates = [...props.currDates, ...props.nextDates]
-  for (const date of allDates) {
+  for (const date of [...props.currDates, ...props.nextDates]) {
     localSchedules[user.id][date] = props.teamSchedules[user.id]?.[date] ?? ''
   }
 }
@@ -289,30 +408,79 @@ const fmtRange = (start, end) => {
   return start.substring(5).replace('-', '/') + ' – ' + end.substring(5).replace('-', '/')
 }
 
-const canEdit = (userId) => props.isAdmin || userId === props.currentUserId
+// ── 모달 상태 ──────────────────────────────────────────
+const showModal    = ref(false)
+const modalDate    = ref(null)
+const modalContent = ref('')
+const modalSaving  = ref(false)
+const saveDone     = ref(false)
+let saveDoneTimer  = null
 
-const savingKey = ref('')
-const savedKey  = ref('')
+const openModal = (date, content) => {
+  // 날짜 미지정 시 오늘 날짜(또는 금주 첫날) 기본 선택
+  const defaultDate = allDates.value.includes(today) ? today : props.currDates[0]
+  modalDate.value    = date ?? defaultDate
+  modalContent.value = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
+  showModal.value    = true
+}
 
-const saveCell = async (userId, date) => {
-  if (!canEdit(userId)) return
-  const key = `${userId}:${date}`
-  savingKey.value = key
-  savedKey.value  = ''
+const closeModal = () => {
+  showModal.value    = false
+  modalDate.value    = null
+  modalContent.value = ''
+}
+
+const saveModal = async () => {
+  if (!modalDate.value || modalSaving.value) return
+  modalSaving.value = true
   try {
     await window.axios.post('/schedules/upsert', {
-      date,
-      content:  localSchedules[userId][date],
-      user_id:  props.isAdmin ? userId : undefined,
+      date:    modalDate.value,
+      content: modalContent.value,
+      // user_id 미전송 → 서버에서 로그인 계정으로 처리
     })
-    savedKey.value = key
-    setTimeout(() => { if (savedKey.value === key) savedKey.value = '' }, 2000)
-  } catch (e) { console.error(e) }
-  finally { if (savingKey.value === key) savingKey.value = '' }
+    // 로컬 데이터 즉시 반영
+    if (!localSchedules[props.currentUserId]) localSchedules[props.currentUserId] = {}
+    localSchedules[props.currentUserId][modalDate.value] = modalContent.value
+
+    // 저장 완료 토스트
+    clearTimeout(saveDoneTimer)
+    saveDone.value = true
+    saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)
+    closeModal()
+  } catch (e) {
+    console.error('일정 저장 실패', e)
+  } finally {
+    modalSaving.value = false
+  }
+}
+
+const deleteSchedule = async () => {
+  if (!modalDate.value) return
+  modalSaving.value = true
+  try {
+    await window.axios.post('/schedules/upsert', {
+      date:    modalDate.value,
+      content: null,
+    })
+    if (localSchedules[props.currentUserId]) {
+      localSchedules[props.currentUserId][modalDate.value] = ''
+    }
+    clearTimeout(saveDoneTimer)
+    saveDone.value = true
+    saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)
+    closeModal()
+  } catch (e) {
+    console.error('일정 삭제 실패', e)
+  } finally {
+    modalSaving.value = false
+  }
 }
 </script>
 
 <style scoped>
 .toast-enter-active, .toast-leave-active { transition: all 0.25s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(12px); }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

@@ -160,12 +160,13 @@
       <!-- 지원: 이번 주 | 다음 주 (2열) -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
-          :showCopy="true"
-          @copy="copyJiWon" />
-        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
-          :showPaste="true"
           :canPaste="jiWonClipboard !== null"
-          @paste="pasteJiWon" />
+          @copy="() => copyJiWon('curr')"
+          @paste="() => pasteJiWon('curr')" />
+        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
+          :canPaste="jiWonClipboard !== null"
+          @copy="() => copyJiWon('next')"
+          @paste="() => pasteJiWon('next')" />
       </div>
 
       <!-- 내부작업 (전체 폭) -->
@@ -518,16 +519,18 @@ const submit = async () => {
   })).post('/reports')
 }
 
-// 지원 항목 복사/붙여넣기 클립보드
+// 지원 항목 복사/붙여넣기 클립보드 (이번 주 ↔ 다음 주 양방향)
 const jiWonClipboard = ref(null)
 
-const copyJiWon = () => {
-  jiWonClipboard.value = JSON.parse(JSON.stringify(form.jiWon_curr))
+const copyJiWon = (from) => {
+  const src = from === 'curr' ? form.jiWon_curr : form.jiWon_next
+  jiWonClipboard.value = JSON.parse(JSON.stringify(src))
 }
 
-const pasteJiWon = () => {
+const pasteJiWon = (to) => {
   if (!jiWonClipboard.value) return
-  form.jiWon_next = JSON.parse(JSON.stringify(jiWonClipboard.value))
+  if (to === 'curr') form.jiWon_curr = JSON.parse(JSON.stringify(jiWonClipboard.value))
+  else               form.jiWon_next = JSON.parse(JSON.stringify(jiWonClipboard.value))
 }
 
 // 이전 보고서 미리보기 모달

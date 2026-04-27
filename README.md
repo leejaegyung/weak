@@ -119,9 +119,9 @@ psql --version
 
 ```bash
 sudo -u postgres psql <<'EOF'
-CREATE USER weak WITH PASSWORD '비밀번호를_변경하세요';
-CREATE DATABASE weak OWNER weak ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8' TEMPLATE template0;
-GRANT ALL PRIVILEGES ON DATABASE weak TO weak;
+CREATE USER weeklyrpt_user WITH PASSWORD 'weeklyrpt123';
+CREATE DATABASE weeklyrpt OWNER weeklyrpt_user ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8' TEMPLATE template0;
+GRANT ALL PRIVILEGES ON DATABASE weeklyrpt TO weeklyrpt_user;
 EOF
 ```
 
@@ -177,7 +177,12 @@ sudo chmod -R 755 /data/weak
 cd /data/weak/app
 
 # Composer 패키지 설치
+```bash
 sudo -u nginx composer install --no-dev --optimize-autoloader
+```
+```bash
+sudo -u nginx /usr/local/bin/composer install --no-dev --optimize-autoloader
+```
 
 # 환경 파일 생성
 sudo -u nginx cp .env.example .env

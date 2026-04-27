@@ -62,6 +62,78 @@
     </div>
 
     <form @submit.prevent="submit" style="display:flex;flex-direction:column;gap:18px;">
+
+      <!-- 내 주간 일정 (팀 일정판 연동) — 토글 -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <!-- 섹션 헤더 (클릭으로 토글) -->
+        <div @click="showSchedule = !showSchedule"
+          style="padding:12px 18px;background:#F5EDDB;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background 0.1s;"
+          :style="{ borderBottom: showSchedule ? '2px solid #1A1100' : 'none' }"
+          @mouseenter="e => e.currentTarget.style.background='#EDE3C8'"
+          @mouseleave="e => e.currentTarget.style.background='#F5EDDB'">
+          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;">내 주간 일정</span>
+          <span style="font-size:11px;color:#9A8F7A;">— 제출 시 팀 일정판에 자동 반영됩니다</span>
+          <!-- 열림/닫힘 화살표 -->
+          <svg style="margin-left:auto;flex-shrink:0;transition:transform 0.2s;"
+            :style="{ transform: showSchedule ? 'rotate(180deg)' : 'rotate(0deg)' }"
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+
+        <!-- 일정 그리드 테이블 (토글) -->
+        <table v-if="showSchedule" style="width:100%;border-collapse:collapse;">
+          <colgroup>
+            <col style="width:56px;" />
+            <col /><col /><col /><col /><col />
+          </colgroup>
+          <thead>
+            <tr style="background:#FDFAF5;border-bottom:1.5px solid #E8E0D0;">
+              <th style="padding:7px 6px;border-right:2px solid #1A1100;"></th>
+              <th v-for="day in ['월','화','수','목','금']" :key="day"
+                style="padding:7px 4px;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:#9A8F7A;border-right:1.5px solid #E8E0D0;">
+                {{ day }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 금주 -->
+            <tr style="border-bottom:2px solid #1A1100;">
+              <td style="padding:10px 6px;text-align:center;font-size:12px;font-weight:800;background:#FFF8EE;border-right:2px solid #1A1100;white-space:nowrap;color:#1A1100;vertical-align:middle;">
+                금주
+              </td>
+              <td v-for="date in currDates" :key="'c-'+date"
+                style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
+                <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
+                <input v-model="schedules[date]" type="text" class="input-field"
+                  placeholder="—"
+                  style="font-size:12px;text-align:center;padding:5px 4px;background:#fff;"
+                  @keydown.enter.prevent />
+              </td>
+            </tr>
+            <!-- 차주 -->
+            <tr>
+              <td style="padding:10px 6px;text-align:center;font-size:12px;font-weight:800;background:#FFF8EE;border-right:2px solid #1A1100;white-space:nowrap;color:#1A1100;vertical-align:middle;">
+                차주
+              </td>
+              <td v-for="date in nextDates" :key="'n-'+date"
+                style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
+                <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
+                <input v-model="schedules[date]" type="text" class="input-field"
+                  placeholder="—"
+                  style="font-size:12px;text-align:center;padding:5px 4px;background:#fff;"
+                  @keydown.enter.prevent />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- 보고 기간 -->
       <div class="card" style="background:#FFF0A0;">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:700;margin-bottom:16px;">보고 기간</div>
@@ -331,10 +403,46 @@ const props = defineProps({
   weekInfo:       { type: Object, default: () => ({}) },
   prevReports:    { type: Array,  default: () => [] },
   existingReport: { type: Object, default: null },
+  mySchedules:    { type: Object, default: () => ({}) },
 })
 
 // 중복 보고서 팝업 (제출 시점에만 표시)
 const showDuplicateAlert = ref(false)
+
+// ── 내 주간 일정 ──────────────────────────────────────
+const showSchedule = ref(false)
+const schedules    = ref({ ...props.mySchedules })
+
+const currDates = computed(() => {
+  if (!form.curr_start) return []
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(form.curr_start + 'T00:00:00')
+    d.setDate(d.getDate() + i)
+    return d.toISOString().split('T')[0]
+  })
+})
+const nextDates = computed(() => {
+  if (!form.next_start) return []
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(form.next_start + 'T00:00:00')
+    d.setDate(d.getDate() + i)
+    return d.toISOString().split('T')[0]
+  })
+})
+const fmtDay = (d) => {
+  if (!d) return ''
+  const dt   = new Date(d + 'T00:00:00')
+  const days = ['일', '월', '화', '수', '목', '금', '토']
+  const mm   = String(dt.getMonth() + 1).padStart(2, '0')
+  const dd   = String(dt.getDate()).padStart(2, '0')
+  return `${mm}/${dd}(${days[dt.getDay()]})`
+}
+const fmtDateOnly = (d) => {
+  if (!d) return ''
+  const dt = new Date(d + 'T00:00:00')
+  return `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}`
+}
+// ─────────────────────────────────────────────────────
 
 // title 우선, 구버전 데이터는 content를 title로 마이그레이션
 const splitByCat = (arr, cat) =>
@@ -362,11 +470,29 @@ const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'
 const addTodo    = () => form.todo_items.push({ content: '', done: false })
 const removeTodo = (idx) => form.todo_items.splice(idx, 1)
 
-const submit = () => {
+const submit = async () => {
   if (props.existingReport) {
     showDuplicateAlert.value = true
     return
   }
+
+  // 일정 팀 일정판에 먼저 저장
+  const allDates = [...currDates.value, ...nextDates.value]
+  if (allDates.length) {
+    try {
+      await Promise.all(
+        allDates.map(date =>
+          window.axios.post('/schedules/upsert', {
+            date,
+            content: schedules.value[date] || null,
+          })
+        )
+      )
+    } catch (e) {
+      console.warn('일정 저장 실패 (보고서 제출은 계속됩니다)', e)
+    }
+  }
+
   form.transform(data => ({
     week:       data.week,
     curr_start: data.curr_start,

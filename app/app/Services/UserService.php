@@ -17,6 +17,7 @@ class UserService
             'position'      => $u->position,
             'role'          => $u->role,
             'is_active'     => (bool) $u->is_active,
+            'is_hidden'     => (bool) $u->is_hidden,
             'last_login_at' => $u->last_login_at?->format('Y-m-d H:i'),
         ])->toArray();
     }

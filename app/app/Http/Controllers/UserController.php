@@ -72,6 +72,14 @@ class UserController extends Controller
             ->with('success', '사용자 상태가 변경되었습니다.');
     }
 
+    public function toggleHidden(User $user): RedirectResponse
+    {
+        $user->update(['is_hidden' => !$user->is_hidden]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', $user->is_hidden ? '사용자가 숨김 처리되었습니다.' : '사용자가 표시 처리되었습니다.');
+    }
+
     public function pendingIndex(): Response
     {
         $pending = User::where('registration_status', 'pending')

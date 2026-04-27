@@ -285,7 +285,7 @@
       .item-block {}
       .item-title { font-weight: 700; font-size: 12px; line-height: 1.5; color: #111; }
       .item-num { color: #888; font-family: 'Space Grotesk', sans-serif; margin-right: 1px; }
-      .sub-item { font-size: 11px; color: #333; line-height: 1.55; margin-left: 14px; margin-top: 2px; }
+      .sub-item { font-size: 11px; color: #333; line-height: 1.55; margin-left: 0; margin-top: 2px; white-space: pre-wrap; }
       .sub-dash { color: #888; margin-right: 3px; }
       .empty-cell { color: #bbb; font-size: 12px; }
 

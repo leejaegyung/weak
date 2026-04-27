@@ -20,11 +20,75 @@
 
       <!-- 우측: 알림 + 유저 + 로그아웃 -->
       <div style="display:flex;align-items:center;gap:10px;">
-        <button style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 8px;cursor:pointer;color:#fff;display:flex;align-items:center;position:relative;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </button>
+        <!-- 알림 벨 -->
+        <div style="position:relative;" v-click-outside="closeNotifications">
+          <button @click="toggleNotifications"
+            style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 8px;cursor:pointer;color:#fff;display:flex;align-items:center;position:relative;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <!-- 미읽음 뱃지 -->
+            <span v-if="unreadCount > 0"
+              style="position:absolute;top:-5px;right:-5px;background:#FDCB40;color:#1A1100;font-size:10px;font-weight:800;font-family:'Space Grotesk',sans-serif;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #1A1100;">
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
+          </button>
+
+          <!-- 알림 드롭다운 패널 -->
+          <Transition name="notif-drop">
+            <div v-if="showNotifications"
+              style="position:absolute;top:calc(100% + 8px);right:0;width:340px;background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:4px 4px 0 #1A1100;z-index:200;overflow:hidden;">
+              <!-- 패널 헤더 -->
+              <div style="padding:12px 16px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:800;">알림</span>
+                <button v-if="notifications.some(n=>!n.is_read)" @click="markAllRead"
+                  style="background:none;border:none;cursor:pointer;font-size:11px;color:#9A8F7A;font-weight:700;font-family:inherit;">
+                  모두 읽음
+                </button>
+              </div>
+
+              <!-- 알림 목록 -->
+              <div style="max-height:360px;overflow-y:auto;">
+                <div v-if="notifLoading" style="padding:32px;text-align:center;color:#9A8F7A;font-size:12px;">불러오는 중...</div>
+                <div v-else-if="notifications.length === 0" style="padding:32px;text-align:center;color:#9A8F7A;font-size:12px;">알림이 없습니다</div>
+                <div v-else>
+                  <div v-for="n in notifications" :key="n.id"
+                    @click="openNotification(n)"
+                    :style="{
+                      padding:'12px 16px',
+                      borderBottom:'1px solid #F5EDDB',
+                      cursor: n.link ? 'pointer' : 'default',
+                      background: n.is_read ? 'transparent' : '#FFFBEB',
+                      transition:'background 0.1s',
+                    }"
+                    @mouseenter="e=>{ if(!n.is_read || n.link) e.currentTarget.style.background='#FFF8EE' }"
+                    @mouseleave="e=>e.currentTarget.style.background=n.is_read?'transparent':'#FFFBEB'">
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                      <!-- 타입 아이콘 -->
+                      <div :style="{
+                        width:'28px',height:'28px',borderRadius:'8px',flexShrink:0,
+                        background: n.type==='rejected' ? '#FEE2E2' : '#DBEAFE',
+                        border:'1.5px solid #1A1100',
+                        display:'flex',alignItems:'center',justifyContent:'center',
+                      }">
+                        <svg v-if="n.type==='rejected'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                          <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ n.title }}</span>
+                          <span v-if="!n.is_read" style="width:6px;height:6px;border-radius:50%;background:#FD4401;flex-shrink:0;margin-left:6px;"></span>
+                        </div>
+                        <div v-if="n.body" style="font-size:11px;color:#4A3F2A;line-height:1.5;margin-bottom:3px;">{{ n.body }}</div>
+                        <div style="font-size:10px;color:#9A8F7A;">{{ n.created_at }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
         <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;">
           <div style="width:24px;height:24px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1A1100;flex-shrink:0;">
             {{ auth?.user?.name?.charAt(0) }}
@@ -82,6 +146,19 @@
               </svg>
             </div>
             보고서 작성
+          </Link>
+
+          <Link v-if="auth?.user?.role === 'admin'"
+            href="/admin/settings/webhook"
+            class="nav-item"
+            :style="isActive('/admin/settings') ? { background:'#F5F3FF', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/admin/settings'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            알림 설정
           </Link>
 
           <Link v-if="auth?.user?.role === 'admin'"
@@ -155,9 +232,65 @@ const auth         = computed(() => page.props.auth)
 const flash        = computed(() => page.props.flash ?? {})
 const currentWeek  = computed(() => page.props.currentWeek)
 const pendingCount = computed(() => page.props.pendingCount ?? 0)
+const unreadCount  = computed(() => page.props.unreadCount  ?? 0)
 
 const showFlash = ref(true)
 watch(() => page.props.flash, () => { showFlash.value = true })
+
+// ── 알림 드롭다운 ──
+const showNotifications = ref(false)
+const notifLoading      = ref(false)
+const notifications     = ref([])
+
+const toggleNotifications = async () => {
+  showNotifications.value = !showNotifications.value
+  if (showNotifications.value && notifications.value.length === 0) {
+    await loadNotifications()
+  }
+}
+
+const closeNotifications = () => { showNotifications.value = false }
+
+const loadNotifications = async () => {
+  notifLoading.value = true
+  try {
+    const res = await window.axios.get('/notifications')
+    notifications.value = res.data
+  } catch (e) { console.error(e) }
+  finally { notifLoading.value = false }
+}
+
+const openNotification = async (n) => {
+  if (!n.is_read) {
+    await window.axios.post(`/notifications/${n.id}/read`)
+    n.is_read = true
+    // Inertia 공유 데이터 갱신 없이 로컬 카운트 반영
+    router.reload({ only: ['unreadCount'] })
+  }
+  if (n.link) {
+    showNotifications.value = false
+    router.get(n.link)
+  }
+}
+
+const markAllRead = async () => {
+  await window.axios.post('/notifications/read-all')
+  notifications.value.forEach(n => { n.is_read = true })
+  router.reload({ only: ['unreadCount'] })
+}
+
+// v-click-outside 디렉티브 (전역 등록 없이 인라인 처리)
+const vClickOutside = {
+  mounted(el, binding) {
+    el._clickOutside = (e) => {
+      if (!el.contains(e.target)) binding.value()
+    }
+    document.addEventListener('mousedown', el._clickOutside)
+  },
+  unmounted(el) {
+    document.removeEventListener('mousedown', el._clickOutside)
+  },
+}
 
 const isActive = (path) => {
   const loc = window.location.pathname
@@ -178,3 +311,8 @@ const navIconStyle = (active) => ({
 
 const logout = () => router.post('/logout')
 </script>
+
+<style scoped>
+.notif-drop-enter-active, .notif-drop-leave-active { transition: all 0.18s ease; }
+.notif-drop-enter-from, .notif-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+</style>

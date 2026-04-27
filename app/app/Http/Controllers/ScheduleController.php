@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\WeeklyReport;
 use App\Services\ScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -36,8 +37,8 @@ class ScheduleController extends Controller
         $startDate = $monday->format('Y-m-d');
         $endDate   = $nextFriday->format('Y-m-d');
 
-        // 전체 사용자 목록 (관리자가 지정한 순서 → 이름 순)
-        $users = User::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get()
+        // 전체 사용자 목록 (관리자가 지정한 순서 → 이름 순, 숨김 제외)
+        $users = User::where('is_active', true)->where('is_hidden', false)->orderBy('sort_order')->orderBy('name')->get()
             ->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position])
             ->toArray();
 
@@ -48,17 +49,23 @@ class ScheduleController extends Controller
         $currDates = collect(range(0, 4))->map(fn($i) => $monday->copy()->addDays($i)->format('Y-m-d'))->toArray();
         $nextDates = collect(range(0, 4))->map(fn($i) => $nextMonday->copy()->addDays($i)->format('Y-m-d'))->toArray();
 
+        // 해당 주차 사용자별 보고서 ID 맵 {userId: reportId}
+        $weekReportMap = WeeklyReport::whereBetween('curr_start', [$startDate, $endDate])
+            ->pluck('id', 'user_id')
+            ->toArray();
+
         return Inertia::render('Schedule/Index', [
-            'users'         => $users,
-            'teamSchedules' => $teamSchedules,
-            'currDates'     => $currDates,
-            'nextDates'     => $nextDates,
-            'weekStart'     => $startDate,
-            'currentUserId' => $user->id,
-            'isAdmin'       => $user->isAdmin(),
-            'prevWeek'      => $monday->copy()->subDays(7)->format('Y-m-d'),
-            'nextWeek'      => $monday->copy()->addDays(7)->format('Y-m-d'),
-            'isCurrentWeek' => $monday->isSameDay($now->copy()->startOfWeek(Carbon::MONDAY)),
+            'users'          => $users,
+            'teamSchedules'  => $teamSchedules,
+            'currDates'      => $currDates,
+            'nextDates'      => $nextDates,
+            'weekStart'      => $startDate,
+            'currentUserId'  => $user->id,
+            'isAdmin'        => $user->isAdmin(),
+            'prevWeek'       => $monday->copy()->subDays(7)->format('Y-m-d'),
+            'nextWeek'       => $monday->copy()->addDays(7)->format('Y-m-d'),
+            'isCurrentWeek'  => $monday->isSameDay($now->copy()->startOfWeek(Carbon::MONDAY)),
+            'weekReportMap'  => $weekReportMap,
         ]);
     }
 

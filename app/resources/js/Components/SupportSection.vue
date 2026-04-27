@@ -19,6 +19,7 @@
             :ref="el => { if (el) titleRefs[idx] = el }"
             v-model="item.title"
             @input="emitUpdate"
+            @keydown.enter.prevent
             type="text"
             class="input-field"
             placeholder="항목명"

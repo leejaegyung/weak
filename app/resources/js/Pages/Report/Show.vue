@@ -1,6 +1,36 @@
 <template>
   <AppLayout page-title="보고서 상세">
 
+    <!-- 팀원 보고서 스위처 (관리자 또는 팀원 전체 조회 가능한 경우) -->
+    <div v-if="teamUsers.length > 1"
+      style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;">
+      <div v-for="u in teamUsers" :key="u.id"
+        @click="u.report_id && router.get(`/reports/${u.report_id}`)"
+        :title="u.report_id ? u.name + ' 보고서 보기' : u.name + ' — 미제출'"
+        :style="{
+          display:'flex', alignItems:'center', gap:'6px',
+          padding:'5px 12px', borderRadius:'10px', flexShrink:0,
+          border:'2px solid',
+          borderColor: u.id === report.user_id ? '#1A1100' : (u.report_id ? '#D0C9BC' : '#FDE68A'),
+          background: u.id === report.user_id ? '#FDCB40' : (u.report_id ? '#fff' : '#FFF9E6'),
+          cursor: u.report_id && u.id !== report.user_id ? 'pointer' : 'default',
+          fontWeight: u.id === report.user_id ? '800' : '600',
+          fontSize: '12px',
+          boxShadow: u.id === report.user_id ? '2px 2px 0 #1A1100' : 'none',
+          transition:'all 0.12s',
+        }"
+        @mouseenter="e=>{ if(u.report_id && u.id !== report.user_id) { e.currentTarget.style.background='#FFF8EE'; e.currentTarget.style.borderColor='#1A1100'; } }"
+        @mouseleave="e=>{ if(u.report_id && u.id !== report.user_id) { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; } }">
+        <!-- 아바타 -->
+        <div :style="{ width:'20px', height:'20px', borderRadius:'50%', background: avatarColor(u.id), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
+          {{ u.name.charAt(0) }}
+        </div>
+        {{ u.name }}
+        <!-- 미제출 표시 -->
+        <span v-if="!u.report_id" style="font-size:9px;color:#92400E;background:#FFF0A0;border:1px solid #D97706;border-radius:4px;padding:0 4px;">미제출</span>
+      </div>
+    </div>
+
     <!-- 상단 액션 바 -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
       <Link href="/reports" class="btn-secondary" style="display:inline-flex;align-items:center;gap:5px;">
@@ -123,10 +153,10 @@
                     <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;">{{ i+1 }}.</span>
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
-                  <div v-if="item.sub_items?.length" style="margin-left:21px;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+                  <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
                     </div>
                   </div>
                 </div>
@@ -141,10 +171,10 @@
                     <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;">{{ i+1 }}.</span>
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
-                  <div v-if="item.sub_items?.length" style="margin-left:21px;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+                  <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
                     </div>
                   </div>
                 </div>
@@ -163,10 +193,10 @@
                     <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;">{{ i+1 }}.</span>
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
-                  <div v-if="item.sub_items?.length" style="margin-left:21px;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+                  <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
                     </div>
                   </div>
                 </div>
@@ -201,10 +231,10 @@
                     <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;">{{ i+1 }}.</span>
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
-                  <div v-if="item.sub_items?.length" style="margin-left:21px;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+                  <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
                     </div>
                   </div>
                 </div>
@@ -223,10 +253,10 @@
                     <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;">{{ i+1 }}.</span>
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
-                  <div v-if="item.sub_items?.length" style="margin-left:21px;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+                  <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
                     </div>
                   </div>
                 </div>
@@ -295,12 +325,16 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  report: { type: Object, required: true },
+  report:    { type: Object, required: true },
+  teamUsers: { type: Array,  default: () => [] },
 })
 
 const page    = usePage()
 const isOwn   = computed(() => page.props.auth?.user?.id === props.report.user_id)
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin')
+
+const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
+const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
 
 const fmt      = (d) => d ? String(d).substring(0, 10) : ''
 const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'

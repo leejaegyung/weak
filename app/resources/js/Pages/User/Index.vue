@@ -94,37 +94,62 @@
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">전체 목록</span>
           <span style="font-size:12px;color:#9A8F7A;font-weight:600;">{{ users.length }}명</span>
         </div>
-        <div style="display:grid;grid-template-columns:2fr 2.5fr 1fr 1fr 1fr 1.2fr;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
-          <span>이름</span><span>아이디</span><span>직급</span><span>권한</span><span>마지막 접속</span><span>상태</span>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
+          <span>이름</span><span>아이디</span><span>직급</span><span>권한</span><span>마지막 접속</span><span>숨김</span><span>상태</span>
         </div>
         <div v-for="(u, i) in users" :key="u.id"
-          style="display:grid;grid-template-columns:2fr 2.5fr 1fr 1fr 1fr 1.2fr;padding:13px 20px;align-items:center;transition:background 0.1s;cursor:pointer;"
+          style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr;padding:12px 20px;align-items:center;transition:background 0.1s;cursor:pointer;"
           :style="{ borderBottom: i < users.length-1 ? '1.5px solid #F5EDDB' : 'none' }"
           @click="openEdit(u)"
           @mouseenter="e=>e.currentTarget.style.background='#FFF8EE'"
           @mouseleave="e=>e.currentTarget.style.background='transparent'">
-          <div style="display:flex;align-items:center;gap:9px;">
+          <!-- 이름 -->
+          <div style="display:flex;align-items:center;gap:9px;min-width:0;">
             <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
               {{ u.name.charAt(0) }}
             </div>
-            <span style="font-size:13px;font-weight:700;">{{ u.name }}</span>
+            <span style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ u.name }}</span>
           </div>
-          <span style="font-size:12px;color:#4A3F2A;">@{{ u.username }}</span>
+          <!-- 아이디 -->
+          <span style="font-size:12px;color:#4A3F2A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@{{ u.username }}</span>
+          <!-- 직급 -->
           <span style="font-size:12px;font-weight:600;">{{ u.position || '-' }}</span>
-          <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;"
-            :style="u.role==='admin' ? 'background:#FD440115;color:#FD4401;border:1.5px solid #FD4401;' : 'background:rgba(26,17,0,0.05);color:#4A3F2A;border:1.5px solid rgba(26,17,0,0.15);'">
-            {{ u.role === 'admin' ? '관리자' : '사원' }}
-          </span>
-          <span style="font-size:12px;color:#9A8F7A;">{{ u.last_login_at ?? '-' }}</span>
-          <div style="display:flex;align-items:center;gap:6px;" @click.stop>
-            <span :style="u.is_active ? 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;' : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'"
-              style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;">
-              {{ u.is_active ? '활성' : '비활성' }}
+          <!-- 권한 -->
+          <div>
+            <span style="display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;"
+              :style="u.role==='admin' ? 'background:#FD440115;color:#FD4401;border:1.5px solid #FD4401;' : 'background:rgba(26,17,0,0.05);color:#4A3F2A;border:1.5px solid rgba(26,17,0,0.15);'">
+              {{ u.role === 'admin' ? '관리자' : '사원' }}
             </span>
+          </div>
+          <!-- 마지막 접속 -->
+          <span style="font-size:11px;color:#9A8F7A;white-space:nowrap;">{{ u.last_login_at ?? '-' }}</span>
+          <!-- 숨김 토글 -->
+          <div @click.stop>
+            <button @click="toggleHidden(u)"
+              :title="u.is_hidden ? '클릭하면 표시됩니다' : '클릭하면 숨겨집니다'"
+              style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;cursor:pointer;font-weight:700;transition:all 0.1s;white-space:nowrap;"
+              :style="u.is_hidden
+                ? 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'
+                : 'background:#EFF6FF;color:#2563EB;border:1.5px solid #93C5FD;'">
+              <svg v-if="u.is_hidden" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+              <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              {{ u.is_hidden ? '숨김' : '표시중' }}
+            </button>
+          </div>
+          <!-- 상태: 단일 토글 버튼 -->
+          <div @click.stop>
             <button @click="toggleActive(u)"
-              style="font-size:11px;padding:2px 8px;border-radius:99px;cursor:pointer;font-weight:700;transition:all 0.1s;"
-              :style="u.is_active ? 'background:#FEE2E2;color:#DC2626;border:1.5px solid #DC2626;' : 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;'">
-              {{ u.is_active ? '비활성화' : '활성화' }}
+              style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;cursor:pointer;font-weight:700;transition:all 0.1s;white-space:nowrap;"
+              :style="u.is_active
+                ? 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;'
+                : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'">
+              <span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
+                :style="u.is_active ? 'background:#16A34A;' : 'background:#9CA3AF;'"></span>
+              {{ u.is_active ? '활성' : '비활성' }}
             </button>
           </div>
         </div>
@@ -288,6 +313,7 @@ const submitUser = () => {
   }
 }
 const toggleActive = (u) => router.post(`/admin/users/${u.id}/toggle-active`)
+const toggleHidden = (u) => router.post(`/admin/users/${u.id}/toggle-hidden`)
 
 const approve   = (id) => router.post(`/admin/users/${id}/approve`)
 const rejectReg = (id) => router.post(`/admin/users/${id}/reject-registration`)

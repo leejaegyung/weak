@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,12 +40,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules/upsert', [ScheduleController::class, 'upsert'])->name('schedules.upsert');
 
+    // 인앱 알림
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/users',                              [UserController::class, 'index'])->name('admin.users.index');
     Route::post('/users',                             [UserController::class, 'store'])->name('admin.users.store');
     Route::post('/users/reorder',                     [UserController::class, 'reorder'])->name('admin.users.reorder');
+
+    // 설정 (Webhook)
+    Route::get('/settings/webhook',                   [SettingController::class, 'webhook'])->name('admin.settings.webhook');
+    Route::post('/settings/webhook',                  [SettingController::class, 'updateWebhook'])->name('admin.settings.webhook.update');
+    Route::post('/settings/webhook/test',             [SettingController::class, 'testWebhook'])->name('admin.settings.webhook.test');
+    Route::post('/settings/notify-not-submitted',     [SettingController::class, 'sendNotSubmittedAlert'])->name('admin.settings.notify-not-submitted');
     // 회원가입 승인 관리 (/{user} 와이드카드보다 먼저 선언)
     Route::get('/users/pending',                      [UserController::class, 'pendingIndex'])->name('admin.users.pending');
     Route::post('/users/{user}/approve',              [UserController::class, 'approve'])->name('admin.users.approve');
@@ -51,6 +64,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/users/{user}',                       [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/users/{user}',                    [UserController::class, 'destroy'])->name('admin.users.destroy');
     Route::post('/users/{user}/toggle-active',        [UserController::class, 'toggleActive'])->name('admin.users.toggle-active');
+    Route::post('/users/{user}/toggle-hidden',        [UserController::class, 'toggleHidden'])->name('admin.users.toggle-hidden');
 });
 
 Route::middleware(['auth', 'admin'])->get('/export/weekly', [ExportController::class, 'weeklyExcel'])->name('export.weekly');

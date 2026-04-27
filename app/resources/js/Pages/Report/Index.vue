@@ -36,6 +36,15 @@
           </button>
         </div>
 
+        <!-- 미제출 알림 (관리자만) -->
+        <button v-if="isAdmin" @click="sendNotSubmittedAlert"
+          :disabled="alertSending"
+          class="btn-secondary btn-sm"
+          style="display:inline-flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          {{ alertSending ? '발송 중...' : '미제출 알림' }}
+        </button>
+
         <!-- Excel 다운로드 (관리자만) -->
         <a v-if="isAdmin" :href="`/export/weekly?curr_start=${weekStart}`"
           class="btn-secondary btn-sm"
@@ -240,6 +249,18 @@ const statusBadge = (s) => ({
   rejected:      'badge-rejected',
   not_submitted: 'badge-not-submitted',
 })[s] ?? 'badge-draft'
+
+// ── 미제출 Webhook 알림 ──
+const alertSending = ref(false)
+const sendNotSubmittedAlert = async () => {
+  if (!props.weekStart) return
+  alertSending.value = true
+  try {
+    const res = await window.axios.post('/admin/settings/notify-not-submitted', { week_start: props.weekStart })
+    alert(res.data.message)
+  } catch { alert('알림 발송 실패. Webhook 설정을 확인해 주세요.') }
+  finally { alertSending.value = false }
+}
 
 let timer = null
 const onSearch  = () => { clearTimeout(timer); timer = setTimeout(applyFilter, 400) }

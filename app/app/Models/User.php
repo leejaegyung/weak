@@ -19,6 +19,7 @@ class User extends Authenticatable
         'position',
         'role',
         'is_active',
+        'is_hidden',
         'sort_order',
         'registration_status',
         'google_id',
@@ -36,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active'      => 'boolean',
+            'is_hidden'      => 'boolean',
             'last_login_at'  => 'datetime',
         ];
     }

@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreReportRequest;
 use App\Http\Requests\UpdateReportRequest;
+use App\Models\User;
 use App\Models\WeeklyReport;
+use App\Services\NotificationService;
 use App\Services\ReportService;
+use App\Services\ScheduleService;
+use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +19,12 @@ use Inertia\Response;
 
 class ReportController extends Controller
 {
-    public function __construct(private ReportService $reportService) {}
+    public function __construct(
+        private ReportService       $reportService,
+        private NotificationService $notificationService,
+        private WebhookService      $webhookService,
+        private ScheduleService     $scheduleService,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -85,10 +94,23 @@ class ReportController extends Controller
                 ];
             });
 
+        // 현재 사용자의 금주·차주 일정 사전 로드
+        $mySchedulesRaw = $this->scheduleService->getByUserAndRange(
+            $user->id,
+            $weekInfo['curr_start'],
+            $weekInfo['next_end']
+        );
+        $mySchedules = collect($mySchedulesRaw)
+            ->mapWithKeys(fn($s) => [
+                (is_array($s) ? substr($s['date'], 0, 10) : substr((string)$s->date, 0, 10))
+                => is_array($s) ? ($s['content'] ?? '') : ($s->content ?? '')
+            ])->toArray();
+
         return Inertia::render('Report/Create', [
             'weekInfo'       => $weekInfo,
             'prevReports'    => $prevReports,
             'existingReport' => $existing ? ['id' => $existing->id, 'week' => $existing->week] : null,
+            'mySchedules'    => $mySchedules,
         ]);
     }
 
@@ -116,7 +138,21 @@ class ReportController extends Controller
 
         $report->load('user');
 
-        return Inertia::render('Report/Show', ['report' => $report]);
+        // 같은 주차 팀원 보고서 맵 (사용자 스위처용)
+        $weekReports = WeeklyReport::where('week', $report->week)->pluck('id', 'user_id');
+        $teamUsers   = User::where('is_active', true)->where('is_hidden', false)
+            ->orderBy('sort_order')->orderBy('name')
+            ->get()
+            ->map(fn($u) => [
+                'id'        => $u->id,
+                'name'      => $u->name,
+                'report_id' => $weekReports->get($u->id),
+            ])->values()->toArray();
+
+        return Inertia::render('Report/Show', [
+            'report'    => $report,
+            'teamUsers' => $teamUsers,
+        ]);
     }
 
     public function edit(WeeklyReport $report): Response
@@ -169,7 +205,20 @@ class ReportController extends Controller
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
+        $report->load('user');
         $report->update(['status' => 'rejected']);
+
+        // 인앱 알림 생성 (보고서 작성자에게)
+        $this->notificationService->create(
+            $report->user_id,
+            'rejected',
+            '보고서가 반려되었습니다',
+            $report->week . ' 주간보고가 관리자에 의해 반려되었습니다. 수정 후 재제출해 주세요.',
+            "/reports/{$report->id}"
+        );
+
+        // Webhook 발송
+        $this->webhookService->notifyRejected($report->user->name ?? '알 수 없음', $report->week);
 
         return back()->with('success', '보고서가 반려되었습니다.');
     }

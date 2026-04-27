@@ -109,12 +109,23 @@
                     <rect x="4" y="18" width="16" height="2" rx="1"/>
                   </svg>
                 </div>
-                <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
-                  {{ user.name.charAt(0) }}
-                </div>
-                <div>
-                  <div style="font-size:12px;font-weight:700;">{{ user.name }}</div>
-                  <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
+                <!-- 이름 + 아바타 (보고서 있으면 클릭 이동) -->
+                <div
+                  @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
+                  :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
+                  :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
+                  <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
+                    {{ user.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <div :style="{ fontSize:'12px', fontWeight:'700', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
+                    <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
+                  </div>
+                  <!-- 보고서 있음 표시 -->
+                  <span v-if="weekReportMap[user.id]"
+                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">
+                    보고서
+                  </span>
                 </div>
               </div>
             </td>
@@ -168,20 +179,21 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  users:         { type: Array,   default: () => [] },
-  teamSchedules: { type: Object,  default: () => ({}) },
-  currDates:     { type: Array,   default: () => [] },
-  nextDates:     { type: Array,   default: () => [] },
-  weekStart:     { type: String,  default: '' },
-  currentUserId: { type: Number,  default: 0 },
-  isAdmin:       { type: Boolean, default: false },
-  prevWeek:      { type: String,  default: '' },
-  nextWeek:      { type: String,  default: '' },
-  isCurrentWeek: { type: Boolean, default: true },
+  users:          { type: Array,   default: () => [] },
+  teamSchedules:  { type: Object,  default: () => ({}) },
+  currDates:      { type: Array,   default: () => [] },
+  nextDates:      { type: Array,   default: () => [] },
+  weekStart:      { type: String,  default: '' },
+  currentUserId:  { type: Number,  default: 0 },
+  isAdmin:        { type: Boolean, default: false },
+  prevWeek:       { type: String,  default: '' },
+  nextWeek:       { type: String,  default: '' },
+  isCurrentWeek:  { type: Boolean, default: true },
+  weekReportMap:  { type: Object,  default: () => ({}) },
 })
 
 const DAY_KR = ['월', '화', '수', '목', '금']

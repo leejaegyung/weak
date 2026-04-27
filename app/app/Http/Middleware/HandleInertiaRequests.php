@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Notification;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -36,6 +37,9 @@ class HandleInertiaRequests extends Middleware
             'currentWeek'  => fn () => $this->getCurrentWeekData(),
             'pendingCount' => fn () => $request->user()?->isAdmin()
                 ? User::where('registration_status', 'pending')->count()
+                : 0,
+            'unreadCount'  => fn () => $request->user()
+                ? Notification::where('user_id', $request->user()->id)->whereNull('read_at')->count()
                 : 0,
         ];
     }

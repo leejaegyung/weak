@@ -266,17 +266,38 @@
 
             <!-- 내용 입력 -->
             <div>
-              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase;">
+              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">
                 일정 내용
                 <span v-if="modalDate" style="font-weight:600;color:#1A1100;text-transform:none;font-size:12px;margin-left:6px;">
                   — {{ modalDate.substring(5).replace('-','/') }} ({{ DAY_KR[allDates.indexOf(modalDate) % 5] }})
                 </span>
               </label>
+
+              <!-- 빠른 선택 태그 -->
+              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
+                <button v-for="tag in QUICK_TAGS" :key="tag.label" type="button"
+                  @click="toggleQuickTag(tag)"
+                  :style="{
+                    display:'inline-flex', alignItems:'center', gap:'5px',
+                    padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
+                    border: isTagActive(tag) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                    background: isTagActive(tag) ? tag.bg : '#fff',
+                    color: isTagActive(tag) ? tag.color : '#9A8F7A',
+                    cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                    boxShadow: isTagActive(tag) ? '2px 2px 0 #1A1100' : 'none',
+                  }"
+                  @mouseenter="e=>{ if(!isTagActive(tag)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                  @mouseleave="e=>{ if(!isTagActive(tag)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                  <span>{{ tag.icon }}</span>
+                  {{ tag.label }}
+                </button>
+              </div>
+
               <textarea
                 v-model="modalContent"
-                rows="4"
+                rows="3"
                 class="input-field"
-                placeholder="이 날의 일정을 입력하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
+                placeholder="이 날의 일정을 직접 입력하거나 위 태그를 선택하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
                 style="resize:vertical;line-height:1.65;font-size:13px;"
                 @keydown.meta.enter.prevent="saveModal"
                 @keydown.ctrl.enter.prevent="saveModal"
@@ -406,6 +427,34 @@ for (const user of props.users) {
 const fmtRange = (start, end) => {
   if (!start || !end) return ''
   return start.substring(5).replace('-', '/') + ' – ' + end.substring(5).replace('-', '/')
+}
+
+// ── 빠른 선택 태그 ────────────────────────────────────
+const QUICK_TAGS = [
+  { label: '외근', icon: '🏢', bg: '#DBEAFE', color: '#1D4ED8' },
+  { label: '출장', icon: '✈️', bg: '#EDE9FE', color: '#7C3AED' },
+  { label: '반차', icon: '🕐', bg: '#FEF9C3', color: '#854D0E' },
+  { label: '휴가', icon: '🌴', bg: '#DCFCE7', color: '#166534' },
+]
+
+// 현재 내용에 태그가 활성화되어 있는지 확인
+const isTagActive = (tag) => {
+  const lines = modalContent.value.split('\n').map(l => l.trim())
+  return lines.includes(tag.label)
+}
+
+// 태그 토글: 없으면 추가, 있으면 제거
+const toggleQuickTag = (tag) => {
+  const lines = modalContent.value.split('\n').map(l => l.trim()).filter(l => l)
+  const idx = lines.indexOf(tag.label)
+  if (idx !== -1) {
+    // 이미 있으면 제거
+    lines.splice(idx, 1)
+  } else {
+    // 없으면 맨 앞에 추가
+    lines.unshift(tag.label)
+  }
+  modalContent.value = lines.join('\n')
 }
 
 // ── 모달 상태 ──────────────────────────────────────────

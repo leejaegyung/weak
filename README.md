@@ -156,17 +156,17 @@ sudo systemctl restart php-fpm
 ### 7단계 — 프로젝트 클론 및 설정
 
 ```bash
-# 배포 디렉터리로 이동
-sudo mkdir -p /var/www
-cd /var/www
+# data 디렉터리 생성 및 이동
+sudo mkdir -p /data
+cd /data
 
 # 저장소 클론
 sudo git clone git@github.com:leejaegyung/weak.git sehub
-cd /var/www/sehub/app
+cd /data/sehub/app
 
 # 소유권 설정
-sudo chown -R nginx:nginx /var/www/sehub
-sudo chmod -R 755 /var/www/sehub
+sudo chown -R nginx:nginx /data/sehub
+sudo chmod -R 755 /data/sehub
 ```
 
 ---
@@ -174,7 +174,7 @@ sudo chmod -R 755 /var/www/sehub
 ### 8단계 — 애플리케이션 초기 설정
 
 ```bash
-cd /var/www/sehub/app
+cd /data/sehub/app
 
 # Composer 패키지 설치
 sudo -u nginx composer install --no-dev --optimize-autoloader
@@ -231,7 +231,7 @@ sudo -u nginx php artisan view:cache
 ### 9단계 — 프론트엔드 빌드
 
 ```bash
-cd /var/www/sehub/app
+cd /data/sehub/app
 
 # npm 패키지 설치 및 빌드
 sudo -u nginx npm ci
@@ -284,7 +284,7 @@ server {
     listen 80;
     server_name 서버IP또는도메인;
 
-    root /var/www/sehub/app/public;
+    root /data/sehub/app/public;
     index index.php;
 
     charset utf-8;
@@ -338,10 +338,10 @@ sudo setsebool -P httpd_can_network_connect 1
 sudo setsebool -P httpd_unified 1
 
 # 애플리케이션 디렉터리 컨텍스트 적용
-sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/sehub/app/storage(/.*)?"
-sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/sehub/app/bootstrap/cache(/.*)?"
-sudo restorecon -Rv /var/www/sehub/app/storage
-sudo restorecon -Rv /var/www/sehub/app/bootstrap/cache
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/sehub/app/storage(/.*)?"
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/data/sehub/app/bootstrap/cache(/.*)?"
+sudo restorecon -Rv /data/sehub/app/storage
+sudo restorecon -Rv /data/sehub/app/bootstrap/cache
 ```
 
 ---
@@ -363,7 +363,7 @@ sudo firewall-cmd --reload
 ### 14단계 — 관리자 계정 생성
 
 ```bash
-cd /var/www/sehub/app
+cd /data/sehub/app
 
 sudo -u nginx php artisan tinker --execute="
 \App\Models\User::create([
@@ -383,7 +383,7 @@ sudo -u nginx php artisan tinker --execute="
 ## 업데이트 배포
 
 ```bash
-cd /var/www/sehub/app
+cd /data/sehub/app
 
 # 코드 업데이트
 sudo -u nginx git pull origin main
@@ -407,21 +407,22 @@ sudo -u nginx php artisan view:cache
 ## 디렉터리 구조
 
 ```
-/var/www/sehub/
-├── app/                  # Laravel 애플리케이션
-│   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Models/
-│   │   └── Services/
-│   ├── database/
-│   │   └── migrations/
-│   ├── resources/
-│   │   └── js/Pages/     # Vue 3 + Inertia 페이지
-│   ├── public/
-│   │   └── build/        # Vite 빌드 결과물
-│   └── routes/
-│       └── web.php
-└── nginx/                # Nginx 설정 참고용
+/data/
+└── sehub/                        # 프로젝트 루트
+    └── app/                      # Laravel 애플리케이션
+        ├── app/
+        │   ├── Http/Controllers/
+        │   ├── Models/
+        │   └── Services/
+        ├── database/
+        │   └── migrations/
+        ├── resources/
+        │   └── js/Pages/         # Vue 3 + Inertia 페이지
+        ├── public/
+        │   └── build/            # Vite 빌드 결과물
+        ├── storage/              # 로그, 캐시 (쓰기 권한 필요)
+        └── routes/
+            └── web.php
 ```
 
 ---

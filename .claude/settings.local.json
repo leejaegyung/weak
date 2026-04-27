@@ -70,7 +70,8 @@
       "PowerShell(cd C:\\\\weeklyrpt\\\\app; $php = \"C:\\\\Users\\\\leejk\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\php.exe\"; & $php artisan make:migration add_registration_status_to_users_table 2>&1)",
       "PowerShell(cd C:\\\\weeklyrpt\\\\app; $php = \"C:\\\\Users\\\\leejk\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\php.exe\"; & $php artisan migrate 2>&1)",
       "Bash(cmd /c \"npm run build\")",
-      "PowerShell(cd C:\\\\weeklyrpt\\\\app; cmd /c \"php artisan tinker --execute=\"\"\\\\$r=\\\\App\\\\Models\\\\WeeklyReport::whereHas\\('user',function\\(\\\\$q\\){\\\\$q->where\\('name','이재경'\\);}\\)->get\\(['id','week','status']\\); echo \\\\$r->toJson\\(\\);\"\" \" 2>&1)"
+      "PowerShell(cd C:\\\\weeklyrpt\\\\app; cmd /c \"php artisan tinker --execute=\"\"\\\\$r=\\\\App\\\\Models\\\\WeeklyReport::whereHas\\('user',function\\(\\\\$q\\){\\\\$q->where\\('name','이재경'\\);}\\)->get\\(['id','week','status']\\); echo \\\\$r->toJson\\(\\);\"\" \" 2>&1)",
+      "PowerShell(cd \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\"; git status --short 2>&1; echo \"---\"; \\(Get-Item \"app\" -Force\\).Attributes; \\(Get-Item \"app\" -Force\\).LinkType)"
     ]
   }
 }

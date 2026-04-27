@@ -1,7 +1,52 @@
 <template>
   <div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:12px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">
-      {{ title }}
+    <div style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <span>{{ title }}</span>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <!-- 복사 버튼 -->
+        <button v-if="showCopy" type="button" @click="handleCopy"
+          :title="copied ? '복사됨!' : '이 항목 전체 복사'"
+          :style="{
+            background: copied ? '#FDCB40' : 'transparent',
+            border: copied ? '1.5px solid #1A1100' : '1.5px solid transparent',
+            borderRadius:'7px', padding:'3px 7px', cursor:'pointer',
+            display:'inline-flex', alignItems:'center', gap:'4px',
+            fontSize:'11px', fontWeight:'700', color: copied ? '#1A1100' : '#9A8F7A',
+            fontFamily:'inherit', transition:'all 0.15s',
+          }"
+          @mouseenter="e=>{ if(!copied){ e.currentTarget.style.background='rgba(26,17,0,0.07)'; e.currentTarget.style.color='#1A1100'; e.currentTarget.style.borderColor='#C5BAA8'; } }"
+          @mouseleave="e=>{ if(!copied){ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#9A8F7A'; e.currentTarget.style.borderColor='transparent'; } }">
+          <!-- 복사 아이콘 -->
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span v-if="copied">복사됨!</span>
+          <span v-else>복사</span>
+        </button>
+        <!-- 붙여넣기 버튼 -->
+        <button v-if="showPaste" type="button" @click="$emit('paste')"
+          title="복사한 항목 붙여넣기"
+          :disabled="!canPaste"
+          :style="{
+            background: canPaste ? 'transparent' : 'transparent',
+            border: '1.5px solid transparent',
+            borderRadius:'7px', padding:'3px 7px', cursor: canPaste ? 'pointer' : 'not-allowed',
+            display:'inline-flex', alignItems:'center', gap:'4px',
+            fontSize:'11px', fontWeight:'700',
+            color: canPaste ? '#9A8F7A' : '#D0C9BC',
+            fontFamily:'inherit', transition:'all 0.15s', opacity: canPaste ? 1 : 0.5,
+          }"
+          @mouseenter="e=>{ if(canPaste){ e.currentTarget.style.background='rgba(26,17,0,0.07)'; e.currentTarget.style.color='#1A1100'; e.currentTarget.style.borderColor='#C5BAA8'; } }"
+          @mouseleave="e=>{ if(canPaste){ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#9A8F7A'; e.currentTarget.style.borderColor='transparent'; } }">
+          <!-- 붙여넣기 아이콘 -->
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+          </svg>
+          붙여넣기
+        </button>
+      </div>
     </div>
 
     <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
@@ -81,11 +126,25 @@
 import { ref, nextTick } from 'vue'
 
 const props = defineProps({
-  title:      { type: String, default: '' },
-  modelValue: { type: Array,  default: () => [] },
-  error:      { type: String, default: '' },
+  title:      { type: String,   default: '' },
+  modelValue: { type: Array,    default: () => [] },
+  error:      { type: String,   default: '' },
+  showCopy:   { type: Boolean,  default: false },
+  showPaste:  { type: Boolean,  default: false },
+  canPaste:   { type: Boolean,  default: false },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'copy', 'paste'])
+
+// 복사 피드백
+const copied = ref(false)
+let copiedTimer = null
+
+const handleCopy = () => {
+  emit('copy')
+  copied.value = true
+  if (copiedTimer) clearTimeout(copiedTimer)
+  copiedTimer = setTimeout(() => { copied.value = false }, 2000)
+}
 
 const titleRefs = ref({})
 

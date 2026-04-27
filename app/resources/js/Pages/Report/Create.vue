@@ -159,8 +159,13 @@
 
       <!-- 지원: 이번 주 | 다음 주 (2열) -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr" />
-        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next" />
+        <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
+          :showCopy="true"
+          @copy="copyJiWon" />
+        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
+          :showPaste="true"
+          :canPaste="jiWonClipboard !== null"
+          @paste="pasteJiWon" />
       </div>
 
       <!-- 내부작업 (전체 폭) -->
@@ -511,6 +516,18 @@ const submit = async () => {
     notes:      data.notes,
     requests:   data.requests,
   })).post('/reports')
+}
+
+// 지원 항목 복사/붙여넣기 클립보드
+const jiWonClipboard = ref(null)
+
+const copyJiWon = () => {
+  jiWonClipboard.value = JSON.parse(JSON.stringify(form.jiWon_curr))
+}
+
+const pasteJiWon = () => {
+  if (!jiWonClipboard.value) return
+  form.jiWon_next = JSON.parse(JSON.stringify(jiWonClipboard.value))
 }
 
 // 이전 보고서 미리보기 모달

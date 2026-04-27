@@ -23,7 +23,7 @@ class WebhookService
         $url = Setting::get('webhook_url');
 
         try {
-            $response = Http::timeout(5)->post($url, ['text' => $text]);
+            $response = Http::timeout(5)->asJson()->post($url, ['text' => $text]);
             return $response->successful();
         } catch (\Throwable $e) {
             Log::warning('Webhook 전송 실패: ' . $e->getMessage());

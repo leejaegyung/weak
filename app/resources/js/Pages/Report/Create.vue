@@ -290,7 +290,7 @@
                       <div v-for="(item, i) in previewCurr['지원']" :key="i" style="margin-bottom:8px;">
                         <div style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-weight:700;">{{ i+1 }}.</span><span style="color:#1A1100;line-height:1.5;font-weight:700;">{{ item.title || item.content }}</span></div>
                         <div v-if="item.sub_items?.length" style="margin-left:14px;margin-top:3px;">
-                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;">{{ sub }}</span></div>
+                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(sub)"></span></div>
                         </div>
                       </div>
                     </template>
@@ -301,7 +301,7 @@
                       <div v-for="(item, i) in previewNext['지원']" :key="i" style="margin-bottom:8px;">
                         <div style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-weight:700;">{{ i+1 }}.</span><span style="color:#1A1100;line-height:1.5;font-weight:700;">{{ item.title || item.content }}</span></div>
                         <div v-if="item.sub_items?.length" style="margin-left:14px;margin-top:3px;">
-                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;">{{ sub }}</span></div>
+                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(sub)"></span></div>
                         </div>
                       </div>
                     </template>
@@ -317,7 +317,7 @@
                       <div v-for="(item, i) in previewCurr['내부작업']" :key="i" style="margin-bottom:8px;">
                         <div style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-weight:700;">{{ i+1 }}.</span><span style="color:#1A1100;line-height:1.5;font-weight:700;">{{ item.title || item.content }}</span></div>
                         <div v-if="item.sub_items?.length" style="margin-left:14px;margin-top:3px;">
-                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;">{{ sub }}</span></div>
+                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(sub)"></span></div>
                         </div>
                       </div>
                     </template>
@@ -347,7 +347,7 @@
                       <div v-for="(item, i) in previewCurr['공유']" :key="i" style="margin-bottom:8px;">
                         <div style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-weight:700;">{{ i+1 }}.</span><span style="color:#1A1100;line-height:1.5;font-weight:700;">{{ item.title || item.content }}</span></div>
                         <div v-if="item.sub_items?.length" style="margin-left:14px;margin-top:3px;">
-                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;">{{ sub }}</span></div>
+                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(sub)"></span></div>
                         </div>
                       </div>
                     </template>
@@ -363,7 +363,7 @@
                       <div v-for="(item, i) in previewCurr['기타']" :key="i" style="margin-bottom:8px;">
                         <div style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-weight:700;">{{ i+1 }}.</span><span style="color:#1A1100;line-height:1.5;font-weight:700;">{{ item.title || item.content }}</span></div>
                         <div v-if="item.sub_items?.length" style="margin-left:14px;margin-top:3px;">
-                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;">{{ sub }}</span></div>
+                          <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:5px;"><span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span><span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(sub)"></span></div>
                         </div>
                       </div>
                     </template>
@@ -398,6 +398,7 @@ import { ref, computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
+import { autoLink } from '@/utils/autoLink.js'
 
 const props = defineProps({
   weekInfo:       { type: Object, default: () => ({}) },
@@ -554,14 +555,16 @@ const previewNext = computed(() => {
 const applyPrev = () => {
   if (!previewData.value) return
   const r = previewData.value
-  form.jiWon_curr = splitByCat(r.curr_work, '지원')
-  form.jiWon_next = splitByCat(r.next_plan, '지원')
+  // 이전 보고서의 '금주 업무(next_plan)' → 새 보고서 '전주 업무(jiWon_curr)'
+  form.jiWon_curr = splitByCat(r.next_plan, '지원')
+  // 다음 주 계획은 비워서 새로 작성하도록
+  form.jiWon_next = []
+  // 내부작업·공유·기타는 이전 curr_work에서 참고용으로 불러옴
   form.naebu      = splitByCat(r.curr_work, '내부작업')
   form.gongyu     = splitByCat(r.curr_work, '공유')
   form.gita       = splitByCat(r.curr_work, '기타')
-  if (r.todo_items) form.todo_items = r.todo_items
-  if (r.notes)      form.notes      = r.notes
-  if (r.requests)   form.requests   = r.requests
+  // 미완료 Todo만 이어받기
+  if (r.todo_items) form.todo_items = r.todo_items.filter(t => !t.done).map(t => ({ ...t, done: false }))
   showPrevModal.value = false
   previewReport.value = null
   previewData.value   = null

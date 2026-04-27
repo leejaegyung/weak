@@ -156,7 +156,7 @@
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -174,7 +174,7 @@
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -196,7 +196,7 @@
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -234,7 +234,7 @@
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -256,7 +256,7 @@
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
                     <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;">{{ sub }}</span>
+                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -323,6 +323,7 @@
 import { ref, computed } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { autoLink } from '@/utils/autoLink.js'
 
 const props = defineProps({
   report:    { type: Object, required: true },

@@ -64,7 +64,7 @@
                   <div v-for="(item, i) in currBy['지원']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
                     <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> {{ sub }}
+                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -75,7 +75,7 @@
                   <div v-for="(item, i) in nextBy['지원']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
                     <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> {{ sub }}
+                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -91,7 +91,7 @@
                   <div v-for="(item, i) in currBy['내부작업']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
                     <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> {{ sub }}
+                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -120,7 +120,7 @@
                   <div v-for="(item, i) in currBy['공유']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
                     <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> {{ sub }}
+                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -136,7 +136,7 @@
                   <div v-for="(item, i) in currBy['기타']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
                     <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> {{ sub }}
+                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
                     </div>
                   </div>
                 </div>
@@ -319,6 +319,8 @@
 </template>
 
 <script setup>
+import { autoLink } from '@/utils/autoLink.js'
+
 const props = defineProps({
   report: { type: Object, required: true },
 })

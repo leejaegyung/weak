@@ -110,10 +110,13 @@
               <td v-for="date in currDates" :key="'c-'+date"
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
-                <input v-model="schedules[date]" type="text" class="input-field"
-                  placeholder="—"
-                  style="font-size:12px;text-align:center;padding:5px 4px;background:#fff;"
-                  @keydown.enter.prevent />
+                <div @click="openSchedModal(date, '금주')"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;"
+                  @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
+                  @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
+                  <span v-if="schedules[date]" style="white-space:pre-wrap;word-break:break-word;font-size:11px;">{{ schedules[date] }}</span>
+                  <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
+                </div>
               </td>
             </tr>
             <!-- 차주 -->
@@ -124,15 +127,147 @@
               <td v-for="date in nextDates" :key="'n-'+date"
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
-                <input v-model="schedules[date]" type="text" class="input-field"
-                  placeholder="—"
-                  style="font-size:12px;text-align:center;padding:5px 4px;background:#fff;"
-                  @keydown.enter.prevent />
+                <div @click="openSchedModal(date, '차주')"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;"
+                  @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
+                  @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
+                  <span v-if="schedules[date]" style="white-space:pre-wrap;word-break:break-word;font-size:11px;">{{ schedules[date] }}</span>
+                  <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- ── 일정 입력 모달 ── -->
+      <Transition name="sched-modal-fade">
+        <div v-if="schedModalVisible"
+          style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(3px);"
+          @click.self="closeSchedModal">
+          <div style="width:460px;max-width:95vw;background:#FFF8EE;border:2px solid #1A1100;border-radius:18px;box-shadow:6px 6px 0 #1A1100;overflow:hidden;display:flex;flex-direction:column;">
+
+            <!-- 모달 헤더 -->
+            <div style="padding:16px 22px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;color:#1A1100;">
+                  {{ schedModalWeek }} 일정 입력
+                </div>
+                <div style="font-size:12px;color:#9A8F7A;margin-top:2px;">
+                  {{ schedModalDate }} ({{ schedModalDayKr }})
+                </div>
+              </div>
+              <button type="button" @click="closeSchedModal"
+                style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;transition:color 0.1s;"
+                @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- 모달 바디 -->
+            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
+
+              <!-- 내 사이트 -->
+              <div v-if="mySites.length"
+                style="background:#FFFBF0;border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">내 사이트</span>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button v-for="site in mySites" :key="site" type="button"
+                    @click="toggleSchedTag({ label: site, icon: '', bg: '#FDCB40', color: '#1A1100' })"
+                    :style="{
+                      display:'inline-flex', alignItems:'center', gap:'4px',
+                      padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
+                      border: isSchedSiteActive(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: isSchedSiteActive(site) ? '#FDCB40' : '#fff',
+                      color: isSchedSiteActive(site) ? '#1A1100' : '#6B5E4A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                      boxShadow: isSchedSiteActive(site) ? '2px 2px 0 #1A1100' : 'none',
+                    }"
+                    @mouseenter="e=>{ if(!isSchedSiteActive(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(!isSchedSiteActive(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                    {{ site }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 상태 -->
+              <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
+                </div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                  <button v-for="tag in SCHED_QUICK_TAGS" :key="tag.label" type="button"
+                    @click="toggleSchedTag(tag)"
+                    :style="{
+                      display:'inline-flex', alignItems:'center', gap:'5px',
+                      padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
+                      border: isSchedTagActive(tag) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: isSchedTagActive(tag) ? tag.bg : '#fff',
+                      color: isSchedTagActive(tag) ? tag.color : '#9A8F7A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                      boxShadow: isSchedTagActive(tag) ? '2px 2px 0 #1A1100' : 'none',
+                    }"
+                    @mouseenter="e=>{ if(!isSchedTagActive(tag)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                    @mouseleave="e=>{ if(!isSchedTagActive(tag)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                    <span>{{ tag.icon }}</span>{{ tag.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 내용 입력 -->
+              <textarea
+                v-model="schedModalContent"
+                rows="3"
+                class="input-field"
+                placeholder="일정을 직접 입력하거나 위 태그를 선택하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
+                style="resize:vertical;line-height:1.65;font-size:13px;"
+                @keydown.ctrl.enter.prevent="saveSchedModal"
+                @keydown.meta.enter.prevent="saveSchedModal"
+              ></textarea>
+              <p style="font-size:11px;color:#9A8F7A;margin-top:-6px;">Ctrl+Enter로 빠르게 저장</p>
+            </div>
+
+            <!-- 모달 푸터 -->
+            <div style="padding:14px 22px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+              <button v-if="schedules[schedModalDate]" type="button" @click="deleteSchedModal"
+                style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
+                @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
+                @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                </svg>
+                삭제
+              </button>
+              <div v-else></div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" @click="closeSchedModal"
+                  style="display:inline-flex;align-items:center;gap:5px;background:#fff;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
+                  @mouseenter="e=>{e.currentTarget.style.background='#F5EDDB';}"
+                  @mouseleave="e=>{e.currentTarget.style.background='#fff';}">
+                  취소
+                </button>
+                <button type="button" @click="saveSchedModal"
+                  style="display:inline-flex;align-items:center;gap:5px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+                  @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+                  @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
 
       <!-- 보고 기간 -->
       <div class="card" style="background:#FFF0A0;">
@@ -401,6 +536,11 @@
   </AppLayout>
 </template>
 
+<style scoped>
+.sched-modal-fade-enter-active, .sched-modal-fade-leave-active { transition: all 0.2s ease; }
+.sched-modal-fade-enter-from, .sched-modal-fade-leave-to { opacity: 0; transform: scale(0.97); }
+</style>
+
 <script setup>
 import { ref, computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
@@ -451,6 +591,58 @@ const fmtDateOnly = (d) => {
   if (!d) return ''
   const dt = new Date(d + 'T00:00:00')
   return `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}`
+}
+// ─────────────────────────────────────────────────────
+
+// ── 일정 입력 모달 ────────────────────────────────────
+const SCHED_QUICK_TAGS = [
+  { label: '외근', icon: '🚗', bg: '#FEF3C7', color: '#92400E' },
+  { label: '출장', icon: '✈️', bg: '#DBEAFE', color: '#1E40AF' },
+  { label: '반차', icon: '🌤️', bg: '#D1FAE5', color: '#065F46' },
+  { label: '휴가', icon: '🏖️', bg: '#FCE7F3', color: '#9D174D' },
+]
+const DAY_KR_LIST = ['일', '월', '화', '수', '목', '금', '토']
+
+const schedModalVisible = ref(false)
+const schedModalDate    = ref('')
+const schedModalWeek    = ref('')
+const schedModalContent = ref('')
+
+const schedModalDayKr = computed(() => {
+  if (!schedModalDate.value) return ''
+  const d = new Date(schedModalDate.value + 'T00:00:00')
+  return DAY_KR_LIST[d.getDay()]
+})
+
+const openSchedModal = (date, week) => {
+  schedModalDate.value    = date
+  schedModalWeek.value    = week
+  schedModalContent.value = schedules.value[date] ?? ''
+  schedModalVisible.value = true
+}
+const closeSchedModal = () => { schedModalVisible.value = false }
+
+const saveSchedModal = () => {
+  const content = schedModalContent.value.trim()
+  if (content) schedules.value[schedModalDate.value] = content
+  else         delete schedules.value[schedModalDate.value]
+  schedModalVisible.value = false
+}
+const deleteSchedModal = () => {
+  delete schedules.value[schedModalDate.value]
+  schedModalVisible.value = false
+}
+
+const isSchedTagActive = (tag) => schedModalContent.value.includes(tag.label)
+const isSchedSiteActive = (site) => schedModalContent.value.includes(site)
+
+const toggleSchedTag = (tag) => {
+  const cur = schedModalContent.value
+  if (cur.includes(tag.label)) {
+    schedModalContent.value = cur.replace(tag.label, '').replace(/\n{2,}/g, '\n').trim()
+  } else {
+    schedModalContent.value = cur ? cur + '\n' + tag.label : tag.label
+  }
 }
 // ─────────────────────────────────────────────────────
 

@@ -80,11 +80,20 @@
                 fontSize:'12px',
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
-                background: isToday(date) ? '#FFF0A0' : 'transparent',
+                background: isToday(date) ? '#FFF0A0' : (isHoliday(date) ? '#FFF5F5' : 'transparent'),
                 minWidth: '80px',
               }">
-              <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
-              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
+              <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
+                :style="{ color: isHoliday(date) ? '#DC2626' : 'inherit' }">
+                {{ DAY_KR[i % 5] }}
+              </div>
+              <div :style="{ fontSize:'11px', marginTop:'2px', color: isHoliday(date) ? '#DC2626' : '#9A8F7A', fontWeight: isHoliday(date) ? '700' : '400' }">
+                {{ date.substring(5).replace('-','/') }}
+              </div>
+              <div v-if="isHoliday(date)"
+                style="font-size:9px;color:#DC2626;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px;margin-left:auto;margin-right:auto;">
+                {{ holidayName(date) }}
+              </div>
             </th>
           </tr>
         </thead>
@@ -264,12 +273,14 @@
                     @click="modalDate = date"
                     :style="{
                       padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
-                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
-                      background: modalDate === date ? (isToday(date) ? '#FDCB40' : '#1A1100') : (isToday(date) ? '#FFF0A0' : '#fff'),
-                      color: modalDate === date ? (isToday(date) ? '#1A1100' : '#FDCB40') : '#4A3F2A',
+                      border: modalDate === date ? '2px solid #1A1100' : (isHoliday(date) ? '2px solid #FCA5A5' : '2px solid #E8E0D0'),
+                      background: modalDate === date ? (isToday(date) ? '#FDCB40' : '#1A1100') : (isToday(date) ? '#FFF0A0' : (isHoliday(date) ? '#FFF5F5' : '#fff')),
+                      color: modalDate === date ? (isToday(date) ? '#1A1100' : '#FDCB40') : (isHoliday(date) ? '#DC2626' : '#4A3F2A'),
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                    }">
+                    }"
+                    :title="isHoliday(date) ? holidayName(date) : ''">
                     {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
+                    <span v-if="isHoliday(date)" style="display:block;font-size:9px;font-weight:600;color:#DC2626;margin-top:1px;">{{ holidayName(date) }}</span>
                   </button>
                 </div>
               </div>
@@ -283,12 +294,14 @@
                     @click="modalDate = date"
                     :style="{
                       padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
-                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
-                      background: modalDate === date ? '#1A1100' : '#fff',
-                      color: modalDate === date ? '#FDCB40' : '#4A3F2A',
+                      border: modalDate === date ? '2px solid #1A1100' : (isHoliday(date) ? '2px solid #FCA5A5' : '2px solid #E8E0D0'),
+                      background: modalDate === date ? '#1A1100' : (isHoliday(date) ? '#FFF5F5' : '#fff'),
+                      color: modalDate === date ? '#FDCB40' : (isHoliday(date) ? '#DC2626' : '#4A3F2A'),
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                    }">
+                    }"
+                    :title="isHoliday(date) ? holidayName(date) : ''">
                     {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
+                    <span v-if="isHoliday(date)" style="display:block;font-size:9px;font-weight:600;color:#DC2626;margin-top:1px;">{{ holidayName(date) }}</span>
                   </button>
                 </div>
               </div>
@@ -426,6 +439,7 @@ const props = defineProps({
   isCurrentWeek:  { type: Boolean, default: true },
   weekReportMap:  { type: Object,  default: () => ({}) },
   mySites:        { type: Array,   default: () => [] },
+  holidays:       { type: Object,  default: () => ({}) },  // {'YYYY-MM-DD': '공휴일명'}
 })
 
 const DAY_KR = ['월', '화', '수', '목', '금']
@@ -433,9 +447,11 @@ const DAY_KR = ['월', '화', '수', '목', '금']
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 const avatarColor = (id) => AVATAR_COLORS[id % AVATAR_COLORS.length]
 
-const today    = new Date().toISOString().slice(0, 10)
-const isToday  = (d) => d === today
-const allDates = computed(() => [...props.currDates, ...props.nextDates])
+const today      = new Date().toISOString().slice(0, 10)
+const isToday    = (d) => d === today
+const isHoliday  = (d) => !!props.holidays[d]
+const holidayName = (d) => props.holidays[d] ?? ''
+const allDates   = computed(() => [...props.currDates, ...props.nextDates])
 
 const nameColStyle = {
   width: props.isAdmin ? '130px' : '100px',

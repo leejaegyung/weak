@@ -58,10 +58,16 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        // 자기 자신은 삭제 불가
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', '자기 자신의 계정은 삭제할 수 없습니다.');
+        }
+
         $this->userService->delete($user);
 
         return redirect()->route('admin.users.index')
-            ->with('success', '사용자가 삭제되었습니다.');
+            ->with('success', $user->name . ' 님의 계정이 삭제되었습니다.');
     }
 
     public function toggleActive(User $user): RedirectResponse

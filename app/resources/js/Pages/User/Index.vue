@@ -94,11 +94,11 @@
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">전체 목록</span>
           <span style="font-size:12px;color:#9A8F7A;font-weight:600;">{{ users.length }}명</span>
         </div>
-        <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
-          <span>이름</span><span>아이디</span><span>직급</span><span>권한</span><span>마지막 접속</span><span>숨김</span><span>상태</span>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr 44px;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
+          <span>이름</span><span>아이디</span><span>직급</span><span>권한</span><span>마지막 접속</span><span>숨김</span><span>상태</span><span></span>
         </div>
         <div v-for="(u, i) in users" :key="u.id"
-          style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr;padding:12px 20px;align-items:center;transition:background 0.1s;cursor:pointer;"
+          style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr 44px;padding:12px 20px;align-items:center;transition:background 0.1s;cursor:pointer;"
           :style="{ borderBottom: i < users.length-1 ? '1.5px solid #F5EDDB' : 'none' }"
           @click="openEdit(u)"
           @mouseenter="e=>e.currentTarget.style.background='#FFF8EE'"
@@ -140,7 +140,7 @@
               {{ u.is_hidden ? '숨김' : '표시중' }}
             </button>
           </div>
-          <!-- 상태: 단일 토글 버튼 -->
+          <!-- 상태 토글 -->
           <div @click.stop>
             <button @click="toggleActive(u)"
               style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;cursor:pointer;font-weight:700;transition:all 0.1s;white-space:nowrap;"
@@ -150,6 +150,19 @@
               <span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
                 :style="u.is_active ? 'background:#16A34A;' : 'background:#9CA3AF;'"></span>
               {{ u.is_active ? '활성' : '비활성' }}
+            </button>
+          </div>
+          <!-- 삭제 버튼 -->
+          <div @click.stop style="display:flex;justify-content:center;">
+            <button @click="confirmDelete(u)"
+              title="사용자 삭제"
+              style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:5px;border-radius:6px;transition:color 0.1s;display:flex;align-items:center;"
+              @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+              @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -211,6 +224,33 @@
         </div>
       </div>
     </template>
+
+    <!-- 삭제 확인 모달 -->
+    <div v-if="deleteTarget"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      @click.self="deleteTarget=null">
+      <div class="card" style="width:400px;padding:28px;text-align:center;">
+        <div style="width:52px;height:52px;background:#FEE2E2;border:2px solid #DC2626;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </div>
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:17px;font-weight:800;color:#1A1100;margin-bottom:10px;">사용자를 삭제할까요?</div>
+        <div style="font-size:13px;color:#9A8F7A;line-height:1.8;margin-bottom:22px;">
+          <strong style="color:#1A1100;">{{ deleteTarget?.name }}</strong> (@{{ deleteTarget?.username }}) 계정과<br>
+          해당 사용자의 <strong style="color:#DC2626;">모든 보고서 및 일정</strong>이<br>
+          영구적으로 삭제됩니다. 되돌릴 수 없습니다.
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button @click="deleteTarget=null" class="btn-secondary">취소</button>
+          <button @click="doDelete"
+            style="background:#DC2626;color:#fff;border:2px solid #DC2626;border-radius:10px;padding:8px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #991B1B;transition:all 0.1s;">
+            삭제하기
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- 추가/수정 모달 -->
     <div v-if="showModal"
@@ -314,6 +354,16 @@ const submitUser = () => {
 }
 const toggleActive = (u) => router.post(`/admin/users/${u.id}/toggle-active`)
 const toggleHidden = (u) => router.post(`/admin/users/${u.id}/toggle-hidden`)
+
+// ── 사용자 삭제 ──
+const deleteTarget = ref(null)
+const confirmDelete = (u) => { deleteTarget.value = u }
+const doDelete = () => {
+  if (!deleteTarget.value) return
+  router.delete(`/admin/users/${deleteTarget.value.id}`, {
+    onSuccess: () => { deleteTarget.value = null },
+  })
+}
 
 const approve   = (id) => router.post(`/admin/users/${id}/approve`)
 const rejectReg = (id) => router.post(`/admin/users/${id}/reject-registration`)

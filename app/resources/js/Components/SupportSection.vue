@@ -93,34 +93,40 @@
           <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">
             {{ idx + 1 }}.
           </span>
-          <div style="flex:1;position:relative;">
+
+          <!-- input + 드롭다운 버튼 묶음 -->
+          <div :ref="el => { if (el) containerRefs[idx] = el }"
+            style="flex:1;display:flex;gap:4px;align-items:center;">
             <input
               :ref="el => { if (el) titleRefs[idx] = el }"
               v-model="item.title"
-              @input="emitUpdate"
+              @input="onInputChange(idx)"
               @focus="onTitleFocus(idx)"
               @blur="onTitleBlur"
-              @keydown.enter.prevent
-              @keydown.escape="suggestVisible = false"
+              @keydown.enter.prevent="pickFirst(idx)"
+              @keydown.escape="closeAll"
+              @keydown.arrow-down.prevent="hoverIdx = Math.min(hoverIdx + 1, activeSuggestions.length - 1)"
+              @keydown.arrow-up.prevent="hoverIdx = Math.max(hoverIdx - 1, 0)"
               type="text"
               class="input-field"
               placeholder="항목명"
-              style="width:100%;font-weight:700;font-size:13px;" />
-            <!-- 자동완성 드롭다운 -->
-            <div v-if="suggestVisible && focusedTitleIdx === idx && activeSuggestions.length"
-              style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:2px solid #1A1100;border-radius:10px;box-shadow:3px 3px 0 #1A1100;z-index:100;overflow:hidden;">
-              <div v-for="(s, si) in activeSuggestions" :key="si"
-                @mousedown.prevent="selectSuggestion(idx, s)"
-                style="padding:8px 14px;font-size:12px;font-weight:600;color:#1A1100;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background 0.08s;"
-                @mouseenter="e=>e.currentTarget.style.background='#FFF0A0'"
-                @mouseleave="e=>e.currentTarget.style.background='transparent'">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
-                {{ s }}
-              </div>
-            </div>
+              style="flex:1;font-weight:700;font-size:13px;" />
+
+            <!-- 드롭다운 토글 버튼 (▼) -->
+            <button v-if="suggestions.length" type="button"
+              @mousedown.prevent="toggleDropdown(idx)"
+              title="저장된 항목 목록 보기"
+              style="flex-shrink:0;background:#F0EBE0;border:1.5px solid #C5BAA8;border-radius:7px;width:28px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;"
+              @mouseenter="e=>{e.currentTarget.style.background='#E8E0D0';e.currentTarget.style.borderColor='#9A8F7A';}"
+              @mouseleave="e=>{e.currentTarget.style.background='#F0EBE0';e.currentTarget.style.borderColor='#C5BAA8';}">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6B5E4A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                :style="{ transform: dropdownOpen && focusedTitleIdx === idx ? 'rotate(180deg)' : 'rotate(0deg)', transition:'transform 0.15s' }">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
           </div>
+
+          <!-- 항목 삭제 버튼 -->
           <button type="button" @click="removeItem(idx)"
             style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
             @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
@@ -172,21 +178,74 @@
       <p v-if="error" style="font-size:12px;color:#FD4401;margin:0;">{{ error }}</p>
     </div>
   </div>
+
+  <!-- ── 자동완성 드롭다운 (body에 텔레포트 → overflow 잘림 없음) ── -->
+  <Teleport to="body">
+    <div v-if="showDropdown && activeSuggestions.length"
+      :style="{
+        position: 'fixed',
+        top: dropPos.top + 'px',
+        left: dropPos.left + 'px',
+        width: dropPos.width + 'px',
+        background: '#fff',
+        border: '2px solid #1A1100',
+        borderRadius: '10px',
+        boxShadow: '4px 4px 0 #1A1100',
+        zIndex: 9999,
+        maxHeight: '240px',
+        overflowY: 'auto',
+        fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif',
+      }">
+      <!-- 드롭다운 헤더 (전체 목록일 때) -->
+      <div v-if="dropdownOpen"
+        style="padding:6px 14px;font-size:10px;font-weight:800;color:#9A8F7A;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1.5px solid #F0EBE0;background:#FDFAF5;">
+        저장된 항목
+      </div>
+      <div v-for="(s, si) in activeSuggestions" :key="si"
+        @mousedown.prevent="selectSuggestion(focusedTitleIdx, s)"
+        :style="{
+          padding: '9px 14px',
+          fontSize: '12px',
+          fontWeight: '600',
+          color: '#1A1100',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: hoverIdx === si ? '#FFF0A0' : 'transparent',
+          transition: 'background 0.07s',
+        }"
+        @mouseenter="hoverIdx = si"
+        @mouseleave="hoverIdx = -1">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <!-- 타이핑 연관어 하이라이트 -->
+        <span v-if="!dropdownOpen && currentQuery">
+          <template v-for="(part, pi) in highlight(s, currentQuery)" :key="pi">
+            <strong v-if="part.match" style="color:#FD4401;font-weight:800;">{{ part.text }}</strong>
+            <span v-else>{{ part.text }}</span>
+          </template>
+        </span>
+        <span v-else>{{ s }}</span>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   title:       { type: String,  default: '' },
   modelValue:  { type: Array,   default: () => [] },
   error:       { type: String,  default: '' },
   canPaste:    { type: Boolean, default: false },
-  suggestions: { type: Array,   default: () => [] },   // 자동완성 후보 목록 (mySites)
+  suggestions: { type: Array,   default: () => [] },
 })
 const emit = defineEmits(['update:modelValue', 'copy', 'paste', 'cancel'])
 
-// 복사 피드백
+// ── 복사 피드백 ───────────────────────────────────────
 const copied = ref(false)
 let copiedTimer = null
 
@@ -196,51 +255,141 @@ const handleCopy = () => {
   if (copiedTimer) clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => { copied.value = false }, 2000)
 }
-
-const handlePaste = () => {
-  if (!props.canPaste) return
-  emit('paste')
-}
-
+const handlePaste = () => { if (props.canPaste) emit('paste') }
 const handleCancel = () => {
   if (!props.modelValue.length) return
   emit('update:modelValue', [])
   emit('cancel')
 }
 
-const titleRefs = ref({})
+// ── Ref 모음 ─────────────────────────────────────────
+const titleRefs     = ref({})
+const containerRefs = ref({})
 
-// ── 자동완성 ──────────────────────────────────────────
-const focusedTitleIdx = ref(-1)   // 현재 포커스된 타이틀 input 인덱스
-const suggestVisible  = ref(false)
+// ── 드롭다운 위치 ─────────────────────────────────────
+const dropPos = ref({ top: 0, left: 0, width: 240 })
 
+const updateDropPos = (idx) => {
+  const el = containerRefs.value[idx]
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  dropPos.value = {
+    top:   r.bottom + 4,
+    left:  r.left,
+    width: Math.max(r.width, 200),
+  }
+}
+
+// ── 자동완성 상태 ─────────────────────────────────────
+const focusedTitleIdx = ref(-1)
+const suggestVisible  = ref(false)   // 타이핑 연관어 표시
+const dropdownOpen    = ref(false)   // ▼ 버튼으로 전체 목록 표시
+const currentQuery    = ref('')
+const hoverIdx        = ref(-1)
+
+const showDropdown = computed(() =>
+  focusedTitleIdx.value >= 0 && (suggestVisible.value || dropdownOpen.value)
+)
+
+// 연관어: 타이핑 시 필터, 드롭다운 버튼 시 전체
 const activeSuggestions = computed(() => {
-  if (focusedTitleIdx.value < 0 || !props.suggestions?.length) return []
-  const query = (props.modelValue[focusedTitleIdx.value]?.title ?? '').toLowerCase().trim()
-  if (!query) return props.suggestions.slice(0, 8)
-  return props.suggestions.filter(s => s.toLowerCase().includes(query)).slice(0, 8)
+  if (!props.suggestions?.length) return []
+  if (dropdownOpen.value) return props.suggestions        // 전체 목록
+  const q = currentQuery.value.toLowerCase().trim()
+  if (!q) return []                                       // 빈 쿼리면 숨김
+  return props.suggestions.filter(s => s.toLowerCase().includes(q)).slice(0, 10)
 })
+
+// 타이핑 연관어 하이라이트 파싱
+const highlight = (text, query) => {
+  if (!query) return [{ text, match: false }]
+  const parts = []
+  const lower = text.toLowerCase()
+  const q     = query.toLowerCase()
+  let cursor  = 0
+  let idx
+  while ((idx = lower.indexOf(q, cursor)) !== -1) {
+    if (idx > cursor) parts.push({ text: text.slice(cursor, idx), match: false })
+    parts.push({ text: text.slice(idx, idx + q.length), match: true })
+    cursor = idx + q.length
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), match: false })
+  return parts
+}
+
+const onInputChange = (idx) => {
+  emitUpdate()
+  currentQuery.value   = props.modelValue[idx]?.title ?? ''
+  dropdownOpen.value   = false   // 타이핑 시 전체목록 닫고 연관어로 전환
+  suggestVisible.value = true
+  hoverIdx.value       = -1
+  updateDropPos(idx)
+}
 
 const onTitleFocus = (idx) => {
   focusedTitleIdx.value = idx
-  suggestVisible.value  = true
+  currentQuery.value    = props.modelValue[idx]?.title ?? ''
+  hoverIdx.value        = -1
+  // 포커스만으로는 드롭다운 열지 않음 (타이핑하거나 ▼ 버튼 클릭 시 열림)
 }
 
 const onTitleBlur = () => {
-  // mousedown으로 선택 처리 후 blur → 약간 딜레이
-  setTimeout(() => { suggestVisible.value = false; focusedTitleIdx.value = -1 }, 150)
+  setTimeout(() => {
+    suggestVisible.value  = false
+    dropdownOpen.value    = false
+    focusedTitleIdx.value = -1
+    hoverIdx.value        = -1
+  }, 160)
+}
+
+const toggleDropdown = (idx) => {
+  if (focusedTitleIdx.value !== idx) {
+    focusedTitleIdx.value = idx
+  }
+  dropdownOpen.value   = !dropdownOpen.value
+  suggestVisible.value = false
+  hoverIdx.value       = -1
+  if (dropdownOpen.value) {
+    updateDropPos(idx)
+    nextTick(() => titleRefs.value[idx]?.focus())
+  }
+}
+
+const closeAll = () => {
+  suggestVisible.value  = false
+  dropdownOpen.value    = false
+  focusedTitleIdx.value = -1
+  hoverIdx.value        = -1
+}
+
+const pickFirst = (idx) => {
+  if (hoverIdx.value >= 0 && activeSuggestions.value[hoverIdx.value]) {
+    selectSuggestion(idx, activeSuggestions.value[hoverIdx.value])
+  }
 }
 
 const selectSuggestion = (idx, text) => {
-  const arr = props.modelValue.map((item, i) => {
-    if (i !== idx) return item
-    return { ...item, title: text }
-  })
+  if (idx < 0) return
+  const arr = props.modelValue.map((item, i) =>
+    i !== idx ? item : { ...item, title: text }
+  )
   emit('update:modelValue', arr)
+  currentQuery.value    = text
   suggestVisible.value  = false
+  dropdownOpen.value    = false
   focusedTitleIdx.value = -1
+  hoverIdx.value        = -1
 }
 
+// 바깥 클릭 시 닫기
+const onDocClick = (e) => {
+  const inContainer = Object.values(containerRefs.value).some(el => el?.contains(e.target))
+  if (!inContainer) closeAll()
+}
+onMounted(()  => document.addEventListener('mousedown', onDocClick))
+onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
+
+// ── 공통 유틸 ─────────────────────────────────────────
 const autoResize = (el) => {
   if (!el) return
   el.style.height = 'auto'
@@ -263,20 +412,17 @@ const removeItem = (idx) => {
 }
 
 const addSubItem = (idx) => {
-  const arr = props.modelValue.map((item, i) => {
-    if (i !== idx) return item
-    return { ...item, sub_items: [...(item.sub_items || []), ''] }
-  })
-  emit('update:modelValue', arr)
+  emit('update:modelValue', props.modelValue.map((item, i) =>
+    i !== idx ? item : { ...item, sub_items: [...(item.sub_items || []), ''] }
+  ))
 }
 
 const removeSubItem = (idx, sIdx) => {
-  const arr = props.modelValue.map((item, i) => {
+  emit('update:modelValue', props.modelValue.map((item, i) => {
     if (i !== idx) return item
     const subs = [...(item.sub_items || [])]
     subs.splice(sIdx, 1)
     return { ...item, sub_items: subs }
-  })
-  emit('update:modelValue', arr)
+  }))
 }
 </script>

@@ -115,11 +115,14 @@
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">
-                    <div v-if="parsedSchedCell(schedules[date]).status"
-                      :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].bg, color:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].color, border:'1px solid '+SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].border, width:'fit-content', margin:'0 auto' }">
-                      {{ SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].icon }} {{ parsedSchedCell(schedules[date]).status }}
-                    </div>
-                    <div v-if="parsedSchedCell(schedules[date]).site" style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ parsedSchedCell(schedules[date]).site }}</div>
+                    <template v-for="s in parsedSchedCell(schedules[date]).statuses" :key="s">
+                      <div :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[s].bg, color:SCHED_STATUS_MAP[s].color, border:'1px solid '+SCHED_STATUS_MAP[s].border, width:'fit-content', margin:'0 auto' }">
+                        {{ SCHED_STATUS_MAP[s].icon }} {{ s }}
+                      </div>
+                    </template>
+                    <template v-for="site in parsedSchedCell(schedules[date]).sites" :key="site">
+                      <div style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ site }}</div>
+                    </template>
                     <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
                   </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
@@ -139,11 +142,14 @@
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">
-                    <div v-if="parsedSchedCell(schedules[date]).status"
-                      :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].bg, color:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].color, border:'1px solid '+SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].border, width:'fit-content' }">
-                      {{ SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].icon }} {{ parsedSchedCell(schedules[date]).status }}
-                    </div>
-                    <div v-if="parsedSchedCell(schedules[date]).site" style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ parsedSchedCell(schedules[date]).site }}</div>
+                    <template v-for="s in parsedSchedCell(schedules[date]).statuses" :key="s">
+                      <div :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[s].bg, color:SCHED_STATUS_MAP[s].color, border:'1px solid '+SCHED_STATUS_MAP[s].border, width:'fit-content' }">
+                        {{ SCHED_STATUS_MAP[s].icon }} {{ s }}
+                      </div>
+                    </template>
+                    <template v-for="site in parsedSchedCell(schedules[date]).sites" :key="site">
+                      <div style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ site }}</div>
+                    </template>
                     <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
                   </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
@@ -193,18 +199,18 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
-                    @click="schedModalSite = schedModalSite === site ? '' : site"
+                    @click="toggleSchedSite(site)"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: schedModalSite === site ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: schedModalSite === site ? '#FDCB40' : '#fff',
-                      color: schedModalSite === site ? '#1A1100' : '#6B5E4A',
+                      border: schedModalSites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalSites.includes(site) ? '#FDCB40' : '#fff',
+                      color: schedModalSites.includes(site) ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: schedModalSite === site ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: schedModalSites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(schedModalSite !== site){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
-                    @mouseleave="e=>{ if(schedModalSite !== site){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                    @mouseenter="e=>{ if(!schedModalSites.value.includes(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(!schedModalSites.value.includes(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
                     {{ site }}
                   </button>
                 </div>
@@ -220,18 +226,18 @@
                 </div>
                 <div style="display:flex;gap:7px;flex-wrap:wrap;">
                   <button v-for="tag in SCHED_QUICK_TAGS" :key="tag.label" type="button"
-                    @click="schedModalStatus = schedModalStatus === tag.label ? '' : tag.label"
+                    @click="toggleSchedStatus(tag)"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'5px',
                       padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: schedModalStatus === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: schedModalStatus === tag.label ? tag.bg : '#fff',
-                      color: schedModalStatus === tag.label ? tag.color : '#9A8F7A',
+                      border: schedModalStatuses.includes(tag.label) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalStatuses.includes(tag.label) ? tag.bg : '#fff',
+                      color: schedModalStatuses.includes(tag.label) ? tag.color : '#9A8F7A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: schedModalStatus === tag.label ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: schedModalStatuses.includes(tag.label) ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(schedModalStatus !== tag.label){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                    @mouseleave="e=>{ if(schedModalStatus !== tag.label){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                    @mouseenter="e=>{ if(!schedModalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                    @mouseleave="e=>{ if(!schedModalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
                     <span>{{ tag.icon }}</span>{{ tag.label }}
                   </button>
                 </div>
@@ -624,34 +630,41 @@ const SCHED_STATUS_LABELS = SCHED_QUICK_TAGS.map(t => t.label)
 const SCHED_STATUS_MAP    = Object.fromEntries(SCHED_QUICK_TAGS.map(t => [t.label, t]))
 const DAY_KR_LIST = ['일', '월', '화', '수', '목', '금', '토']
 
-// 셀 파싱 (Schedule/Index.vue와 동일한 로직)
+// 셀 파싱 — 다중 상태/사이트 지원 (Schedule/Index.vue와 동일한 로직)
 const parsedSchedCell = (text) => {
-  if (!text || !text.trim()) return { status: '', site: '', detail: '' }
+  if (!text || !text.trim()) return { statuses: [], sites: [], detail: '' }
   const raw = text.trim()
-  const colonIdx = raw.indexOf(':')
+  const nlIdx = raw.indexOf('\n')
+  const headerLine = nlIdx === -1 ? raw : raw.substring(0, nlIdx)
+  const detail     = nlIdx === -1 ? '' : raw.substring(nlIdx + 1).trim()
+
+  const colonIdx = headerLine.indexOf(':')
   if (colonIdx > 0) {
-    const before = raw.substring(0, colonIdx).trim()
-    if (SCHED_STATUS_LABELS.includes(before)) {
-      const afterFirst = raw.substring(colonIdx + 1)
-      const nlIdx  = afterFirst.indexOf('\n')
-      const site   = (nlIdx === -1 ? afterFirst : afterFirst.substring(0, nlIdx)).trim()
-      const detail = (nlIdx === -1 ? '' : afterFirst.substring(nlIdx + 1)).trim()
-      return { status: before, site, detail }
+    const before = headerLine.substring(0, colonIdx).trim()
+    const after  = headerLine.substring(colonIdx + 1).trim()
+    const potentialStatuses = before.split(',').map(s => s.trim()).filter(s => s)
+    if (potentialStatuses.length && potentialStatuses.every(s => SCHED_STATUS_LABELS.includes(s))) {
+      const sites = after ? after.split(',').map(s => s.trim()).filter(s => s) : []
+      return { statuses: potentialStatuses, sites, detail }
     }
   }
-  const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
-  if (lines.length > 0 && SCHED_STATUS_LABELS.includes(lines[0])) {
-    return { status: lines[0], site: '', detail: lines.slice(1).join('\n') }
+  const parts = headerLine.split(',').map(s => s.trim()).filter(s => s)
+  if (parts.length && parts.every(s => SCHED_STATUS_LABELS.includes(s))) {
+    return { statuses: parts, sites: [], detail }
   }
-  return { status: '', site: '', detail: raw }
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
+  if (lines.length && SCHED_STATUS_LABELS.includes(lines[0])) {
+    return { statuses: [lines[0]], sites: [], detail: lines.slice(1).join('\n') }
+  }
+  return { statuses: [], sites: [], detail: raw }
 }
 
-const schedModalVisible = ref(false)
-const schedModalDate    = ref('')
-const schedModalWeek    = ref('')
-const schedModalStatus  = ref('')
-const schedModalSite    = ref('')
-const schedModalDetail  = ref('')
+const schedModalVisible  = ref(false)
+const schedModalDate     = ref('')
+const schedModalWeek     = ref('')
+const schedModalStatuses = ref([])   // 다중 선택
+const schedModalSites    = ref([])   // 다중 선택
+const schedModalDetail   = ref('')
 
 const schedModalDayKr = computed(() => {
   if (!schedModalDate.value) return ''
@@ -660,25 +673,23 @@ const schedModalDayKr = computed(() => {
 })
 
 const openSchedModal = (date, week) => {
-  schedModalDate.value    = date
-  schedModalWeek.value    = week
+  schedModalDate.value     = date
+  schedModalWeek.value     = week
   const parsed = parsedSchedCell(schedules.value[date] ?? '')
-  schedModalStatus.value  = parsed.status
-  schedModalSite.value    = parsed.site
-  schedModalDetail.value  = parsed.detail
-  schedModalVisible.value = true
+  schedModalStatuses.value = parsed.statuses
+  schedModalSites.value    = parsed.sites
+  schedModalDetail.value   = parsed.detail
+  schedModalVisible.value  = true
 }
 const closeSchedModal = () => { schedModalVisible.value = false }
 
 const buildSchedContent = () => {
   const parts = []
-  if (schedModalStatus.value && schedModalSite.value) {
-    parts.push(`${schedModalStatus.value}:${schedModalSite.value}`)
-  } else if (schedModalStatus.value) {
-    parts.push(schedModalStatus.value)
-  } else if (schedModalSite.value) {
-    parts.push(schedModalSite.value)
-  }
+  const statusPart = schedModalStatuses.value.join(',')
+  const sitePart   = schedModalSites.value.join(',')
+  if (statusPart && sitePart) parts.push(`${statusPart}:${sitePart}`)
+  else if (statusPart)        parts.push(statusPart)
+  else if (sitePart)          parts.push(sitePart)
   if (schedModalDetail.value.trim()) parts.push(schedModalDetail.value.trim())
   return parts.join('\n')
 }
@@ -694,17 +705,16 @@ const deleteSchedModal = () => {
   schedModalVisible.value = false
 }
 
-const isSchedTagActive  = (tag)  => schedModalStatus.value === tag.label
-const isSchedSiteActive = (site) => schedModalSite.value   === site
-
-const toggleSchedTag = (tag) => {
-  // 상태는 단일 선택 (토글)
-  if (SCHED_STATUS_LABELS.includes(tag.label)) {
-    schedModalStatus.value = schedModalStatus.value === tag.label ? '' : tag.label
-  } else {
-    // 사이트 선택 (토글)
-    schedModalSite.value = schedModalSite.value === tag.label ? '' : tag.label
-  }
+// 다중 선택 토글
+const toggleSchedStatus = (tag) => {
+  const idx = schedModalStatuses.value.indexOf(tag.label)
+  if (idx === -1) schedModalStatuses.value.push(tag.label)
+  else            schedModalStatuses.value.splice(idx, 1)
+}
+const toggleSchedSite = (site) => {
+  const idx = schedModalSites.value.indexOf(site)
+  if (idx === -1) schedModalSites.value.push(site)
+  else            schedModalSites.value.splice(idx, 1)
 }
 // ─────────────────────────────────────────────────────
 

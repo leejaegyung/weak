@@ -152,31 +152,33 @@
               @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
-              <!-- 내용 표시 (상태별 색상 칩) -->
+              <!-- 내용 표시 (상태별 색상 칩 — 다중 선택) -->
               <div style="min-height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;">
                 <template v-if="localSchedules[user.id]?.[date]">
-                  <!-- 상태 칩 -->
-                  <div v-if="parsedCell(localSchedules[user.id][date]).status"
-                    :style="{
+                  <!-- 상태 칩들 (복수) -->
+                  <template v-for="s in parsedCell(localSchedules[user.id][date]).statuses" :key="s">
+                    <div :style="{
                       display:'inline-flex', alignItems:'center', gap:'3px',
                       padding:'2px 8px', borderRadius:'99px', fontSize:'11px', fontWeight:'800',
-                      background: STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].bg,
-                      color: STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].color,
-                      border: '1.5px solid ' + STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].border,
+                      background: STATUS_STYLE_MAP[s].bg,
+                      color: STATUS_STYLE_MAP[s].color,
+                      border: '1.5px solid ' + STATUS_STYLE_MAP[s].border,
                       width: 'fit-content',
                     }">
-                    <span style="font-size:10px;">{{ STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].icon }}</span>
-                    {{ parsedCell(localSchedules[user.id][date]).status }}
-                  </div>
-                  <!-- 사이트 칩 -->
-                  <div v-if="parsedCell(localSchedules[user.id][date]).site"
-                    style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:700;background:#FFF0D0;color:#6B4F1A;border:1.5px solid #E8D090;width:fit-content;">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                    {{ parsedCell(localSchedules[user.id][date]).site }}
-                  </div>
+                      <span style="font-size:10px;">{{ STATUS_STYLE_MAP[s].icon }}</span>
+                      {{ s }}
+                    </div>
+                  </template>
+                  <!-- 사이트 칩들 (복수) -->
+                  <template v-for="site in parsedCell(localSchedules[user.id][date]).sites" :key="site">
+                    <div style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:700;background:#FFF0D0;color:#6B4F1A;border:1.5px solid #E8D090;width:fit-content;">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                      </svg>
+                      {{ site }}
+                    </div>
+                  </template>
                   <!-- 상세 텍스트 -->
                   <div v-if="parsedCell(localSchedules[user.id][date]).detail"
                     style="font-size:11px;color:#4A3F2A;line-height:1.5;white-space:pre-wrap;word-break:break-word;padding:1px 2px;">
@@ -316,14 +318,14 @@
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: modalSite === site ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: modalSite === site ? '#FDCB40' : '#fff',
-                      color: modalSite === site ? '#1A1100' : '#6B5E4A',
+                      border: modalSites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: modalSites.includes(site) ? '#FDCB40' : '#fff',
+                      color: modalSites.includes(site) ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: modalSite === site ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: modalSites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(modalSite !== site){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
-                    @mouseleave="e=>{ if(modalSite !== site){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                    @mouseenter="e=>{ if(!modalSites.value.includes(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(!modalSites.value.includes(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
                     {{ site }}
                   </button>
                 </div>
@@ -343,14 +345,14 @@
                   :style="{
                     display:'inline-flex', alignItems:'center', gap:'5px',
                     padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                    border: modalStatus === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                    background: modalStatus === tag.label ? tag.bg : '#fff',
-                    color: modalStatus === tag.label ? tag.color : '#9A8F7A',
+                    border: modalStatuses.includes(tag.label) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                    background: modalStatuses.includes(tag.label) ? tag.bg : '#fff',
+                    color: modalStatuses.includes(tag.label) ? tag.color : '#9A8F7A',
                     cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                    boxShadow: modalStatus === tag.label ? '2px 2px 0 #1A1100' : 'none',
+                    boxShadow: modalStatuses.includes(tag.label) ? '2px 2px 0 #1A1100' : 'none',
                   }"
-                  @mouseenter="e=>{ if(modalStatus !== tag.label){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                  @mouseleave="e=>{ if(modalStatus !== tag.label){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                  @mouseenter="e=>{ if(!modalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                  @mouseleave="e=>{ if(!modalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
                   <span>{{ tag.icon }}</span>
                   {{ tag.label }}
                 </button>
@@ -504,86 +506,96 @@ const QUICK_TAGS = [
 const STATUS_STYLE_MAP = Object.fromEntries(QUICK_TAGS.map(t => [t.label, t]))
 const STATUS_LABELS    = QUICK_TAGS.map(t => t.label)
 
-// ── 셀 내용 파싱 ("상태:사이트\n상세" 형식 역파싱) ────────
+// ── 셀 내용 파싱 ("상태1,상태2:사이트1,사이트2\n상세" 형식 역파싱) ────────
 const parsedCell = (text) => {
-  if (!text || !text.trim()) return { status: '', site: '', detail: '' }
+  if (!text || !text.trim()) return { statuses: [], sites: [], detail: '' }
   const raw = text.trim()
+  const nlIdx = raw.indexOf('\n')
+  const headerLine = nlIdx === -1 ? raw : raw.substring(0, nlIdx)
+  const detail     = nlIdx === -1 ? '' : raw.substring(nlIdx + 1).trim()
 
-  // "상태:사이트" 패턴
-  const colonIdx = raw.indexOf(':')
+  // "상태들:사이트들" 패턴
+  const colonIdx = headerLine.indexOf(':')
   if (colonIdx > 0) {
-    const before = raw.substring(0, colonIdx).trim()
-    if (STATUS_LABELS.includes(before)) {
-      const afterFirst = raw.substring(colonIdx + 1)
-      const nlIdx = afterFirst.indexOf('\n')
-      const site   = (nlIdx === -1 ? afterFirst : afterFirst.substring(0, nlIdx)).trim()
-      const detail = (nlIdx === -1 ? '' : afterFirst.substring(nlIdx + 1)).trim()
-      return { status: before, site, detail }
+    const before = headerLine.substring(0, colonIdx).trim()
+    const after  = headerLine.substring(colonIdx + 1).trim()
+    const potentialStatuses = before.split(',').map(s => s.trim()).filter(s => s)
+    if (potentialStatuses.length && potentialStatuses.every(s => STATUS_LABELS.includes(s))) {
+      const sites = after ? after.split(',').map(s => s.trim()).filter(s => s) : []
+      return { statuses: potentialStatuses, sites, detail }
     }
   }
 
-  // 첫 줄이 상태인 경우 (구버전 호환)
+  // 콤마로 구분된 상태들만 (사이트 없음)
+  const parts = headerLine.split(',').map(s => s.trim()).filter(s => s)
+  if (parts.length && parts.every(s => STATUS_LABELS.includes(s))) {
+    return { statuses: parts, sites: [], detail }
+  }
+
+  // 구버전 호환: 첫 줄이 단일 상태
   const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
-  if (lines.length > 0 && STATUS_LABELS.includes(lines[0])) {
-    return { status: lines[0], site: '', detail: lines.slice(1).join('\n') }
+  if (lines.length && STATUS_LABELS.includes(lines[0])) {
+    return { statuses: [lines[0]], sites: [], detail: lines.slice(1).join('\n') }
   }
 
   // 일반 텍스트
-  return { status: '', site: '', detail: raw }
+  return { statuses: [], sites: [], detail: raw }
 }
 
-// ── 저장 내용 빌드 ("상태:사이트\n상세" 형식으로 조합) ───
+// ── 저장 내용 빌드 ("상태1,상태2:사이트1,사이트2\n상세" 형식으로 조합) ───
 const buildContent = () => {
   const parts = []
-  if (modalStatus.value && modalSite.value) {
-    parts.push(`${modalStatus.value}:${modalSite.value}`)
-  } else if (modalStatus.value) {
-    parts.push(modalStatus.value)
-  } else if (modalSite.value) {
-    parts.push(modalSite.value)
-  }
+  const statusPart = modalStatuses.value.join(',')
+  const sitePart   = modalSites.value.join(',')
+  if (statusPart && sitePart) parts.push(`${statusPart}:${sitePart}`)
+  else if (statusPart)        parts.push(statusPart)
+  else if (sitePart)          parts.push(sitePart)
   if (modalDetail.value.trim()) parts.push(modalDetail.value.trim())
   return parts.join('\n')
 }
 
 // ── 모달 상태 ──────────────────────────────────────────
-const showModal   = ref(false)
-const modalDate   = ref(null)
-const modalStatus = ref('')   // 선택된 상태 ('외근'|'출장'|'반차'|'휴가'|'')
-const modalSite   = ref('')   // 선택된 사이트명 또는 ''
-const modalDetail = ref('')   // 추가 상세 텍스트
-const modalSaving = ref(false)
-const saveDone    = ref(false)
-let saveDoneTimer = null
+const showModal    = ref(false)
+const modalDate    = ref(null)
+const modalStatuses = ref([])   // 선택된 상태들 (다중)
+const modalSites    = ref([])   // 선택된 사이트들 (다중)
+const modalDetail  = ref('')    // 추가 상세 텍스트
+const modalSaving  = ref(false)
+const saveDone     = ref(false)
+let saveDoneTimer  = null
 
-// 상태 단일 선택 토글
+// 상태 다중 선택 토글
 const selectStatus = (tag) => {
-  modalStatus.value = modalStatus.value === tag.label ? '' : tag.label
+  const idx = modalStatuses.value.indexOf(tag.label)
+  if (idx === -1) modalStatuses.value.push(tag.label)
+  else            modalStatuses.value.splice(idx, 1)
 }
-// 사이트 단일 선택 토글
+// 사이트 다중 선택 토글
 const selectSite = (site) => {
-  modalSite.value = modalSite.value === site ? '' : site
+  const idx = modalSites.value.indexOf(site)
+  if (idx === -1) modalSites.value.push(site)
+  else            modalSites.value.splice(idx, 1)
 }
 
 const openModal = (date, content) => {
   const defaultDate = allDates.value.includes(today) ? today : props.currDates[0]
   modalDate.value = date ?? defaultDate
 
-  // 기존 내용 파싱해서 상태/사이트/상세 분리
+  // 기존 내용 파싱해서 상태들/사이트들/상세 분리
   const raw    = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
   const parsed = parsedCell(raw)
-  modalStatus.value = parsed.status
-  modalSite.value   = parsed.site
-  modalDetail.value = parsed.detail
-  showModal.value   = true
+  modalStatuses.value = parsed.statuses
+  modalSites.value    = parsed.sites
+  modalDetail.value   = parsed.detail
+  showModal.value     = true
 }
 
 const closeModal = () => {
-  showModal.value   = false
-  modalDate.value   = null
-  modalStatus.value = ''
-  modalSite.value   = ''
-  modalDetail.value = ''
+  showModal.value    = false
+  modalDate.value    = null
+  modalStatuses.value = []
+  modalSites.value    = []
+  modalDetail.value  = ''
 }
 
 const saveModal = async () => {

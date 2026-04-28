@@ -97,20 +97,20 @@
           <!-- input + 드롭다운 버튼 묶음 -->
           <div :ref="el => { if (el) containerRefs[idx] = el }"
             style="flex:1;display:flex;gap:4px;align-items:center;">
-            <input
+            <textarea
               :ref="el => { if (el) titleRefs[idx] = el }"
               v-model="item.title"
-              @input="onInputChange(idx)"
+              @input="e => { onInputChange(idx); e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
               @focus="onTitleFocus(idx)"
               @blur="onTitleBlur"
               @keydown.enter.prevent="pickFirst(idx)"
               @keydown.escape="closeAll"
               @keydown.arrow-down.prevent="hoverIdx = Math.min(hoverIdx + 1, activeSuggestions.length - 1)"
               @keydown.arrow-up.prevent="hoverIdx = Math.max(hoverIdx - 1, 0)"
-              type="text"
+              rows="1"
               class="input-field"
               placeholder="항목명"
-              style="flex:1;font-weight:700;font-size:13px;" />
+              style="flex:1;font-weight:700;font-size:13px;resize:none;overflow:hidden;min-height:36px;line-height:1.55;" />
 
             <!-- 드롭다운 토글 버튼 (▼) -->
             <button v-if="suggestions.length" type="button"

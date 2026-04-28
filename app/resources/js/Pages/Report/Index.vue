@@ -37,12 +37,11 @@
         </div>
 
         <!-- 미제출 알림 (관리자만) -->
-        <button v-if="isAdmin" @click="sendNotSubmittedAlert"
-          :disabled="alertSending"
+        <button v-if="isAdmin" @click="showAlertModal=true"
           class="btn-secondary btn-sm"
           style="display:inline-flex;align-items:center;gap:5px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-          {{ alertSending ? '발송 중...' : '미제출 알림' }}
+          미제출 알림
         </button>
 
         <!-- Excel 다운로드 (관리자만) -->
@@ -159,6 +158,58 @@
         style="padding:48px 20px;text-align:center;color:#9A8F7A;font-size:13px;">검색 결과가 없습니다</div>
     </div>
 
+    <!-- 미제출 알림 채널 선택 모달 -->
+    <div v-if="showAlertModal"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      @click.self="showAlertModal=false">
+      <div class="card" style="width:420px;padding:28px;">
+        <!-- 모달 헤더 -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:44px;height:44px;background:#FFF0A0;border:2px solid #1A1100;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          </div>
+          <div>
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;">미제출 알림 발송</div>
+            <div style="font-size:12px;color:#9A8F7A;margin-top:2px;">{{ weekLabel }} · 발송 채널을 선택하세요</div>
+          </div>
+        </div>
+
+        <!-- 채널 선택 -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
+          <label v-for="opt in alertChannelOptions" :key="opt.value"
+            :style="{
+              display:'flex', alignItems:'center', gap:'12px',
+              border: alertChannel===opt.value ? '2px solid #FD4401' : '2px solid #E8E0D0',
+              borderRadius: '12px', padding: '12px 16px', cursor: 'pointer',
+              background: alertChannel===opt.value ? '#FFF8EE' : '#fff',
+              transition: 'all 0.12s',
+            }"
+            @click="alertChannel=opt.value">
+            <div :style="{
+              width:'18px', height:'18px', borderRadius:'50%',
+              border: alertChannel===opt.value ? '5px solid #FD4401' : '2px solid #C0B8AC',
+              flexShrink: 0, transition:'all 0.12s',
+            }"></div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1A1100;">{{ opt.label }}</div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ opt.desc }}</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- 버튼 -->
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button @click="showAlertModal=false" class="btn-secondary" :disabled="alertSending">취소</button>
+          <button @click="sendNotSubmittedAlert"
+            :disabled="alertSending"
+            style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;">
+            <svg v-if="alertSending" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity=".25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            {{ alertSending ? '발송 중...' : '알림 발송' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 삭제 확인 모달 -->
     <div v-if="deleteTarget"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
@@ -250,16 +301,32 @@ const statusBadge = (s) => ({
   not_submitted: 'badge-not-submitted',
 })[s] ?? 'badge-draft'
 
-// ── 미제출 Webhook 알림 ──
-const alertSending = ref(false)
+// ── 미제출 알림 채널 선택 모달 ──
+const showAlertModal = ref(false)
+const alertSending   = ref(false)
+const alertChannel   = ref('both')
+
+const alertChannelOptions = [
+  { value: 'both',    label: '전체 전송',       desc: 'Webhook 팀 알림 + 카카오톡 개인 메시지 동시 발송' },
+  { value: 'webhook', label: 'Webhook 전송만',  desc: '팀 채널(슬랙/Teams/구글챗 등)에만 발송' },
+  { value: 'kakao',   label: '카카오톡 전송만', desc: '카카오 연동된 팀원에게 개인 메시지로만 발송' },
+]
+
 const sendNotSubmittedAlert = async () => {
   if (!props.weekStart) return
   alertSending.value = true
   try {
-    const res = await window.axios.post('/admin/settings/notify-not-submitted', { week_start: props.weekStart })
+    const res = await window.axios.post('/admin/settings/notify-not-submitted', {
+      week_start: props.weekStart,
+      channels:   alertChannel.value,
+    })
+    showAlertModal.value = false
     alert(res.data.message)
-  } catch { alert('알림 발송 실패. Webhook 설정을 확인해 주세요.') }
-  finally { alertSending.value = false }
+  } catch {
+    alert('알림 발송 실패. 설정을 확인해 주세요.')
+  } finally {
+    alertSending.value = false
+  }
 }
 
 let timer = null

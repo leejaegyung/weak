@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\WeeklyReport;
+use App\Services\KakaoService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,10 @@ use Inertia\Response;
 
 class SettingController extends Controller
 {
-    public function __construct(private WebhookService $webhookService) {}
+    public function __construct(
+        private WebhookService $webhookService,
+        private KakaoService   $kakaoService,
+    ) {}
 
     /** Webhook 설정 페이지 */
     public function webhook(): Response
@@ -54,10 +58,15 @@ class SettingController extends Controller
         return response()->json(['ok' => $response->successful()]);
     }
 
-    /** 미제출자 Webhook 알림 발송 (관리자 수동 트리거) */
+    /** 미제출자 알림 발송 (관리자 수동 트리거) — channels: webhook | kakao | both */
     public function sendNotSubmittedAlert(Request $request): JsonResponse
     {
-        $request->validate(['week_start' => ['required', 'date']]);
+        $request->validate([
+            'week_start' => ['required', 'date'],
+            'channels'   => ['required', 'in:webhook,kakao,both'],
+        ]);
+
+        $channels = $request->input('channels', 'both');
 
         // 입력 날짜가 무슨 요일이든 그 주 월요일로 정규화
         $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
@@ -76,16 +85,42 @@ class SettingController extends Controller
             return response()->json(['ok' => true, 'message' => '미제출자가 없습니다.']);
         }
 
-        $monday     = Carbon::parse($weekStart);
-        $month      = $monday->month;
-        $weekOfMon  = (int) ceil($monday->day / 7);
-        $weekLabel  = "{$month}월 {$weekOfMon}주차";
+        $monday    = Carbon::parse($weekStart);
+        $month     = $monday->month;
+        $weekOfMon = (int) ceil($monday->day / 7);
+        $weekLabel = "{$month}월 {$weekOfMon}주차";
 
-        $this->webhookService->notifyNotSubmitted($notSubmittedUsers->pluck('name')->toArray(), $weekLabel);
+        $webhookSent = 0;
+        $kakaoSent   = 0;
+        $kakaoFailed = 0;
+
+        // ── Webhook 발송 ────────────────────────────────────────────
+        if (in_array($channels, ['webhook', 'both'])) {
+            $this->webhookService->notifyNotSubmitted($notSubmittedUsers->pluck('name')->toArray(), $weekLabel);
+            $webhookSent = 1;
+        }
+
+        // ── 카카오 개인 발송 ────────────────────────────────────────
+        if (in_array($channels, ['kakao', 'both'])) {
+            foreach ($notSubmittedUsers as $user) {
+                if (empty($user->kakao_id)) continue;
+                $text = "📋 [{$weekLabel}] 주간보고 미제출 알림\n\n{$user->name}님, 이번 주 주간보고가 아직 제출되지 않았습니다.\n\n빠른 시간 내에 보고서를 제출해 주세요.";
+                $ok   = $this->kakaoService->sendToUser($user, $text);
+                $ok ? $kakaoSent++ : $kakaoFailed++;
+            }
+        }
+
+        // ── 결과 메시지 조합 ────────────────────────────────────────
+        $total   = $notSubmittedUsers->count();
+        $parts   = [];
+        if ($webhookSent) $parts[] = 'Webhook 전송 완료';
+        if ($kakaoSent || $kakaoFailed) {
+            $parts[] = "카카오 {$kakaoSent}/{$total}명 전송" . ($kakaoFailed ? " ({$kakaoFailed}명 실패 — 카카오 미연동)" : '');
+        }
 
         return response()->json([
             'ok'      => true,
-            'message' => count($notSubmittedUsers) . '명에게 미제출 알림을 발송했습니다.',
+            'message' => implode(' / ', $parts) ?: '알림을 발송했습니다.',
         ]);
     }
 }

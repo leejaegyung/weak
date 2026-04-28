@@ -86,6 +86,54 @@
         </form>
       </div>
 
+      <!-- ── 카카오 연동 ── -->
+      <div class="card">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 512 512" fill="#1A1100">
+            <path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/>
+          </svg>
+          카카오 연동
+        </div>
+
+        <!-- 연결된 상태 -->
+        <div v-if="kakaoConnected"
+          style="display:flex;align-items:center;justify-content:space-between;background:#FEF9C3;border:2px solid #1A1100;border-radius:12px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:#FEE500;border:2px solid #1A1100;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 512 512" fill="#1A1100">
+                <path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1A1100;">카카오 계정 연결됨</div>
+              <div style="font-size:11px;color:#6B4F1A;margin-top:2px;">카카오로 로그인 및 알림 수신이 가능합니다</div>
+            </div>
+          </div>
+          <button type="button" @click="disconnectKakao"
+            style="background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.1s;"
+            @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
+            @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
+            연동 해제
+          </button>
+        </div>
+
+        <!-- 미연결 상태 -->
+        <div v-else>
+          <p style="font-size:12px;color:#9A8F7A;margin-bottom:14px;line-height:1.7;">
+            카카오 계정을 연결하면 카카오톡으로 업무 알림을 수신하고,<br>카카오 계정으로 바로 로그인할 수 있습니다.
+          </p>
+          <a href="/auth/kakao?intent=connect"
+            style="display:inline-flex;align-items:center;gap:8px;background:#FEE500;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:800;text-decoration:none;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+            @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+            @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+            <svg width="16" height="16" viewBox="0 0 512 512" fill="#1A1100">
+              <path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/>
+            </svg>
+            카카오 계정 연결하기
+          </a>
+        </div>
+      </div>
+
       <!-- ── 점검 사이트 관리 ── -->
       <div class="card">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
@@ -154,13 +202,25 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
+import { useForm, usePage, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
   profileUser: { type: Object, required: true },
   sites:       { type: Array,  default: () => [] },
 })
+
+const kakaoConnected = ref(props.profileUser.kakao_connected ?? false)
+
+const disconnectKakao = () => {
+  if (!confirm('카카오 연동을 해제하시겠습니까?')) return
+  router.post('/profile/kakao/disconnect', {}, {
+    onSuccess: () => {
+      kakaoConnected.value = false
+      showToast('카카오 연동이 해제되었습니다.')
+    },
+  })
+}
 
 // ── 기본 정보 폼 ──────────────────────────────────────
 const showPwSection = ref(false)

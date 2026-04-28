@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\KakaoAuthController;
 use App\Http\Controllers\KakaoController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -21,6 +22,10 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// 카카오 OAuth (로그인·연결 공용 콜백 — 미들웨어 없음, 컨트롤러에서 분기)
+Route::get('/auth/kakao',          [KakaoAuthController::class, 'redirect'])->name('auth.kakao.redirect');
+Route::get('/auth/kakao/callback', [KakaoAuthController::class, 'callback'])->name('auth.kakao.callback');
 
 Route::middleware('auth')->group(function () {
     // 보고서 CRUD
@@ -47,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile',                        [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/sites',                 [ProfileController::class, 'storeSite'])->name('profile.sites.store');
     Route::delete('/profile/sites/{site}',        [ProfileController::class, 'destroySite'])->name('profile.sites.destroy');
+    Route::post('/profile/kakao/disconnect',      [ProfileController::class, 'kakaoDisconnect'])->name('profile.kakao.disconnect');
 
     // 인앱 알림
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -67,13 +73,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/notify-not-submitted', [SettingController::class, 'sendNotSubmittedAlert'])->name('admin.settings.notify-not-submitted');
 
     // 설정 — 카카오 연동
-    Route::get('/settings/kakao',          [KakaoController::class, 'show'])->name('admin.settings.kakao');
-    Route::post('/settings/kakao',         [KakaoController::class, 'update'])->name('admin.settings.kakao.update');
-    Route::get('/settings/kakao/auth',     [KakaoController::class, 'auth'])->name('admin.settings.kakao.auth');
-    Route::get('/settings/kakao/callback', [KakaoController::class, 'callback'])->name('admin.settings.kakao.callback');
-    Route::post('/settings/kakao/test',    [KakaoController::class, 'test'])->name('admin.settings.kakao.test');
-    Route::post('/settings/kakao/disconnect', [KakaoController::class, 'disconnect'])->name('admin.settings.kakao.disconnect');
-    Route::post('/settings/kakao/send',    [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
+    Route::get('/settings/kakao',             [KakaoController::class, 'show'])->name('admin.settings.kakao');
+    Route::post('/settings/kakao',            [KakaoController::class, 'update'])->name('admin.settings.kakao.update');
+    Route::post('/settings/kakao/send',       [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
     // 회원가입 승인 관리 (/{user} 와이드카드보다 먼저 선언)
     Route::get('/users/pending',                      [UserController::class, 'pendingIndex'])->name('admin.users.pending');
     Route::post('/users/{user}/approve',              [UserController::class, 'approve'])->name('admin.users.approve');

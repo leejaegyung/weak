@@ -111,7 +111,7 @@
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
                 <div @click="openSchedModal(date, '금주')"
-                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;transition:all 0.12s;line-height:1.5;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">
@@ -138,7 +138,7 @@
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
                 <div @click="openSchedModal(date, '차주')"
-                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;gap:2px;"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;transition:all 0.12s;line-height:1.5;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">

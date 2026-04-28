@@ -22,14 +22,26 @@ class ProfileController extends Controller
 
         return Inertia::render('Profile/Index', [
             'profileUser' => [
-                'id'       => $user->id,
-                'name'     => $user->name,
-                'username' => $user->username,
-                'position' => $user->position ?? '',
-                'role'     => $user->role,
+                'id'            => $user->id,
+                'name'          => $user->name,
+                'username'      => $user->username,
+                'position'      => $user->position ?? '',
+                'role'          => $user->role,
+                'kakao_connected' => !empty($user->kakao_id),
             ],
             'sites' => $sites,
         ]);
+    }
+
+    /** 카카오 연동 해제 */
+    public function kakaoDisconnect(): RedirectResponse
+    {
+        Auth::user()->update([
+            'kakao_id'            => null,
+            'kakao_access_token'  => null,
+            'kakao_refresh_token' => null,
+        ]);
+        return back()->with('success', '카카오 연동이 해제되었습니다.');
     }
 
     /** 기본 정보 수정 (이름, 직급, 비밀번호) */

@@ -23,12 +23,17 @@ class User extends Authenticatable
         'sort_order',
         'registration_status',
         'google_id',
+        'kakao_id',
+        'kakao_access_token',
+        'kakao_refresh_token',
         'last_login_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'kakao_access_token',
+        'kakao_refresh_token',
     ];
 
     protected function casts(): array

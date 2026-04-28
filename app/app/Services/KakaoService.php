@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -11,27 +12,24 @@ class KakaoService
     const AUTH_URL    = 'https://kauth.kakao.com/oauth/authorize';
     const TOKEN_URL   = 'https://kauth.kakao.com/oauth/token';
     const MESSAGE_URL = 'https://kapi.kakao.com/v2/api/talk/memo/default/send';
+    const PROFILE_URL = 'https://kapi.kakao.com/v2/user/me';
 
-    /** 연동 여부 */
-    public function isConnected(): bool
-    {
-        return !empty(Setting::get('kakao_access_token'));
-    }
+    // ─── 앱 설정 (REST API 키) ────────────────────────────────────
 
-    /** OAuth 인증 URL 생성 */
-    public function getAuthUrl(string $redirectUri): string
+    /** 사용자 OAuth 인증 URL 생성 (로그인 / 카카오 연결 공용) */
+    public function getUserAuthUrl(string $redirectUri): string
     {
         $params = http_build_query([
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
-            'scope'         => 'talk_message',
+            'scope'         => 'profile_nickname,talk_message',
         ]);
         return self::AUTH_URL . '?' . $params;
     }
 
-    /** 인가 코드 → Access Token 교환 */
-    public function exchangeCode(string $code, string $redirectUri): bool
+    /** 인가 코드 → Access Token 교환 (사용자용) */
+    public function exchangeUserCode(string $code, string $redirectUri): ?array
     {
         try {
             $response = Http::timeout(10)->asForm()->post(self::TOKEN_URL, [
@@ -40,25 +38,58 @@ class KakaoService
                 'redirect_uri' => $redirectUri,
                 'code'         => $code,
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                Setting::set('kakao_access_token',  $data['access_token']  ?? '');
-                Setting::set('kakao_refresh_token', $data['refresh_token'] ?? '');
-                Setting::set('kakao_connected_at',  now()->format('Y-m-d H:i:s'));
-                return true;
-            }
+            if ($response->successful()) return $response->json();
             Log::warning('카카오 코드 교환 실패: ' . $response->body());
         } catch (\Throwable $e) {
-            Log::error('카카오 토큰 교환 예외: ' . $e->getMessage());
+            Log::error('카카오 코드 교환 예외: ' . $e->getMessage());
         }
-        return false;
+        return null;
     }
 
-    /** Access Token 갱신 */
-    public function refreshToken(): bool
+    /** 카카오 프로필 조회 (id, nickname) */
+    public function getUserProfile(string $accessToken): ?array
     {
-        $refreshToken = Setting::get('kakao_refresh_token', '');
+        try {
+            $response = Http::timeout(10)
+                ->withToken($accessToken)
+                ->get(self::PROFILE_URL);
+            if ($response->successful()) return $response->json();
+        } catch (\Throwable $e) {
+            Log::error('카카오 프로필 조회 예외: ' . $e->getMessage());
+        }
+        return null;
+    }
+
+    // ─── 사용자별 메시지 발송 ─────────────────────────────────────
+
+    /**
+     * 특정 팀원에게 카카오 메시지 발송 (나에게 보내기 — 해당 사용자의 토큰 사용)
+     * 토큰 만료(401) 시 자동 갱신 후 재시도
+     */
+    public function sendToUser(User $user, string $text): bool
+    {
+        if (empty($user->kakao_access_token)) return false;
+
+        // $hidden 필드는 직접 쿼리로 가져와야 함
+        $token = User::where('id', $user->id)->value('kakao_access_token');
+        if (empty($token)) return false;
+
+        $status = $this->doSend($token, $text);
+
+        if ($status === 401) {
+            if ($this->refreshUserToken($user)) {
+                $token  = User::where('id', $user->id)->value('kakao_access_token');
+                $status = $this->doSend($token, $text);
+            }
+        }
+
+        return $status === 200;
+    }
+
+    /** 사용자 Access Token 갱신 */
+    public function refreshUserToken(User $user): bool
+    {
+        $refreshToken = User::where('id', $user->id)->value('kakao_refresh_token');
         if (empty($refreshToken)) return false;
 
         try {
@@ -70,46 +101,36 @@ class KakaoService
 
             if ($response->successful()) {
                 $data = $response->json();
-                Setting::set('kakao_access_token', $data['access_token']);
-                if (!empty($data['refresh_token'])) {
-                    Setting::set('kakao_refresh_token', $data['refresh_token']);
-                }
+                $user->updateQuietly([
+                    'kakao_access_token'  => $data['access_token'],
+                    'kakao_refresh_token' => $data['refresh_token'] ?? $refreshToken,
+                ]);
                 return true;
             }
         } catch (\Throwable $e) {
-            Log::error('카카오 토큰 갱신 예외: ' . $e->getMessage());
+            Log::error('카카오 사용자 토큰 갱신 예외: ' . $e->getMessage());
         }
         return false;
     }
 
-    /**
-     * 나에게 보내기 (관리자 카카오 계정으로 메시지 발송)
-     * — 토큰 만료(401) 시 자동 갱신 후 재시도
-     */
-    public function sendMessage(string $text): bool
+    /** 사용자 카카오 연동 해제 */
+    public function disconnectUser(User $user): void
     {
-        $accessToken = Setting::get('kakao_access_token', '');
-        if (empty($accessToken)) return false;
-
-        $result = $this->doSend($accessToken, $text);
-
-        if ($result === 401) {
-            // 토큰 만료 → 갱신 후 재시도
-            if ($this->refreshToken()) {
-                $accessToken = Setting::get('kakao_access_token', '');
-                $result = $this->doSend($accessToken, $text);
-            }
-        }
-
-        return $result === 200;
+        $user->update([
+            'kakao_id'            => null,
+            'kakao_access_token'  => null,
+            'kakao_refresh_token' => null,
+        ]);
     }
+
+    // ─── 공통 메시지 발송 ─────────────────────────────────────────
 
     private function doSend(string $accessToken, string $text): int
     {
         try {
             $templateObject = json_encode([
                 'object_type' => 'text',
-                'text'        => $text,
+                'text'        => mb_substr($text, 0, 200), // 카카오 최대 200자
                 'link'        => [
                     'web_url'        => config('app.url'),
                     'mobile_web_url' => config('app.url'),
@@ -126,13 +147,5 @@ class KakaoService
             Log::error('카카오 메시지 발송 예외: ' . $e->getMessage());
             return 500;
         }
-    }
-
-    /** 연동 해제 */
-    public function disconnect(): void
-    {
-        Setting::set('kakao_access_token',  '');
-        Setting::set('kakao_refresh_token', '');
-        Setting::set('kakao_connected_at',  '');
     }
 }

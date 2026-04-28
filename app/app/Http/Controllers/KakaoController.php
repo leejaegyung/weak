@@ -53,7 +53,8 @@ class KakaoController extends Controller
     {
         $request->validate(['week_start' => ['required', 'date']]);
 
-        $weekStart = $request->input('week_start');
+        // 입력 날짜가 무슨 요일이든 그 주 월요일로 정규화
+        $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd   = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
 
         $submittedIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])

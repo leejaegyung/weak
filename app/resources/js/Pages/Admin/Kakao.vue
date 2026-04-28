@@ -137,7 +137,7 @@
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
           <div style="flex:1;min-width:160px;">
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">주차 시작일 (월요일)</label>
-            <input type="date" v-model="alertWeekStart" class="input-field" />
+            <input type="date" :value="alertWeekStart" @change="e => alertWeekStart = toMonday(e.target.value)" class="input-field" />
           </div>
           <button @click="sendAlert" :disabled="!alertWeekStart || alertLoading"
             style="background:#FEE500;color:#1A1100;border:2px solid #1A1100;border-radius:12px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;"
@@ -202,6 +202,16 @@ const steps = [
 // REST API 키 저장
 const keyForm = useForm({ rest_api_key: props.rest_api_key, client_secret: props.client_secret })
 const saveKey = () => keyForm.post('/admin/settings/kakao')
+
+// 날짜 → 해당 주 월요일로 보정
+const toMonday = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d.toISOString().slice(0, 10)
+}
 
 // 미제출 알림 발송
 const alertWeekStart = ref('')

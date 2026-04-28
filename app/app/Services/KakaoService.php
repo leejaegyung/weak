@@ -23,7 +23,7 @@ class KakaoService
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
-            'scope'         => 'profile_nickname',
+            'scope'         => 'profile_nickname,talk_message',
         ]);
         return self::AUTH_URL . '?' . $params;
     }

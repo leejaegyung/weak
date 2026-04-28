@@ -163,18 +163,50 @@
             개인설정
           </Link>
 
-          <Link v-if="auth?.user?.role === 'admin'"
-            href="/admin/settings/webhook"
-            class="nav-item"
-            :style="isActive('/admin/settings') ? { background:'#F5F3FF', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
-            <div :style="navIconStyle(isActive('/admin/settings'))">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                <circle cx="12" cy="12" r="3"/>
+          <!-- 알림 설정 — 아코디언 서브메뉴 -->
+          <template v-if="auth?.user?.role === 'admin'">
+            <!-- 부모 토글 버튼 -->
+            <button type="button" @click="settingsOpen = !settingsOpen"
+              class="nav-item"
+              style="width:100%;text-align:left;background:none;border:none;cursor:pointer;"
+              :style="isActive('/admin/settings') ? { background:'#F5F3FF', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+              <div :style="navIconStyle(isActive('/admin/settings'))">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+              알림 설정
+              <svg :style="{ marginLeft:'auto', transition:'transform 0.2s', transform: settingsOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
+                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
               </svg>
-            </div>
-            알림 설정
-          </Link>
+            </button>
+
+            <!-- 서브메뉴 -->
+            <Transition name="submenu">
+              <div v-if="settingsOpen" style="display:flex;flex-direction:column;gap:2px;padding-left:14px;margin-top:2px;">
+                <Link href="/admin/settings/webhook"
+                  class="nav-item"
+                  style="font-size:12px;"
+                  :style="isActive('/admin/settings/webhook') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+                  <div :style="{ ...navIconStyle(isActive('/admin/settings/webhook')), width:'20px', height:'20px', borderRadius:'6px' }">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3M8 12h8"/></svg>
+                  </div>
+                  Webhook
+                </Link>
+                <Link href="/admin/settings/kakao"
+                  class="nav-item"
+                  style="font-size:12px;"
+                  :style="isActive('/admin/settings/kakao') ? { background:'#FEF9C3', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+                  <div :style="{ ...navIconStyle(isActive('/admin/settings/kakao')), width:'20px', height:'20px', borderRadius:'6px' }">
+                    <svg width="11" height="11" viewBox="0 0 512 512" fill="#1A1100"><path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/></svg>
+                  </div>
+                  카카오 연동
+                </Link>
+              </div>
+            </Transition>
+          </template>
 
           <Link v-if="auth?.user?.role === 'admin'"
             href="/admin/users"
@@ -239,6 +271,9 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
+
+// 알림 설정 서브메뉴 — /admin/settings 경로이면 자동 열림
+const settingsOpen = ref(window.location.pathname.startsWith('/admin/settings'))
 
 defineProps({ pageTitle: { type: String, default: '' } })
 
@@ -330,4 +365,6 @@ const logout = () => router.post('/logout')
 <style scoped>
 .notif-drop-enter-active, .notif-drop-leave-active { transition: all 0.18s ease; }
 .notif-drop-enter-from, .notif-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+.submenu-enter-active, .submenu-leave-active { transition: all 0.18s ease; overflow: hidden; }
+.submenu-enter-from, .submenu-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>

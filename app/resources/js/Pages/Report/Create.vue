@@ -307,7 +307,7 @@
       </div>
 
       <!-- 내부작업 (전체 폭) -->
-      <SupportSection title="내부작업" v-model="form.naebu" :suggestions="mySites" />
+      <SupportSection title="내부작업" v-model="form.naebu" />
 
       <!-- Todo -->
       <div class="card">
@@ -333,10 +333,10 @@
       </div>
 
       <!-- 공유 (전체 폭) -->
-      <SupportSection title="공유" v-model="form.gongyu" :suggestions="mySites" />
+      <SupportSection title="공유" v-model="form.gongyu" />
 
       <!-- 기타 (전체 폭) -->
-      <SupportSection title="기타" v-model="form.gita" :suggestions="mySites" />
+      <SupportSection title="기타" v-model="form.gita" />
 
       <!-- 특이사항 / 요청사항 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-bottom:16px;">

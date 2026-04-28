@@ -1,5 +1,5 @@
 <template>
-  <div class="card" style="padding:0;overflow:hidden;">
+  <div ref="rootRef" class="card" style="padding:0;overflow:hidden;">
     <div style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <span>{{ title }}</span>
       <div style="display:flex;gap:3px;align-items:center;">
@@ -234,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const props = defineProps({
   title:       { type: String,  default: '' },
@@ -263,8 +263,24 @@ const handleCancel = () => {
 }
 
 // ── Ref 모음 ─────────────────────────────────────────
+const rootRef       = ref(null)
 const titleRefs     = ref({})
 const containerRefs = ref({})
+
+// 모든 textarea 높이 일괄 재계산 (초기 로드 시 기존 데이터 높이 맞춤)
+const resizeAllTextareas = () => {
+  nextTick(() => {
+    if (!rootRef.value) return
+    rootRef.value.querySelectorAll('textarea').forEach(el => {
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    })
+  })
+}
+
+onMounted(resizeAllTextareas)
+// modelValue가 교체될 때도 재계산 (붙여넣기, 불러오기 등)
+watch(() => props.modelValue, resizeAllTextareas, { deep: false })
 
 // ── 드롭다운 위치 ─────────────────────────────────────
 const dropPos = ref({ top: 0, left: 0, width: 240 })

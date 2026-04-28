@@ -67,9 +67,14 @@
         </div>
         <div v-if="form.todo_items.length === 0" style="text-align:center;padding:16px 0;color:#9A8F7A;font-size:13px;">항목을 추가하세요</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div v-for="(t, idx) in form.todo_items" :key="idx" style="display:flex;gap:8px;align-items:center;">
-            <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:16px;height:16px;cursor:pointer;flex-shrink:0;" />
-            <input v-model="t.content" type="text" class="input-field" :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1 }" placeholder="할 일을 입력하세요" />
+          <div v-for="(t, idx) in form.todo_items" :key="idx" style="display:flex;gap:8px;align-items:flex-start;">
+            <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:9px;" />
+            <textarea v-model="t.content" rows="1"
+              @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
+              class="input-field todo-textarea"
+              :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55' }"
+              placeholder="할 일을 입력하세요"
+              @keydown.enter.prevent />
             <button type="button" @click="removeTodo(idx)"
               style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
               @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
@@ -102,9 +107,20 @@
 </template>
 
 <script setup>
+import { onMounted, nextTick } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
+
+// 기존 데이터 로드 시 Todo textarea 높이 자동 맞춤
+onMounted(() => {
+  nextTick(() => {
+    document.querySelectorAll('.todo-textarea').forEach(el => {
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    })
+  })
+})
 
 const props = defineProps({
   report: { type: Object, required: true },

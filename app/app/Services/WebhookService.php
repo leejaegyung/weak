@@ -32,9 +32,10 @@ class WebhookService
     }
 
     /** 보고서 반려 알림 */
-    public function notifyRejected(string $userName, string $week): void
+    public function notifyRejected(string $userName, string $week, string $reason = ''): void
     {
-        $this->send("⚠️ **보고서 반려 알림**\n{$userName}님의 {$week} 주간보고가 반려되었습니다. 수정 후 재제출해 주세요.");
+        $reasonText = $reason ? "\n📝 반려 사유: {$reason}" : '';
+        $this->send("⚠️ **보고서 반려 알림**\n{$userName}님의 {$week} 주간보고가 반려되었습니다. 수정 후 재제출해 주세요.{$reasonText}");
     }
 
     /** 미제출자 일괄 알림 */

@@ -10,7 +10,7 @@ class WeeklyReport extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'week', 'status',
+        'user_id', 'week', 'status', 'reject_reason',
         'curr_start', 'curr_end',
         'next_start', 'next_end',
         'curr_work', 'next_plan',

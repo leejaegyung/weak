@@ -34,7 +34,9 @@ class KakaoAuthController extends Controller
         session(['kakao_intent' => $intent]);
 
         $redirectUri = route('auth.kakao.callback');
-        return redirect()->away($this->kakao->getUserAuthUrl($redirectUri));
+        // register intent: 카카오 계정 재선택 강제 (이전 로그인 세션 자동 사용 방지)
+        $reauthenticate = $intent === 'register';
+        return redirect()->away($this->kakao->getUserAuthUrl($redirectUri, $reauthenticate));
     }
 
     /**
@@ -45,6 +47,8 @@ class KakaoAuthController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         $intent = session()->pull('kakao_intent', 'login');
+        // register는 login과 동일하게 처리
+        if ($intent === 'register') $intent = 'login';
 
         // 사용자가 취소하거나 에러 발생
         if ($request->has('error')) {

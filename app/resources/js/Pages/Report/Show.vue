@@ -40,9 +40,14 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <span :class="statusBadge(report.status)" style="font-size:13px;padding:5px 14px;">{{ report.status_label }}</span>
 
-        <!-- 반려됨 안내 -->
-        <span v-if="report.status === 'rejected'" style="font-size:12px;color:#DC2626;font-weight:600;">
-          ⚠ 반려된 보고서입니다. 수정 후 재제출하세요.
+        <!-- 반려됨 안내 + 사유 -->
+        <span v-if="report.status === 'rejected'"
+          style="font-size:12px;color:#DC2626;font-weight:600;display:flex;flex-direction:column;gap:2px;">
+          <span>⚠ 반려된 보고서입니다. 수정 후 재제출하세요.</span>
+          <span v-if="report.reject_reason"
+            style="font-size:11px;color:#7F1D1D;background:#FEE2E2;border-radius:6px;padding:2px 8px;font-weight:500;">
+            사유: {{ report.reject_reason }}
+          </span>
         </span>
 
         <!-- 삭제 버튼 (관리자 또는 본인) -->
@@ -57,7 +62,7 @@
         </button>
 
         <!-- 관리자: submitted → 반려 -->
-        <button v-if="isAdmin && report.status === 'submitted'" @click="reject"
+        <button v-if="isAdmin && report.status === 'submitted'" @click="showRejectModal=true"
           style="background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #DC2626;transition:all 0.1s;"
           @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #DC2626';}"
           @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #DC2626';}">
@@ -316,6 +321,25 @@
         </div>
       </div>
     </div>
+
+    <!-- 반려 사유 모달 -->
+    <div v-if="showRejectModal"
+      style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:6px 6px 0 #1A1100;padding:28px;max-width:420px;width:100%;">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#DC2626;margin-bottom:6px;">보고서 반려</div>
+        <div style="font-size:13px;color:#9A8F7A;margin-bottom:16px;">반려 사유를 입력하면 Webhook 및 카카오 알림으로 전달됩니다.</div>
+        <textarea v-model="rejectReason" rows="3" class="input-field"
+          placeholder="반려 사유 입력 (선택, 최대 500자)"
+          style="width:100%;resize:vertical;font-family:inherit;margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button @click="showRejectModal=false;rejectReason=''" class="btn-secondary">취소</button>
+          <button @click="doReject"
+            style="background:#DC2626;color:#fff;border:2px solid #DC2626;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+            반려하기
+          </button>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
@@ -379,7 +403,14 @@ const allSingleCats = computed(() => {
 })
 
 const submit = () => router.post(`/reports/${props.report.id}/submit`)
-const reject = () => router.post(`/reports/${props.report.id}/reject`)
+
+const showRejectModal = ref(false)
+const rejectReason    = ref('')
+const doReject = () => {
+  router.post(`/reports/${props.report.id}/reject`, { reason: rejectReason.value }, {
+    onSuccess: () => { showRejectModal.value = false; rejectReason.value = '' },
+  })
+}
 
 const allCategories = computed(() => [
   ...Object.keys(currByCategory.value),

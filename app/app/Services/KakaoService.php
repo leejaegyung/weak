@@ -17,15 +17,19 @@ class KakaoService
     // ─── 앱 설정 (REST API 키) ────────────────────────────────────
 
     /** 사용자 OAuth 인증 URL 생성 (로그인 / 카카오 연결 공용) */
-    public function getUserAuthUrl(string $redirectUri): string
+    public function getUserAuthUrl(string $redirectUri, bool $reauthenticate = false): string
     {
-        $params = http_build_query([
+        $params = [
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
             'scope'         => 'profile_nickname,talk_message',
-        ]);
-        return self::AUTH_URL . '?' . $params;
+        ];
+        // 회원가입 시 이전 카카오 세션 자동 사용 방지
+        if ($reauthenticate) {
+            $params['reauthenticate'] = 'true';
+        }
+        return self::AUTH_URL . '?' . http_build_query($params);
     }
 
     /** 인가 코드 → Access Token 교환 (사용자용) */

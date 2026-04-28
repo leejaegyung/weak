@@ -80,7 +80,7 @@
         <div style="flex:1;height:1.5px;background:#E8E0D0;"></div>
       </div>
 
-      <a href="/auth/kakao?intent=login"
+      <a href="/auth/kakao?intent=register"
         style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#FEE500;color:#1A1100;border:2px solid #1A1100;border-radius:14px;padding:13px;font-size:14px;font-weight:800;text-decoration:none;box-shadow:3px 3px 0 #1A1100;margin-top:14px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
         @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='4px 4px 0 #1A1100';}"
         @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}">

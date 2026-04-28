@@ -6,6 +6,7 @@ use App\Http\Requests\StoreReportRequest;
 use App\Http\Requests\UpdateReportRequest;
 use App\Models\User;
 use App\Models\WeeklyReport;
+use App\Services\KakaoService;
 use App\Services\NotificationService;
 use App\Services\ReportService;
 use App\Services\ScheduleService;
@@ -23,6 +24,7 @@ class ReportController extends Controller
         private ReportService       $reportService,
         private NotificationService $notificationService,
         private WebhookService      $webhookService,
+        private KakaoService        $kakaoService,
         private ScheduleService     $scheduleService,
     ) {}
 
@@ -204,24 +206,38 @@ class ReportController extends Controller
     }
 
     /** 관리자: 반려 */
-    public function reject(WeeklyReport $report): RedirectResponse
+    public function reject(Request $request, WeeklyReport $report): RedirectResponse
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
-        $report->load('user');
-        $report->update(['status' => 'rejected']);
+        $request->validate(['reason' => ['nullable', 'string', 'max:500']]);
+        $reason = trim($request->input('reason', ''));
 
-        // 인앱 알림 생성 (보고서 작성자에게)
+        $report->load('user');
+        $report->update([
+            'status'        => 'rejected',
+            'reject_reason' => $reason ?: null,
+        ]);
+
+        $reasonText = $reason ? "\n\n📝 반려 사유: {$reason}" : '';
+
+        // 인앱 알림 생성
         $this->notificationService->create(
             $report->user_id,
             'rejected',
             '보고서가 반려되었습니다',
-            $report->week . ' 주간보고가 관리자에 의해 반려되었습니다. 수정 후 재제출해 주세요.',
+            $report->week . ' 주간보고가 관리자에 의해 반려되었습니다. 수정 후 재제출해 주세요.' . ($reason ? " 사유: {$reason}" : ''),
             "/reports/{$report->id}"
         );
 
         // Webhook 발송
-        $this->webhookService->notifyRejected($report->user->name ?? '알 수 없음', $report->week);
+        $this->webhookService->notifyRejected($report->user->name ?? '알 수 없음', $report->week, $reason);
+
+        // 카카오 알림 발송
+        if (!empty($report->user->kakao_id)) {
+            $kakaoText = "⚠️ [{$report->week}] 주간보고 반려 알림\n{$report->user->name}님의 보고서가 반려되었습니다. 수정 후 재제출해 주세요.{$reasonText}";
+            $this->kakaoService->sendToUser($report->user, $kakaoText);
+        }
 
         return back()->with('success', '보고서가 반려되었습니다.');
     }

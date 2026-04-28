@@ -73,8 +73,26 @@
         </form>
       </div>
 
+      <!-- 카카오로 간편 가입 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
+        <div style="flex:1;height:1.5px;background:#E8E0D0;"></div>
+        <span style="font-size:11px;color:#9A8F7A;white-space:nowrap;">또는 간편 가입</span>
+        <div style="flex:1;height:1.5px;background:#E8E0D0;"></div>
+      </div>
+
+      <a href="/auth/kakao?intent=login"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#FEE500;color:#1A1100;border:2px solid #1A1100;border-radius:14px;padding:13px;font-size:14px;font-weight:800;text-decoration:none;box-shadow:3px 3px 0 #1A1100;margin-top:14px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
+        @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='4px 4px 0 #1A1100';}"
+        @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}">
+        <svg width="20" height="20" viewBox="0 0 512 512" fill="#1A1100">
+          <path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/>
+        </svg>
+        카카오로 간편 가입
+      </a>
+      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">카카오 닉네임으로 자동 가입 신청 → 관리자 승인 후 이용</p>
+
       <!-- 로그인 링크 -->
-      <div style="text-align:center;margin-top:16px;">
+      <div style="text-align:center;margin-top:14px;">
         <span style="font-size:13px;color:#9A8F7A;">이미 계정이 있으신가요?</span>
         <Link href="/login" style="font-size:13px;font-weight:700;color:#FD4401;margin-left:6px;text-decoration:none;">로그인</Link>
       </div>

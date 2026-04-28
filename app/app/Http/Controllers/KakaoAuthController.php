@@ -96,16 +96,42 @@ class KakaoAuthController extends Controller
 
         $user = User::where('kakao_id', $kakaoId)->first();
 
+        // ── 연동 계정 없음 → 카카오 정보로 자동 가입 신청 ──────────────
         if (!$user) {
-            return redirect('/login')->with('error', '연동된 계정이 없습니다. 일반 로그인 후 프로필 → 카카오 연결을 먼저 진행해 주세요.');
+            $nickname = $profile['properties']['nickname']
+                     ?? $profile['kakao_account']['profile']['nickname']
+                     ?? '카카오사용자';
+
+            // kakao_{id} 형태로 고유 username 생성
+            $username = 'kakao_' . $kakaoId;
+
+            User::create([
+                'name'                => $nickname,
+                'username'            => $username,
+                'password'            => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                'role'                => 'user',
+                'is_active'           => false,
+                'registration_status' => 'pending',
+                'kakao_id'            => $kakaoId,
+                'kakao_access_token'  => $tokenData['access_token'],
+                'kakao_refresh_token' => $tokenData['refresh_token'] ?? '',
+            ]);
+
+            return redirect('/login')->with('success',
+                "카카오 가입 신청이 완료되었습니다! ({$nickname}) 관리자 승인 후 카카오 로그인이 가능합니다."
+            );
         }
 
         if (!$user->is_active) {
             return redirect('/login')->with('error', '비활성화된 계정입니다. 관리자에게 문의하세요.');
         }
 
+        if ($user->registration_status === 'pending') {
+            return redirect('/login')->with('error', '가입 신청이 아직 승인 대기 중입니다. 관리자 승인 후 이용할 수 있습니다.');
+        }
+
         if ($user->registration_status !== 'approved') {
-            return redirect('/login')->with('error', '아직 승인되지 않은 계정입니다.');
+            return redirect('/login')->with('error', '가입이 거절된 계정입니다. 관리자에게 문의하세요.');
         }
 
         // 토큰 갱신 저장

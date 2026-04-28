@@ -61,7 +61,7 @@
         </svg>
         카카오 로그인
       </a>
-      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">카카오 계정을 먼저 프로필에서 연결해야 합니다</p>
+      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">처음이라면 자동으로 가입 신청됩니다 (관리자 승인 필요)</p>
 
       <!-- 회원가입 링크 -->
       <div style="text-align:center;margin-top:14px;">

@@ -10,10 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Holidays\Holidays;
 
 class ScheduleController extends Controller
 {
@@ -58,9 +56,6 @@ class ScheduleController extends Controller
 
         $mySites = $user->sites->pluck('name')->toArray();
 
-        // ── 대한민국 공휴일 (연도 캐싱 — 1일) ──────────────────────
-        $holidays = $this->getKoreanHolidays($monday->year, $nextFriday->year);
-
         return Inertia::render('Schedule/Index', [
             'users'          => $users,
             'teamSchedules'  => $teamSchedules,
@@ -74,25 +69,7 @@ class ScheduleController extends Controller
             'isCurrentWeek'  => $monday->isSameDay($now->copy()->startOfWeek(Carbon::MONDAY)),
             'weekReportMap'  => $weekReportMap,
             'mySites'        => $mySites,
-            'holidays'       => $holidays,   // ['YYYY-MM-DD' => '공휴일명']
         ]);
-    }
-
-    /** 대한민국 공휴일 목록 반환 ['YYYY-MM-DD' => '공휴일명'] — 연도별 하루 캐시 */
-    private function getKoreanHolidays(int ...$years): array
-    {
-        $result = [];
-        foreach (array_unique($years) as $year) {
-            $map = Cache::remember("holidays_kr_{$year}", 86400, function () use ($year) {
-                $map = [];
-                foreach (Holidays::for(country: 'ko', year: $year)->get() as $holiday) {
-                    $map[$holiday->date->format('Y-m-d')] = $holiday->name;
-                }
-                return $map;
-            });
-            $result = array_merge($result, $map);
-        }
-        return $result;
     }
 
     public function upsert(Request $request): JsonResponse

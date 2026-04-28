@@ -11,8 +11,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.26",
         "laravel/tinker": "^2.9",
-        "phpoffice/phpspreadsheet": "^5.7",
-        "spatie/holidays": "*"
+        "phpoffice/phpspreadsheet": "^5.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

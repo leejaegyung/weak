@@ -32,7 +32,7 @@ class KakaoService
     public function exchangeUserCode(string $code, string $redirectUri): ?array
     {
         try {
-            $response = Http::timeout(10)->asForm()->post(self::TOKEN_URL, [
+            $response = $this->http()->asForm()->post(self::TOKEN_URL, [
                 'grant_type'   => 'authorization_code',
                 'client_id'    => Setting::get('kakao_rest_api_key', ''),
                 'redirect_uri' => $redirectUri,
@@ -50,7 +50,7 @@ class KakaoService
     public function getUserProfile(string $accessToken): ?array
     {
         try {
-            $response = Http::timeout(10)
+            $response = $this->http()
                 ->withToken($accessToken)
                 ->get(self::PROFILE_URL);
             if ($response->successful()) return $response->json();
@@ -93,7 +93,7 @@ class KakaoService
         if (empty($refreshToken)) return false;
 
         try {
-            $response = Http::timeout(10)->asForm()->post(self::TOKEN_URL, [
+            $response = $this->http()->asForm()->post(self::TOKEN_URL, [
                 'grant_type'    => 'refresh_token',
                 'client_id'     => Setting::get('kakao_rest_api_key', ''),
                 'refresh_token' => $refreshToken,
@@ -125,6 +125,16 @@ class KakaoService
 
     // ─── 공통 메시지 발송 ─────────────────────────────────────────
 
+    /** HTTP 클라이언트 (로컬 환경에서 SSL 검증 비활성화) */
+    private function http(): \Illuminate\Http\Client\PendingRequest
+    {
+        $client = Http::timeout(10);
+        if (app()->environment('local')) {
+            $client = $client->withoutVerifying();
+        }
+        return $client;
+    }
+
     private function doSend(string $accessToken, string $text): int
     {
         try {
@@ -137,7 +147,7 @@ class KakaoService
                 ],
             ], JSON_UNESCAPED_UNICODE);
 
-            $response = Http::timeout(10)
+            $response = $this->http()
                 ->withHeaders(['Authorization' => 'Bearer ' . $accessToken])
                 ->asForm()
                 ->post(self::MESSAGE_URL, ['template_object' => $templateObject]);

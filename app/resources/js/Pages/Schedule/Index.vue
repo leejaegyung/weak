@@ -152,9 +152,37 @@
               @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
-              <!-- 내용 표시 -->
-              <div style="min-height:48px;font-size:11.5px;color:#1A1100;line-height:1.6;white-space:pre-wrap;word-break:break-word;padding:3px 4px;">
-                {{ localSchedules[user.id]?.[date] || '' }}
+              <!-- 내용 표시 (상태별 색상 칩) -->
+              <div style="min-height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;">
+                <template v-if="localSchedules[user.id]?.[date]">
+                  <!-- 상태 칩 -->
+                  <div v-if="parsedCell(localSchedules[user.id][date]).status"
+                    :style="{
+                      display:'inline-flex', alignItems:'center', gap:'3px',
+                      padding:'2px 8px', borderRadius:'99px', fontSize:'11px', fontWeight:'800',
+                      background: STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].bg,
+                      color: STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].color,
+                      border: '1.5px solid ' + STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].border,
+                      width: 'fit-content',
+                    }">
+                    <span style="font-size:10px;">{{ STATUS_STYLE_MAP[parsedCell(localSchedules[user.id][date]).status].icon }}</span>
+                    {{ parsedCell(localSchedules[user.id][date]).status }}
+                  </div>
+                  <!-- 사이트 칩 -->
+                  <div v-if="parsedCell(localSchedules[user.id][date]).site"
+                    style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:700;background:#FFF0D0;color:#6B4F1A;border:1.5px solid #E8D090;width:fit-content;">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    {{ parsedCell(localSchedules[user.id][date]).site }}
+                  </div>
+                  <!-- 상세 텍스트 -->
+                  <div v-if="parsedCell(localSchedules[user.id][date]).detail"
+                    style="font-size:11px;color:#4A3F2A;line-height:1.5;white-space:pre-wrap;word-break:break-word;padding:1px 2px;">
+                    {{ parsedCell(localSchedules[user.id][date]).detail }}
+                  </div>
+                </template>
               </div>
 
               <!-- 본인 셀: 내용 없으면 + 힌트, 있으면 연필 아이콘 -->
@@ -284,18 +312,18 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
-                    @click="toggleQuickTag({ label: site, icon: '', bg: '#FDCB40', color: '#1A1100' })"
+                    @click="selectSite(site)"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: isSiteActive(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: isSiteActive(site) ? '#FDCB40' : '#fff',
-                      color: isSiteActive(site) ? '#1A1100' : '#6B5E4A',
+                      border: modalSite === site ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: modalSite === site ? '#FDCB40' : '#fff',
+                      color: modalSite === site ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: isSiteActive(site) ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: modalSite === site ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
-                    @mouseleave="e=>{ if(!isSiteActive(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                    @mouseenter="e=>{ if(modalSite !== site){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(modalSite !== site){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
                     {{ site }}
                   </button>
                 </div>
@@ -311,18 +339,18 @@
                 </div>
                 <div style="display:flex;gap:7px;flex-wrap:wrap;">
                 <button v-for="tag in QUICK_TAGS" :key="tag.label" type="button"
-                  @click="toggleQuickTag(tag)"
+                  @click="selectStatus(tag)"
                   :style="{
                     display:'inline-flex', alignItems:'center', gap:'5px',
                     padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                    border: isTagActive(tag) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                    background: isTagActive(tag) ? tag.bg : '#fff',
-                    color: isTagActive(tag) ? tag.color : '#9A8F7A',
+                    border: modalStatus === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                    background: modalStatus === tag.label ? tag.bg : '#fff',
+                    color: modalStatus === tag.label ? tag.color : '#9A8F7A',
                     cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                    boxShadow: isTagActive(tag) ? '2px 2px 0 #1A1100' : 'none',
+                    boxShadow: modalStatus === tag.label ? '2px 2px 0 #1A1100' : 'none',
                   }"
-                  @mouseenter="e=>{ if(!isTagActive(tag)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                  @mouseleave="e=>{ if(!isTagActive(tag)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                  @mouseenter="e=>{ if(modalStatus !== tag.label){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                  @mouseleave="e=>{ if(modalStatus !== tag.label){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
                   <span>{{ tag.icon }}</span>
                   {{ tag.label }}
                 </button>
@@ -330,10 +358,10 @@
               </div>
 
               <textarea
-                v-model="modalContent"
+                v-model="modalDetail"
                 rows="3"
                 class="input-field"
-                placeholder="이 날의 일정을 직접 입력하거나 위 태그를 선택하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
+                placeholder="추가 상세 내용을 입력하세요 (선택 사항)&#10;(모두 비워두면 해당 날짜 일정이 삭제됩니다)"
                 style="resize:vertical;line-height:1.65;font-size:13px;"
                 @keydown.meta.enter.prevent="saveModal"
                 @keydown.ctrl.enter.prevent="saveModal"
@@ -466,76 +494,110 @@ const fmtRange = (start, end) => {
   return start.substring(5).replace('-', '/') + ' – ' + end.substring(5).replace('-', '/')
 }
 
-// ── 빠른 선택 태그 ────────────────────────────────────
+// ── 빠른 선택 태그 & 색상 맵 ────────────────────────────
 const QUICK_TAGS = [
-  { label: '외근', icon: '🏢', bg: '#DBEAFE', color: '#1D4ED8' },
-  { label: '출장', icon: '✈️', bg: '#EDE9FE', color: '#7C3AED' },
-  { label: '반차', icon: '🕐', bg: '#FEF9C3', color: '#854D0E' },
-  { label: '휴가', icon: '🌴', bg: '#DCFCE7', color: '#166534' },
+  { label: '외근', icon: '🏢', bg: '#DBEAFE', color: '#1D4ED8', border: '#93C5FD' },
+  { label: '출장', icon: '✈️', bg: '#EDE9FE', color: '#7C3AED', border: '#C4B5FD' },
+  { label: '반차', icon: '🕐', bg: '#FEF9C3', color: '#854D0E', border: '#FDE68A' },
+  { label: '휴가', icon: '🌴', bg: '#DCFCE7', color: '#166534', border: '#86EFAC' },
 ]
+const STATUS_STYLE_MAP = Object.fromEntries(QUICK_TAGS.map(t => [t.label, t]))
+const STATUS_LABELS    = QUICK_TAGS.map(t => t.label)
 
-// 현재 내용에 태그가 활성화되어 있는지 확인
-const isTagActive = (tag) => {
-  const lines = modalContent.value.split('\n').map(l => l.trim())
-  return lines.includes(tag.label)
-}
+// ── 셀 내용 파싱 ("상태:사이트\n상세" 형식 역파싱) ────────
+const parsedCell = (text) => {
+  if (!text || !text.trim()) return { status: '', site: '', detail: '' }
+  const raw = text.trim()
 
-// 내 사이트 활성 여부
-const isSiteActive = (siteName) => {
-  const lines = modalContent.value.split('\n').map(l => l.trim())
-  return lines.includes(siteName)
-}
-
-// 태그 토글: 없으면 추가, 있으면 제거
-const toggleQuickTag = (tag) => {
-  const lines = modalContent.value.split('\n').map(l => l.trim()).filter(l => l)
-  const idx = lines.indexOf(tag.label)
-  if (idx !== -1) {
-    // 이미 있으면 제거
-    lines.splice(idx, 1)
-  } else {
-    // 없으면 맨 앞에 추가
-    lines.unshift(tag.label)
+  // "상태:사이트" 패턴
+  const colonIdx = raw.indexOf(':')
+  if (colonIdx > 0) {
+    const before = raw.substring(0, colonIdx).trim()
+    if (STATUS_LABELS.includes(before)) {
+      const afterFirst = raw.substring(colonIdx + 1)
+      const nlIdx = afterFirst.indexOf('\n')
+      const site   = (nlIdx === -1 ? afterFirst : afterFirst.substring(0, nlIdx)).trim()
+      const detail = (nlIdx === -1 ? '' : afterFirst.substring(nlIdx + 1)).trim()
+      return { status: before, site, detail }
+    }
   }
-  modalContent.value = lines.join('\n')
+
+  // 첫 줄이 상태인 경우 (구버전 호환)
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
+  if (lines.length > 0 && STATUS_LABELS.includes(lines[0])) {
+    return { status: lines[0], site: '', detail: lines.slice(1).join('\n') }
+  }
+
+  // 일반 텍스트
+  return { status: '', site: '', detail: raw }
+}
+
+// ── 저장 내용 빌드 ("상태:사이트\n상세" 형식으로 조합) ───
+const buildContent = () => {
+  const parts = []
+  if (modalStatus.value && modalSite.value) {
+    parts.push(`${modalStatus.value}:${modalSite.value}`)
+  } else if (modalStatus.value) {
+    parts.push(modalStatus.value)
+  } else if (modalSite.value) {
+    parts.push(modalSite.value)
+  }
+  if (modalDetail.value.trim()) parts.push(modalDetail.value.trim())
+  return parts.join('\n')
 }
 
 // ── 모달 상태 ──────────────────────────────────────────
-const showModal    = ref(false)
-const modalDate    = ref(null)
-const modalContent = ref('')
-const modalSaving  = ref(false)
-const saveDone     = ref(false)
-let saveDoneTimer  = null
+const showModal   = ref(false)
+const modalDate   = ref(null)
+const modalStatus = ref('')   // 선택된 상태 ('외근'|'출장'|'반차'|'휴가'|'')
+const modalSite   = ref('')   // 선택된 사이트명 또는 ''
+const modalDetail = ref('')   // 추가 상세 텍스트
+const modalSaving = ref(false)
+const saveDone    = ref(false)
+let saveDoneTimer = null
+
+// 상태 단일 선택 토글
+const selectStatus = (tag) => {
+  modalStatus.value = modalStatus.value === tag.label ? '' : tag.label
+}
+// 사이트 단일 선택 토글
+const selectSite = (site) => {
+  modalSite.value = modalSite.value === site ? '' : site
+}
 
 const openModal = (date, content) => {
-  // 날짜 미지정 시 오늘 날짜(또는 금주 첫날) 기본 선택
   const defaultDate = allDates.value.includes(today) ? today : props.currDates[0]
-  modalDate.value    = date ?? defaultDate
-  modalContent.value = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
-  showModal.value    = true
+  modalDate.value = date ?? defaultDate
+
+  // 기존 내용 파싱해서 상태/사이트/상세 분리
+  const raw    = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
+  const parsed = parsedCell(raw)
+  modalStatus.value = parsed.status
+  modalSite.value   = parsed.site
+  modalDetail.value = parsed.detail
+  showModal.value   = true
 }
 
 const closeModal = () => {
-  showModal.value    = false
-  modalDate.value    = null
-  modalContent.value = ''
+  showModal.value   = false
+  modalDate.value   = null
+  modalStatus.value = ''
+  modalSite.value   = ''
+  modalDetail.value = ''
 }
 
 const saveModal = async () => {
   if (!modalDate.value || modalSaving.value) return
   modalSaving.value = true
+  const content = buildContent()
   try {
     await window.axios.post('/schedules/upsert', {
       date:    modalDate.value,
-      content: modalContent.value,
-      // user_id 미전송 → 서버에서 로그인 계정으로 처리
+      content: content || null,
     })
-    // 로컬 데이터 즉시 반영
     if (!localSchedules[props.currentUserId]) localSchedules[props.currentUserId] = {}
-    localSchedules[props.currentUserId][modalDate.value] = modalContent.value
+    localSchedules[props.currentUserId][modalDate.value] = content
 
-    // 저장 완료 토스트
     clearTimeout(saveDoneTimer)
     saveDone.value = true
     saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)

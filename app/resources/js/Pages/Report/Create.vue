@@ -114,7 +114,14 @@
                   style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
-                  <span v-if="schedules[date]" style="white-space:pre-wrap;word-break:break-word;font-size:11px;">{{ schedules[date] }}</span>
+                  <template v-if="schedules[date]">
+                    <div v-if="parsedSchedCell(schedules[date]).status"
+                      :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].bg, color:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].color, border:'1px solid '+SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].border, width:'fit-content', margin:'0 auto' }">
+                      {{ SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].icon }} {{ parsedSchedCell(schedules[date]).status }}
+                    </div>
+                    <div v-if="parsedSchedCell(schedules[date]).site" style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ parsedSchedCell(schedules[date]).site }}</div>
+                    <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
+                  </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
                 </div>
               </td>
@@ -128,10 +135,17 @@
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
                 <div @click="openSchedModal(date, '차주')"
-                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all 0.12s;line-height:1.5;gap:2px;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
-                  <span v-if="schedules[date]" style="white-space:pre-wrap;word-break:break-word;font-size:11px;">{{ schedules[date] }}</span>
+                  <template v-if="schedules[date]">
+                    <div v-if="parsedSchedCell(schedules[date]).status"
+                      :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].bg, color:SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].color, border:'1px solid '+SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].border, width:'fit-content' }">
+                      {{ SCHED_STATUS_MAP[parsedSchedCell(schedules[date]).status].icon }} {{ parsedSchedCell(schedules[date]).status }}
+                    </div>
+                    <div v-if="parsedSchedCell(schedules[date]).site" style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ parsedSchedCell(schedules[date]).site }}</div>
+                    <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
+                  </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
                 </div>
               </td>
@@ -179,18 +193,18 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
-                    @click="toggleSchedTag({ label: site, icon: '', bg: '#FDCB40', color: '#1A1100' })"
+                    @click="schedModalSite = schedModalSite === site ? '' : site"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: isSchedSiteActive(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: isSchedSiteActive(site) ? '#FDCB40' : '#fff',
-                      color: isSchedSiteActive(site) ? '#1A1100' : '#6B5E4A',
+                      border: schedModalSite === site ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalSite === site ? '#FDCB40' : '#fff',
+                      color: schedModalSite === site ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: isSchedSiteActive(site) ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: schedModalSite === site ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(!isSchedSiteActive(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
-                    @mouseleave="e=>{ if(!isSchedSiteActive(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                    @mouseenter="e=>{ if(schedModalSite !== site){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
+                    @mouseleave="e=>{ if(schedModalSite !== site){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
                     {{ site }}
                   </button>
                 </div>
@@ -206,18 +220,18 @@
                 </div>
                 <div style="display:flex;gap:7px;flex-wrap:wrap;">
                   <button v-for="tag in SCHED_QUICK_TAGS" :key="tag.label" type="button"
-                    @click="toggleSchedTag(tag)"
+                    @click="schedModalStatus = schedModalStatus === tag.label ? '' : tag.label"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'5px',
                       padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: isSchedTagActive(tag) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: isSchedTagActive(tag) ? tag.bg : '#fff',
-                      color: isSchedTagActive(tag) ? tag.color : '#9A8F7A',
+                      border: schedModalStatus === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalStatus === tag.label ? tag.bg : '#fff',
+                      color: schedModalStatus === tag.label ? tag.color : '#9A8F7A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: isSchedTagActive(tag) ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: schedModalStatus === tag.label ? '2px 2px 0 #1A1100' : 'none',
                     }"
-                    @mouseenter="e=>{ if(!isSchedTagActive(tag)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                    @mouseleave="e=>{ if(!isSchedTagActive(tag)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
+                    @mouseenter="e=>{ if(schedModalStatus !== tag.label){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
+                    @mouseleave="e=>{ if(schedModalStatus !== tag.label){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
                     <span>{{ tag.icon }}</span>{{ tag.label }}
                   </button>
                 </div>
@@ -225,10 +239,10 @@
 
               <!-- 내용 입력 -->
               <textarea
-                v-model="schedModalContent"
+                v-model="schedModalDetail"
                 rows="3"
                 class="input-field"
-                placeholder="일정을 직접 입력하거나 위 태그를 선택하세요&#10;(비워두면 해당 날짜 일정이 삭제됩니다)"
+                placeholder="추가 상세 내용 (선택 사항)&#10;(모두 비워두면 해당 날짜 일정이 삭제됩니다)"
                 style="resize:vertical;line-height:1.65;font-size:13px;"
                 @keydown.ctrl.enter.prevent="saveSchedModal"
                 @keydown.meta.enter.prevent="saveSchedModal"
@@ -601,17 +615,43 @@ const fmtDateOnly = (d) => {
 
 // ── 일정 입력 모달 ────────────────────────────────────
 const SCHED_QUICK_TAGS = [
-  { label: '외근', icon: '🚗', bg: '#FEF3C7', color: '#92400E' },
-  { label: '출장', icon: '✈️', bg: '#DBEAFE', color: '#1E40AF' },
-  { label: '반차', icon: '🌤️', bg: '#D1FAE5', color: '#065F46' },
-  { label: '휴가', icon: '🏖️', bg: '#FCE7F3', color: '#9D174D' },
+  { label: '외근', icon: '🏢', bg: '#DBEAFE', color: '#1D4ED8', border: '#93C5FD' },
+  { label: '출장', icon: '✈️', bg: '#EDE9FE', color: '#7C3AED', border: '#C4B5FD' },
+  { label: '반차', icon: '🕐', bg: '#FEF9C3', color: '#854D0E', border: '#FDE68A' },
+  { label: '휴가', icon: '🌴', bg: '#DCFCE7', color: '#166534', border: '#86EFAC' },
 ]
+const SCHED_STATUS_LABELS = SCHED_QUICK_TAGS.map(t => t.label)
+const SCHED_STATUS_MAP    = Object.fromEntries(SCHED_QUICK_TAGS.map(t => [t.label, t]))
 const DAY_KR_LIST = ['일', '월', '화', '수', '목', '금', '토']
+
+// 셀 파싱 (Schedule/Index.vue와 동일한 로직)
+const parsedSchedCell = (text) => {
+  if (!text || !text.trim()) return { status: '', site: '', detail: '' }
+  const raw = text.trim()
+  const colonIdx = raw.indexOf(':')
+  if (colonIdx > 0) {
+    const before = raw.substring(0, colonIdx).trim()
+    if (SCHED_STATUS_LABELS.includes(before)) {
+      const afterFirst = raw.substring(colonIdx + 1)
+      const nlIdx  = afterFirst.indexOf('\n')
+      const site   = (nlIdx === -1 ? afterFirst : afterFirst.substring(0, nlIdx)).trim()
+      const detail = (nlIdx === -1 ? '' : afterFirst.substring(nlIdx + 1)).trim()
+      return { status: before, site, detail }
+    }
+  }
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
+  if (lines.length > 0 && SCHED_STATUS_LABELS.includes(lines[0])) {
+    return { status: lines[0], site: '', detail: lines.slice(1).join('\n') }
+  }
+  return { status: '', site: '', detail: raw }
+}
 
 const schedModalVisible = ref(false)
 const schedModalDate    = ref('')
 const schedModalWeek    = ref('')
-const schedModalContent = ref('')
+const schedModalStatus  = ref('')
+const schedModalSite    = ref('')
+const schedModalDetail  = ref('')
 
 const schedModalDayKr = computed(() => {
   if (!schedModalDate.value) return ''
@@ -622,13 +662,29 @@ const schedModalDayKr = computed(() => {
 const openSchedModal = (date, week) => {
   schedModalDate.value    = date
   schedModalWeek.value    = week
-  schedModalContent.value = schedules.value[date] ?? ''
+  const parsed = parsedSchedCell(schedules.value[date] ?? '')
+  schedModalStatus.value  = parsed.status
+  schedModalSite.value    = parsed.site
+  schedModalDetail.value  = parsed.detail
   schedModalVisible.value = true
 }
 const closeSchedModal = () => { schedModalVisible.value = false }
 
+const buildSchedContent = () => {
+  const parts = []
+  if (schedModalStatus.value && schedModalSite.value) {
+    parts.push(`${schedModalStatus.value}:${schedModalSite.value}`)
+  } else if (schedModalStatus.value) {
+    parts.push(schedModalStatus.value)
+  } else if (schedModalSite.value) {
+    parts.push(schedModalSite.value)
+  }
+  if (schedModalDetail.value.trim()) parts.push(schedModalDetail.value.trim())
+  return parts.join('\n')
+}
+
 const saveSchedModal = () => {
-  const content = schedModalContent.value.trim()
+  const content = buildSchedContent()
   if (content) schedules.value[schedModalDate.value] = content
   else         delete schedules.value[schedModalDate.value]
   schedModalVisible.value = false
@@ -638,15 +694,16 @@ const deleteSchedModal = () => {
   schedModalVisible.value = false
 }
 
-const isSchedTagActive = (tag) => schedModalContent.value.includes(tag.label)
-const isSchedSiteActive = (site) => schedModalContent.value.includes(site)
+const isSchedTagActive  = (tag)  => schedModalStatus.value === tag.label
+const isSchedSiteActive = (site) => schedModalSite.value   === site
 
 const toggleSchedTag = (tag) => {
-  const cur = schedModalContent.value
-  if (cur.includes(tag.label)) {
-    schedModalContent.value = cur.replace(tag.label, '').replace(/\n{2,}/g, '\n').trim()
+  // 상태는 단일 선택 (토글)
+  if (SCHED_STATUS_LABELS.includes(tag.label)) {
+    schedModalStatus.value = schedModalStatus.value === tag.label ? '' : tag.label
   } else {
-    schedModalContent.value = cur ? cur + '\n' + tag.label : tag.label
+    // 사이트 선택 (토글)
+    schedModalSite.value = schedModalSite.value === tag.label ? '' : tag.label
   }
 }
 // ─────────────────────────────────────────────────────

@@ -390,22 +390,47 @@ sudo -u nginx php artisan tinker --execute="
 ```bash
 cd /data/weak/app
 
-# 코드 업데이트
-sudo -u nginx git pull origin main
+# git 소유권 오류 발생 시 1회만 실행
+git config --global --add safe.directory /data/weak
 
-# 패키지 업데이트
-sudo -u nginx composer install --no-dev --optimize-autoloader
-sudo -u nginx npm ci
-sudo -u nginx npm run build
+# 서버 로컬 변경사항 초기화 후 최신 코드 pull
+git reset --hard HEAD
+git pull origin main
 
-# 마이그레이션 실행
-sudo -u nginx php artisan migrate --force
+# PHP 패키지 업데이트
+composer install --no-dev --optimize-autoloader
 
-# 캐시 갱신
-sudo -u nginx php artisan config:cache
-sudo -u nginx php artisan route:cache
-sudo -u nginx php artisan view:cache
+# DB 마이그레이션
+php artisan migrate --force
+
+# 프론트엔드 빌드
+npm install
+npm run build
+
+# 캐시 초기화
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+# 권한 설정
+chown -R nginx:nginx storage bootstrap/cache
 ```
+
+> **한방 복붙용 (root 실행 기준)**
+> ```bash
+> cd /data/weak/app && \
+> git reset --hard HEAD && \
+> git pull origin main && \
+> composer install --no-dev --optimize-autoloader && \
+> php artisan migrate --force && \
+> npm install && \
+> npm run build && \
+> php artisan config:clear && \
+> php artisan route:clear && \
+> php artisan view:clear && \
+> chown -R nginx:nginx storage bootstrap/cache
+> ```
 
 ---
 

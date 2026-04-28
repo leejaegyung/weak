@@ -23,7 +23,7 @@ class KakaoService
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
-            'scope'         => 'profile_nickname,talk_message',
+            'scope'         => 'profile_nickname',
         ]);
         return self::AUTH_URL . '?' . $params;
     }
@@ -31,13 +31,23 @@ class KakaoService
     /** 인가 코드 → Access Token 교환 (사용자용) */
     public function exchangeUserCode(string $code, string $redirectUri): ?array
     {
+        $apiKey = Setting::get('kakao_rest_api_key', '');
+        Log::debug('[카카오] 토큰 교환 요청', [
+            'redirect_uri' => $redirectUri,
+            'client_id'    => $apiKey,
+            'code_prefix'  => substr($code, 0, 8) . '...',
+            'env'          => app()->environment(),
+            'ssl_verify'   => !app()->environment('local'),
+        ]);
+
         try {
             $response = $this->http()->asForm()->post(self::TOKEN_URL, [
                 'grant_type'   => 'authorization_code',
-                'client_id'    => Setting::get('kakao_rest_api_key', ''),
+                'client_id'    => $apiKey,
                 'redirect_uri' => $redirectUri,
                 'code'         => $code,
             ]);
+            Log::debug('[카카오] 토큰 교환 응답', ['status' => $response->status(), 'body' => $response->body()]);
             if ($response->successful()) return $response->json();
             Log::warning('카카오 코드 교환 실패: ' . $response->body());
         } catch (\Throwable $e) {

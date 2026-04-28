@@ -32,18 +32,20 @@ class KakaoController extends Controller
             ]);
 
         return Inertia::render('Admin/Kakao', [
-            'rest_api_key' => Setting::get('kakao_rest_api_key', ''),
-            'redirect_uri'  => route('auth.kakao.callback'),
-            'users'         => $users,
+            'rest_api_key'    => Setting::get('kakao_rest_api_key', ''),
+            'client_secret'   => Setting::get('kakao_client_secret', ''),
+            'redirect_uri'    => route('auth.kakao.callback'),
+            'users'           => $users,
         ]);
     }
 
-    /** REST API 키 저장 */
+    /** REST API 키 + 클라이언트 시크릿 저장 */
     public function update(Request $request): RedirectResponse
     {
         $request->validate(['rest_api_key' => ['required', 'string', 'max:255']]);
         Setting::set('kakao_rest_api_key', trim($request->input('rest_api_key')));
-        return back()->with('success', 'REST API 키가 저장되었습니다.');
+        Setting::set('kakao_client_secret', trim($request->input('client_secret', '')));
+        return back()->with('success', '설정이 저장되었습니다.');
     }
 
     /** 미제출자 카카오 알림 — 팀원별 토큰으로 각자에게 발송 */

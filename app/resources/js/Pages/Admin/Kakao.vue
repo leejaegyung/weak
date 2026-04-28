@@ -52,13 +52,24 @@
           앱 설정 (관리자)
         </div>
 
-        <div style="margin-bottom:8px;">
-          <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">카카오 REST API 키</label>
-          <div style="display:flex;gap:8px;">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">카카오 REST API 키 <span style="color:#FD4401;">*</span></label>
             <input v-model="keyForm.rest_api_key" type="text" class="input-field"
-              placeholder="카카오 개발자 콘솔 → 앱 키 → REST API 키"
-              style="flex:1;font-family:monospace;" />
-            <button type="submit" :disabled="keyForm.processing" class="btn-primary" style="white-space:nowrap;flex-shrink:0;">
+              placeholder="카카오 개발자 콘솔 → 플랫폼 키 → REST API 키"
+              style="width:100%;font-family:monospace;" />
+          </div>
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">
+              클라이언트 시크릿
+              <span style="font-weight:400;color:#C5BAA8;">(플랫폼 키 → REST API 키 수정 → 클라이언트 시크릿 활성화 시 필수)</span>
+            </label>
+            <input v-model="keyForm.client_secret" type="text" class="input-field"
+              placeholder="클라이언트 시크릿 비활성화 시 비워두세요"
+              style="width:100%;font-family:monospace;" />
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" :disabled="keyForm.processing" class="btn-primary" style="white-space:nowrap;">
               {{ keyForm.processing ? '저장 중...' : '저장' }}
             </button>
           </div>
@@ -150,7 +161,8 @@ import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  rest_api_key: { type: String, default: '' },
+  rest_api_key:  { type: String, default: '' },
+  client_secret: { type: String, default: '' },
   redirect_uri:  { type: String, default: '' },
   users:         { type: Array,  default: () => [] },
 })
@@ -188,7 +200,7 @@ const steps = [
 ]
 
 // REST API 키 저장
-const keyForm = useForm({ rest_api_key: props.rest_api_key })
+const keyForm = useForm({ rest_api_key: props.rest_api_key, client_secret: props.client_secret })
 const saveKey = () => keyForm.post('/admin/settings/kakao')
 
 // 미제출 알림 발송

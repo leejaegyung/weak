@@ -40,13 +40,21 @@ class KakaoService
             'ssl_verify'   => !app()->environment('local'),
         ]);
 
+        $params = [
+            'grant_type'   => 'authorization_code',
+            'client_id'    => $apiKey,
+            'redirect_uri' => $redirectUri,
+            'code'         => $code,
+        ];
+
+        // 클라이언트 시크릿이 설정된 경우 포함
+        $clientSecret = Setting::get('kakao_client_secret', '');
+        if (!empty($clientSecret)) {
+            $params['client_secret'] = $clientSecret;
+        }
+
         try {
-            $response = $this->http()->asForm()->post(self::TOKEN_URL, [
-                'grant_type'   => 'authorization_code',
-                'client_id'    => $apiKey,
-                'redirect_uri' => $redirectUri,
-                'code'         => $code,
-            ]);
+            $response = $this->http()->asForm()->post(self::TOKEN_URL, $params);
             Log::debug('[카카오] 토큰 교환 응답', ['status' => $response->status(), 'body' => $response->body()]);
             if ($response->successful()) return $response->json();
             Log::warning('카카오 코드 교환 실패: ' . $response->body());
@@ -103,11 +111,16 @@ class KakaoService
         if (empty($refreshToken)) return false;
 
         try {
-            $response = $this->http()->asForm()->post(self::TOKEN_URL, [
+            $refreshParams = [
                 'grant_type'    => 'refresh_token',
                 'client_id'     => Setting::get('kakao_rest_api_key', ''),
                 'refresh_token' => $refreshToken,
-            ]);
+            ];
+            $clientSecret = Setting::get('kakao_client_secret', '');
+            if (!empty($clientSecret)) {
+                $refreshParams['client_secret'] = $clientSecret;
+            }
+            $response = $this->http()->asForm()->post(self::TOKEN_URL, $refreshParams);
 
             if ($response->successful()) {
                 $data = $response->json();

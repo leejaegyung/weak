@@ -204,6 +204,15 @@
                   </div>
                   카카오 연동
                 </Link>
+                <Link href="/admin/settings/smtp"
+                  class="nav-item"
+                  style="font-size:12px;"
+                  :style="isActive('/admin/settings/smtp') ? { background:'#DCFCE7', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+                  <div :style="{ ...navIconStyle(isActive('/admin/settings/smtp')), width:'20px', height:'20px', borderRadius:'6px' }">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </div>
+                  메일(SMTP) 설정
+                </Link>
               </div>
             </Transition>
           </template>

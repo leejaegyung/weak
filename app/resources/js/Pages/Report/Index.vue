@@ -44,6 +44,19 @@
           미제출 알림
         </button>
 
+        <!-- 팀장 메일 전송 (관리자만) -->
+        <button v-if="isAdmin" @click="openMailModal"
+          :disabled="!canSendMail"
+          :title="!canSendMail ? '전원 제출 완료 후 전송 가능합니다' : '주간보고 메일 전송'"
+          class="btn-secondary btn-sm"
+          style="display:inline-flex;align-items:center;gap:5px;"
+          :style="{ opacity: canSendMail ? 1 : 0.45, cursor: canSendMail ? 'pointer' : 'not-allowed' }">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+          메일 전송
+        </button>
+
         <!-- Excel 다운로드 (관리자만) -->
         <a v-if="isAdmin" :href="`/export/weekly?curr_start=${weekStart}`"
           class="btn-secondary btn-sm"
@@ -210,6 +223,79 @@
       </div>
     </div>
 
+    <!-- 메일 전송 모달 -->
+    <div v-if="showMailModal"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      @click.self="showMailModal=false">
+      <div class="card" style="width:520px;padding:0;overflow:hidden;">
+        <!-- 모달 헤더 -->
+        <div style="padding:20px 24px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;background:#DCFCE7;border:2px solid #1A1100;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div>
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;">주간보고 메일 전송</div>
+            <div style="font-size:12px;color:#9A8F7A;margin-top:2px;">{{ weekLabel }} 보고서 링크를 메일로 전달합니다</div>
+          </div>
+        </div>
+
+        <!-- 모달 바디 -->
+        <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;">
+          <!-- 받는 사람 -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">받는 사람</label>
+            <input v-model="mailForm.to" type="email" class="input-field" placeholder="teamlead@company.com" />
+          </div>
+
+          <!-- 참조 -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">참조 (CC)</label>
+            <input v-model="mailForm.ccInput" type="text" class="input-field" placeholder="쉼표(,)로 구분하여 입력 예) a@b.com, c@d.com" />
+          </div>
+
+          <!-- 제목 -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">제목</label>
+            <input v-model="mailForm.subject" type="text" class="input-field" placeholder="메일 제목" />
+          </div>
+
+          <!-- 본문 미리보기 -->
+          <div style="background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:10px;padding:14px 16px;">
+            <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">본문 미리보기</div>
+            <p style="font-size:12px;color:#4A3F2A;line-height:1.7;margin-bottom:12px;">
+              안녕하세요.<br>이번 주 팀원 주간업무보고를 전달드립니다.
+            </p>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div v-for="r in submittedReports" :key="r.id"
+                style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #E8E0D0;border-radius:8px;padding:8px 12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div :style="{ width:'24px', height:'24px', borderRadius:'50%', background: avatarColor(r.user?.id), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:'700', color:'#fff', flexShrink:0 }">
+                    {{ r.user?.name?.charAt(0) }}
+                  </div>
+                  <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ r.user?.name }}</span>
+                  <span style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
+                </div>
+                <span style="font-size:11px;color:#9A8F7A;">보고서 링크 포함</span>
+              </div>
+            </div>
+            <p style="font-size:12px;color:#9A8F7A;margin-top:10px;line-height:1.6;">감사합니다.</p>
+          </div>
+        </div>
+
+        <!-- 모달 푸터 -->
+        <div style="padding:16px 24px;border-top:2px solid #1A1100;background:#F5EDDB;display:flex;gap:8px;justify-content:flex-end;">
+          <button @click="showMailModal=false" class="btn-secondary" :disabled="mailSending">취소</button>
+          <button @click="sendWeeklyMail" :disabled="mailSending || !mailForm.to"
+            style="background:#16A34A;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #166534;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;"
+            :style="{ opacity: (!mailSending && mailForm.to) ? 1 : 0.6 }">
+            <svg v-if="mailSending" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity=".25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            {{ mailSending ? '전송 중...' : '메일 전송' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 삭제 확인 모달 -->
     <div v-if="deleteTarget"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
@@ -329,6 +415,66 @@ const sendNotSubmittedAlert = async () => {
   }
 }
 
+// ── 메일 전송 ──────────────────────────────────────
+// 전원 제출 완료 여부 (미제출=0 이고 제출된 보고서가 1개 이상)
+const canSendMail = computed(() =>
+  isAdmin.value &&
+  (props.counts.notSubmitted ?? 1) === 0 &&
+  (props.counts.submitted ?? 0) > 0
+)
+
+// 제출된 보고서 목록 (메일 미리보기용)
+const submittedReports = computed(() =>
+  props.reports.filter(r => r.status !== 'not_submitted' && r.user)
+)
+
+const showMailModal = ref(false)
+const mailSending   = ref(false)
+const mailForm      = ref({ to: '', ccInput: '', subject: '' })
+
+const openMailModal = async () => {
+  // SMTP 기본값 불러오기
+  try {
+    const res = await window.axios.get('/admin/settings/mail-defaults')
+    const d   = res.data
+    mailForm.value = {
+      to:       d.mail_to ?? '',
+      ccInput:  (d.mail_cc ?? []).join(', '),
+      subject:  `[${props.weekLabel}] SE팀 주간업무보고`,
+    }
+  } catch {
+    mailForm.value = {
+      to:      '',
+      ccInput: '',
+      subject: `[${props.weekLabel}] SE팀 주간업무보고`,
+    }
+  }
+  showMailModal.value = true
+}
+
+const sendWeeklyMail = async () => {
+  if (!mailForm.value.to) return
+  mailSending.value = true
+  try {
+    const ccArr = mailForm.value.ccInput
+      ? mailForm.value.ccInput.split(',').map(s => s.trim()).filter(Boolean)
+      : []
+    const res = await window.axios.post('/admin/settings/send-weekly-mail', {
+      week_start: props.weekStart,
+      to:         mailForm.value.to,
+      cc:         ccArr,
+      subject:    mailForm.value.subject,
+    })
+    showMailModal.value = false
+    alert('✅ ' + res.data.message)
+  } catch (e) {
+    alert('❌ ' + (e.response?.data?.message ?? '메일 전송 실패. SMTP 설정을 확인해 주세요.'))
+  } finally {
+    mailSending.value = false
+  }
+}
+// ─────────────────────────────────────────────────
+
 let timer = null
 const onSearch  = () => { clearTimeout(timer); timer = setTimeout(applyFilter, 400) }
 const setFilter = (f) => { activeFilter.value = f; applyFilter() }
@@ -347,3 +493,7 @@ const applyFilter = () => {
   }, { preserveState: true, replace: true })
 }
 </script>
+
+<style scoped>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>

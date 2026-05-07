@@ -76,6 +76,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/settings/kakao',             [KakaoController::class, 'show'])->name('admin.settings.kakao');
     Route::post('/settings/kakao',            [KakaoController::class, 'update'])->name('admin.settings.kakao.update');
     Route::post('/settings/kakao/send',       [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
+
+    // 설정 — SMTP 메일
+    Route::get('/settings/smtp',              [SettingController::class, 'smtp'])->name('admin.settings.smtp');
+    Route::post('/settings/smtp',             [SettingController::class, 'updateSmtp'])->name('admin.settings.smtp.update');
+    Route::post('/settings/smtp/test',        [SettingController::class, 'testSmtp'])->name('admin.settings.smtp.test');
+    Route::get('/settings/mail-defaults',     [SettingController::class, 'mailDefaults'])->name('admin.settings.mail-defaults');
+    Route::post('/settings/send-weekly-mail', [SettingController::class, 'sendWeeklyMail'])->name('admin.settings.send-weekly-mail');
     // 회원가입 승인 관리 (/{user} 와이드카드보다 먼저 선언)
     Route::get('/users/pending',                      [UserController::class, 'pendingIndex'])->name('admin.users.pending');
     Route::post('/users/{user}/approve',              [UserController::class, 'approve'])->name('admin.users.approve');

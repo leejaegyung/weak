@@ -268,13 +268,18 @@ const titleRefs     = ref({})
 const containerRefs = ref({})
 
 // 모든 textarea 높이 일괄 재계산 (초기 로드 시 기존 데이터 높이 맞춤)
+// nextTick 이후에도 브라우저 레이아웃이 완료되지 않을 수 있으므로 setTimeout으로 한 번 더 보장
 const resizeAllTextareas = () => {
-  nextTick(() => {
+  const doResize = () => {
     if (!rootRef.value) return
     rootRef.value.querySelectorAll('textarea').forEach(el => {
       el.style.height = 'auto'
       el.style.height = el.scrollHeight + 'px'
     })
+  }
+  nextTick(() => {
+    doResize()
+    setTimeout(doResize, 100)
   })
 }
 

@@ -343,7 +343,7 @@
             <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:9px;" />
             <textarea v-model="t.content" rows="1"
               @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
-              class="input-field"
+              class="input-field todo-textarea"
               :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55' }"
               placeholder="할 일을 입력하세요" />
             <button type="button" @click="removeTodo(idx)"
@@ -856,7 +856,7 @@ const previewNext = computed(() => {
   return map
 })
 
-const applyPrev = () => {
+const applyPrev = async () => {
   if (!previewData.value) return
   const r = previewData.value
   // 이전 보고서의 '금주 업무(next_plan)' → 새 보고서 '전주 업무(jiWon_curr)'
@@ -872,5 +872,19 @@ const applyPrev = () => {
   showPrevModal.value = false
   previewReport.value = null
   previewData.value   = null
+
+  // 데이터 채운 뒤 모든 textarea 높이 재계산 (불러오기 시 잘림 방지)
+  const resizeAll = () => {
+    document.querySelectorAll('.todo-textarea, .auto-resize-ta').forEach(el => {
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    })
+  }
+  await nextTick()
+  resizeAll()
+  requestAnimationFrame(() => {
+    resizeAll()
+    setTimeout(resizeAll, 300)
+  })
 }
 </script>

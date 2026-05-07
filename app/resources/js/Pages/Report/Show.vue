@@ -215,10 +215,10 @@
             <td style="padding:12px 8px;text-align:center;font-size:12px;font-weight:700;background:#F5EDDB;border-right:2px solid #1A1100;vertical-align:top;">Todo</td>
             <td colspan="2" style="padding:12px 16px;vertical-align:top;">
               <div v-if="report.todo_items?.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 24px;">
-                <div v-for="(t, i) in report.todo_items" :key="i" style="display:flex;gap:8px;align-items:center;">
-                  <span style="font-size:15px;flex-shrink:0;"
+                <div v-for="(t, i) in report.todo_items" :key="i" style="display:flex;gap:8px;align-items:flex-start;">
+                  <span style="font-size:15px;flex-shrink:0;margin-top:1px;"
                     :style="{ color: t.done ? '#16A34A' : '#9A8F7A' }">{{ t.done ? '☑' : '☐' }}</span>
-                  <span style="font-size:13px;line-height:1.5;"
+                  <span style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"
                     :style="{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#9A8F7A' : '#1A1100' }">{{ t.content }}</span>
                 </div>
               </div>

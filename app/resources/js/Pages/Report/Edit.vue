@@ -120,7 +120,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
 
 // 기존 데이터 로드 시 모든 자동 높이 textarea 초기화
-// nextTick + setTimeout으로 브라우저 레이아웃 완료 후 높이 재계산 보장
+// nextTick → rAF → setTimeout 3단계로 브라우저 레이아웃/폰트 로드 완료 후 높이 재계산 보장
 onMounted(() => {
   const doResize = () => {
     document.querySelectorAll('.todo-textarea, .auto-resize-ta').forEach(el => {
@@ -130,7 +130,10 @@ onMounted(() => {
   }
   nextTick(() => {
     doResize()
-    setTimeout(doResize, 100)
+    requestAnimationFrame(() => {
+      doResize()
+      setTimeout(doResize, 300)
+    })
   })
 })
 

@@ -73,8 +73,7 @@
               @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
               class="input-field todo-textarea"
               :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55' }"
-              placeholder="할 일을 입력하세요"
-              @keydown.enter.prevent />
+              placeholder="할 일을 입력하세요" />
             <button type="button" @click="removeTodo(idx)"
               style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
               @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
@@ -95,11 +94,19 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-bottom:16px;">
         <div class="card">
           <label style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:12px;">특이사항</label>
-          <textarea v-model="form.notes" rows="4" class="input-field" style="resize:vertical;line-height:1.65;" placeholder="이번 주 특이사항을 입력해주세요"></textarea>
+          <textarea v-model="form.notes" rows="1"
+            @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
+            class="input-field auto-resize-ta"
+            style="resize:none;overflow:hidden;min-height:80px;line-height:1.65;"
+            placeholder="이번 주 특이사항을 입력해주세요"></textarea>
         </div>
         <div class="card">
           <label style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:12px;">요청사항</label>
-          <textarea v-model="form.requests" rows="4" class="input-field" style="resize:vertical;line-height:1.65;" placeholder="관리자에게 전달할 요청사항"></textarea>
+          <textarea v-model="form.requests" rows="1"
+            @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
+            class="input-field auto-resize-ta"
+            style="resize:none;overflow:hidden;min-height:80px;line-height:1.65;"
+            placeholder="관리자에게 전달할 요청사항"></textarea>
         </div>
       </div>
     </form>
@@ -112,10 +119,10 @@ import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
 
-// 기존 데이터 로드 시 Todo textarea 높이 자동 맞춤
+// 기존 데이터 로드 시 모든 자동 높이 textarea 초기화
 onMounted(() => {
   nextTick(() => {
-    document.querySelectorAll('.todo-textarea').forEach(el => {
+    document.querySelectorAll('.todo-textarea, .auto-resize-ta').forEach(el => {
       el.style.height = 'auto'
       el.style.height = el.scrollHeight + 'px'
     })

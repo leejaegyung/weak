@@ -28,6 +28,15 @@ class MailService
         Config::set('mail.mailers.smtp.password',   $password);
         Config::set('mail.from.address',            $fromAddr ?: 'noreply@example.com');
         Config::set('mail.from.name',               $fromName);
+
+        // OpenSSL 3.x + 구형 SMTP 서버(legacy renegotiation) 호환성 옵션
+        Config::set('mail.mailers.smtp.stream', [
+            'ssl' => [
+                'allow_self_signed' => true,
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+            ],
+        ]);
     }
 
     /**

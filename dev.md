@@ -1,6 +1,6 @@
-# SE-HUB 개발자 가이드 (Developer Guide)
+# 개발자 가이드 (Developer Guide)
 
-이 문서는 SE-HUB 프로젝트의 코드 일관성, 유지보수성, 그리고 높은 소프트웨어 품질을 유지하기 위한 개발 표준 가이드입니다. 모든 개발자와 AI 어시스턴트는 코드를 작성할 때 이 가이드를 최우선으로 준수해야 합니다.
+이 문서는 프로젝트의 코드 일관성, 유지보수성, 그리고 높은 소프트웨어 품질을 유지하기 위한 개발 표준 가이드입니다. 모든 개발자와 AI 어시스턴트는 코드를 작성할 때 이 가이드를 최우선으로 준수해야 합니다.
 
 ---
 
@@ -47,3 +47,10 @@
 | **JS / TS Variable** | `camelCase` | `handleFormSubmit`, `fetchData` |
 | **Vue File** | `PascalCase.vue` | `DashboardView.vue`, `StatusBadge.vue` |
 | **URL Route** | `kebab-case` | `/weekly-reports/create` |
+
+
+## 5. 📝 데이터 베이스  (Database model)
+* **database model** 데이터 베이스는 postgresql을 사용해야함 
+* **database differ** 데이터 베이스가 다를 경우 postgresql로 마이그레이션 해야함 
+* **database version** 데이터 베이스 버전은 postgresql 14~17 버전을 사용해야함 (기본 17) 
+

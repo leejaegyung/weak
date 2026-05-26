@@ -227,9 +227,9 @@
 
     <!-- 삭제 확인 모달 -->
     <div v-if="deleteTarget"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="deleteTarget=null">
-      <div class="card" style="width:400px;padding:28px;text-align:center;">
+      <div class="card" style="width:400px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
         <div style="width:52px;height:52px;background:#FEE2E2;border:2px solid #DC2626;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -254,9 +254,9 @@
 
     <!-- 추가/수정 모달 -->
     <div v-if="showModal"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="closeModal">
-      <div class="card" style="width:420px;padding:28px;">
+      <div class="card" style="width:420px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:18px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em;">
           {{ editTarget ? '사용자 수정' : '사용자 추가' }}
         </div>

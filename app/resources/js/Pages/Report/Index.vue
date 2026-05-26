@@ -75,7 +75,7 @@
     </div>
 
     <!-- 통계 카드 4개 -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
       <div v-for="stat in statsCards" :key="stat.label"
         class="card"
         :style="{ background: stat.bg, padding:'18px 20px', display:'flex', alignItems:'center', gap:'14px', cursor:'pointer', transition:'transform 0.1s,box-shadow 0.1s' }"
@@ -173,9 +173,9 @@
 
     <!-- 미제출 알림 채널 선택 모달 -->
     <div v-if="showAlertModal"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="showAlertModal=false">
-      <div class="card" style="width:420px;padding:28px;">
+      <div class="card" style="width:420px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;">
         <!-- 모달 헤더 -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
           <div style="width:44px;height:44px;background:#FFF0A0;border:2px solid #1A1100;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -225,11 +225,11 @@
 
     <!-- 메일 전송 모달 -->
     <div v-if="showMailModal"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="showMailModal=false">
-      <div class="card" style="width:520px;padding:0;overflow:hidden;">
+      <div class="card" style="width:520px;max-width:100%;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
         <!-- 모달 헤더 -->
-        <div style="padding:20px 24px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;align-items:center;gap:12px;">
+        <div style="padding:20px 24px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;align-items:center;gap:12px;flex-shrink:0;">
           <div style="width:44px;height:44px;background:#DCFCE7;border:2px solid #1A1100;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           </div>
@@ -240,7 +240,7 @@
         </div>
 
         <!-- 모달 바디 -->
-        <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;min-height:0;">
           <!-- 받는 사람 -->
           <div>
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">받는 사람</label>
@@ -283,7 +283,7 @@
         </div>
 
         <!-- 모달 푸터 -->
-        <div style="padding:16px 24px;border-top:2px solid #1A1100;background:#F5EDDB;display:flex;gap:8px;justify-content:flex-end;">
+        <div style="padding:16px 24px;border-top:2px solid #1A1100;background:#F5EDDB;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
           <button @click="showMailModal=false" class="btn-secondary" :disabled="mailSending">취소</button>
           <button @click="sendWeeklyMail" :disabled="mailSending || !mailForm.to"
             style="background:#16A34A;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #166534;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;"
@@ -298,9 +298,9 @@
 
     <!-- 삭제 확인 모달 -->
     <div v-if="deleteTarget"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="deleteTarget=null">
-      <div class="card" style="width:380px;padding:28px;text-align:center;">
+      <div class="card" style="width:380px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
         <div style="width:48px;height:48px;background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
@@ -366,6 +366,7 @@ const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
 const statsCards = computed(() => [
   { label:'전체 보고서', val: props.counts.all          ?? 0, bg:'#FDCB40', filter:'all' },
   { label:'미제출',      val: props.counts.notSubmitted ?? 0, bg:'#FFF0A0', filter:'not_submitted' },
+  { label:'작성중',      val: props.counts.draft        ?? 0, bg:'#F0FDF4', filter:'draft' },
   { label:'제출됨',      val: props.counts.submitted    ?? 0, bg:'#DBEAFE', filter:'submitted' },
   { label:'반려됨',      val: props.counts.rejected     ?? 0, bg:'#FEE2E2', filter:'rejected' },
 ])
@@ -373,6 +374,7 @@ const statsCards = computed(() => [
 const filterBtns = [
   { val:'all',           label:'전체' },
   { val:'not_submitted', label:'미제출' },
+  { val:'draft',         label:'작성중' },
   { val:'submitted',     label:'제출됨' },
   { val:'rejected',      label:'반려됨' },
 ]

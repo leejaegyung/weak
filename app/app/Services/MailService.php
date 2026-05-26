@@ -6,6 +6,7 @@ use App\Mail\WeeklyReportMail;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class MailService
 {
@@ -37,8 +38,16 @@ class MailService
                 'verify_peer_name'  => false,
             ],
         ]);
-    }
 
+        // 비밀번호는 로그에 남기지 않음 (전체 mail 설정 dump는 유출 위험)
+        Log::info('SMTP configured from settings', [
+            'host'       => $host,
+            'port'       => $port,
+            'encryption' => $encryption,
+            'username'   => $username,
+            'from'       => $fromAddr,
+        ]);
+    }
     /**
      * 주간보고 메일 발송
      *
@@ -59,9 +68,11 @@ class MailService
     public function sendTest(string $toEmail): array
     {
         try {
+            Log::info('sendTest start', ['to' => $toEmail]);
+
             $this->configureSmtp();
 
-            Mail::raw(
+            $sent = Mail::raw(
                 "✅ 주간업무보고 시스템 메일 연결 테스트입니다.\n이 메일이 수신되었다면 SMTP 설정이 정상입니다.",
                 function ($message) use ($toEmail) {
                     $message->to($toEmail)
@@ -69,8 +80,20 @@ class MailService
                 }
             );
 
+            $ctx = ['to' => $toEmail];
+            if ($sent instanceof \Symfony\Component\Mailer\SentMessage) {
+                $ctx['message_id'] = $sent->getMessageId();
+            }
+            Log::info('sendTest smtp transport accepted (no exception)', $ctx);
+
             return ['ok' => true, 'message' => "{$toEmail} 으로 테스트 메일을 전송했습니다."];
         } catch (\Throwable $e) {
+            Log::error('sendTest failed', [
+                'to'       => $toEmail,
+                'message'  => $e->getMessage(),
+                'exception'=> $e,
+            ]);
+
             return ['ok' => false, 'message' => '전송 실패: ' . $e->getMessage()];
         }
     }

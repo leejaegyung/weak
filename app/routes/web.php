@@ -44,7 +44,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/reports/{report}/reject', [ReportController::class, 'reject'])->name('reports.reject');
 
     // 일정 (팀 일정판)
-    Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/schedules',         [ScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/schedules/monthly', [ScheduleController::class, 'monthly'])->name('schedules.monthly');
     Route::post('/schedules/upsert', [ScheduleController::class, 'upsert'])->name('schedules.upsert');
 
     // 개인설정

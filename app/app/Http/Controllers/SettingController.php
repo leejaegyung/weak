@@ -32,8 +32,10 @@ class SettingController extends Controller
     public function webhook(): Response
     {
         return Inertia::render('Admin/Webhook', [
-            'webhook_url'     => Setting::get('webhook_url', ''),
-            'webhook_enabled' => Setting::get('webhook_enabled', '0') === '1',
+            'webhook_url'           => Setting::get('webhook_url', ''),
+            'webhook_enabled'       => Setting::get('webhook_enabled', '0') === '1',
+            'webhook_daily_enabled' => Setting::get('webhook_daily_enabled', '0') === '1',
+            'webhook_daily_time'    => Setting::get('webhook_daily_time', '09:00'),
         ]);
     }
 
@@ -41,12 +43,16 @@ class SettingController extends Controller
     public function updateWebhook(Request $request): RedirectResponse
     {
         $request->validate([
-            'webhook_url'     => ['nullable', 'url'],
-            'webhook_enabled' => ['boolean'],
+            'webhook_url'           => ['nullable', 'url'],
+            'webhook_enabled'       => ['boolean'],
+            'webhook_daily_enabled' => ['boolean'],
+            'webhook_daily_time'    => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
         ]);
 
-        Setting::set('webhook_url', $request->input('webhook_url', ''));
-        Setting::set('webhook_enabled', $request->boolean('webhook_enabled') ? '1' : '0');
+        Setting::set('webhook_url',           $request->input('webhook_url', ''));
+        Setting::set('webhook_enabled',       $request->boolean('webhook_enabled') ? '1' : '0');
+        Setting::set('webhook_daily_enabled', $request->boolean('webhook_daily_enabled') ? '1' : '0');
+        Setting::set('webhook_daily_time',    $request->input('webhook_daily_time', '09:00'));
 
         return back()->with('success', 'Webhook 설정이 저장되었습니다.');
     }

@@ -112,7 +112,7 @@
     <div style="display:flex;flex:1;overflow:hidden;">
 
       <!-- ── 사이드바 ── -->
-      <aside style="width:230px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 12px;flex-shrink:0;overflow-y:auto;">
+      <aside style="width:180px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 8px;flex-shrink:0;overflow-y:auto;">
 
         <div style="font-size:10px;color:#9A8F7A;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0 8px;margin-bottom:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
           메뉴
@@ -177,7 +177,7 @@
                 </svg>
               </div>
               알림 설정
-              <svg :style="{ marginLeft:'auto', transition:'transform 0.2s', transform: settingsOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
+              <svg :style="{ marginLeft:'4px', transition:'transform 0.2s', transform: settingsOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
                 width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -230,7 +230,7 @@
             </div>
             사용자 관리
             <span v-if="pendingCount > 0"
-              style="margin-left:auto;background:#DC2626;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;font-family:'Space Grotesk',sans-serif;">
+              style="margin-left:4px;background:#DC2626;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;font-family:'Space Grotesk',sans-serif;">
               {{ pendingCount }}
             </span>
           </Link>

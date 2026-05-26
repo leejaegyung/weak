@@ -13,13 +13,23 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ReportService
 {
+    /**
+     * weekStart(Monday 날짜 문자열)로부터 ISO 주차 문자열(e.g. "2026-W20")을 계산.
+     * curr_start 날짜 범위 대신 week 컬럼으로 조회해야 날짜 오차 없이 정확히 조회됨.
+     */
+    private function weekString(string $weekStart): string
+    {
+        $monday = Carbon::parse($weekStart);
+        return $monday->format('Y') . '-W' . $monday->format('W');
+    }
+
     public function list(?int $userId = null, ?string $status = null, ?string $search = null, ?string $weekStart = null): array
     {
         // 미제출 필터: 해당 주차 보고서가 없는 활성 사용자 목록 반환
         if ($status === 'not_submitted') {
             if (!$weekStart) return [];
-            $weekEnd         = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
-            $existingUserIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])->pluck('user_id');
+            $weekStr         = $this->weekString($weekStart);
+            $existingUserIds = WeeklyReport::where('week', $weekStr)->pluck('user_id');
 
             $usersQuery = User::where('is_active', true)->where('is_hidden', false)->whereNotIn('id', $existingUserIds);
             if ($userId)  $usersQuery->where('id', $userId);
@@ -47,8 +57,8 @@ class ReportService
             $query->where('user_id', $userId);
         }
         if ($weekStart) {
-            $weekEnd = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
-            $query->whereBetween('curr_start', [$weekStart, $weekEnd]);
+            // curr_start 날짜 범위가 아닌 week 컬럼으로 조회 (날짜 오차 방지)
+            $query->where('week', $this->weekString($weekStart));
         }
         if ($status) {
             $query->where('status', $status);
@@ -77,8 +87,8 @@ class ReportService
 
         // 특정 주차 조회 + 상태 필터 없음 → 미제출 사용자도 포함
         if ($weekStart && !$status) {
-            $weekEnd         = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
-            $existingUserIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])->pluck('user_id');
+            $weekStr         = $this->weekString($weekStart);
+            $existingUserIds = WeeklyReport::where('week', $weekStr)->pluck('user_id');
 
             $usersQuery = User::where('is_active', true)->where('is_hidden', false)->whereNotIn('id', $existingUserIds);
             if ($userId) $usersQuery->where('id', $userId);
@@ -120,18 +130,18 @@ class ReportService
         $query = WeeklyReport::query();
         if ($userId) $query->where('user_id', $userId);
         if ($weekStart) {
-            $weekEnd = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
-            $query->whereBetween('curr_start', [$weekStart, $weekEnd]);
+            // week 컬럼으로 조회 (curr_start 날짜 오차 방지)
+            $query->where('week', $this->weekString($weekStart));
         }
 
         $all       = (clone $query)->count();
+        $draft     = (clone $query)->where('status', 'draft')->count();
         $submitted = (clone $query)->where('status', 'submitted')->count();
         $rejected  = (clone $query)->where('status', 'rejected')->count();
 
         // 미제출: 활성 사용자 중 해당 주차에 보고서가 없는 수
         if ($weekStart) {
-            $weekEnd         = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
-            $existingUserIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])->pluck('user_id');
+            $existingUserIds = WeeklyReport::where('week', $this->weekString($weekStart))->pluck('user_id');
             if ($userId) {
                 // 비관리자: 본인만 체크
                 $notSubmitted = in_array($userId, $existingUserIds->toArray()) ? 0 : 1;
@@ -142,13 +152,14 @@ class ReportService
             $notSubmitted = 0;
         }
 
-        return compact('all', 'notSubmitted', 'submitted', 'rejected');
+        return compact('all', 'draft', 'notSubmitted', 'submitted', 'rejected');
     }
 
-    public function create(array $data, int $userId): WeeklyReport
+    public function create(array $data, int $userId, bool $submitNow = false): WeeklyReport
     {
         $data['user_id'] = $userId;
-        $data['status']  = 'draft';
+        $data['status']  = $submitNow ? 'submitted' : 'draft';
+        if ($submitNow) $data['submitted_at'] = now();
         return WeeklyReport::create($data);
     }
 
@@ -195,7 +206,7 @@ class ReportService
             $this->fillReportSheet($sheet, $report);
         }
 
-        $filename = '주간업무보고_' . $week . '_' . now()->format('YmdHis') . '.xlsx';
+        $filename = 'SE팀 주간업무보고_' . $friday->format('Y-m-d') . '.xlsx';
         $filepath = storage_path('app/exports/' . $filename);
         if (!is_dir(storage_path('app/exports'))) mkdir(storage_path('app/exports'), 0777, true);
 
@@ -311,7 +322,7 @@ class ReportService
         $sheet->setCellValue('A1', '주간업무보고');
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '000000']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC000']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9D9D9']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders'   => ['outline' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['rgb' => '000000']]],
         ]);
@@ -324,12 +335,13 @@ class ReportService
         ];
         $labelStyle = [
             'font'      => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '000000']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFF2CC']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9D9D9']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
         ];
         $valueStyle = [
             'font'      => ['size' => 10],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFFF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
         ];
@@ -354,7 +366,7 @@ class ReportService
         $sheet->setCellValue('F3', '금주 업무 (' . $nextRange . ')');
         $sheet->getStyle('A3:I3')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '000000']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFF2CC']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9D9D9']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['rgb' => '000000']]],
         ]);
@@ -427,7 +439,7 @@ class ReportService
     {
         $sheet->getStyle($cell)->applyFromArray([
             'font'      => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '000000']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFF2CC']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9D9D9']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
         ]);
@@ -458,8 +470,10 @@ class ReportService
             if (trim($title) === '') continue;
             $lines[] = $num++ . '. ' . $title;
             foreach ($item['sub_items'] ?? [] as $sub) {
-                if (trim((string) $sub) !== '') {
-                    $lines[] = '   - ' . $sub;
+                // sub_items 항목이 배열(객체)로 저장된 경우에도 안전하게 처리
+                $subStr = is_array($sub) ? ($sub['content'] ?? $sub['title'] ?? '') : (string) $sub;
+                if (trim($subStr) !== '') {
+                    $lines[] = '   - ' . $subStr;
                 }
             }
         }

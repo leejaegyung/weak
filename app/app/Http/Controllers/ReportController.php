@@ -121,8 +121,10 @@ class ReportController extends Controller
 
     public function store(StoreReportRequest $request): RedirectResponse
     {
-        $data   = $request->validated();
-        $userId = Auth::id();
+        $data      = $request->validated();
+        $userId    = Auth::id();
+        $submitNow = ($data['action'] ?? 'draft') === 'submit';
+        unset($data['action']);
 
         $existing = $this->reportService->findByWeekAndUser($data['week'], $userId);
         if ($existing) {
@@ -130,10 +132,11 @@ class ReportController extends Controller
                 ->with('info', '이번 주 보고서가 이미 존재합니다.');
         }
 
-        $report = $this->reportService->create($data, $userId);
+        $report = $this->reportService->create($data, $userId, $submitNow);
 
+        $message = $submitNow ? '보고서가 제출되었습니다.' : '보고서가 임시 저장되었습니다.';
         return redirect()->route('reports.show', $report->id)
-            ->with('success', '보고서가 저장되었습니다.');
+            ->with('success', $message);
     }
 
     public function show(WeeklyReport $report): Response
@@ -167,7 +170,32 @@ class ReportController extends Controller
 
         $report->load('user');
 
-        return Inertia::render('Report/Edit', ['report' => $report]);
+        // 보고서 기간의 일정 로드 (curr_start ~ next_end)
+        $currStart = $report->curr_start ? substr($report->curr_start, 0, 10) : null;
+        $nextEnd   = $report->next_end   ? substr($report->next_end,   0, 10) : null;
+
+        $mySchedules = [];
+        if ($currStart && $nextEnd) {
+            $schedulesRaw = \App\Models\Schedule::where('user_id', $user->id)
+                ->whereBetween('date', [$currStart, $nextEnd])
+                ->get();
+            $mySchedules = $schedulesRaw->mapWithKeys(fn($s) => [substr((string)$s->date, 0, 10) => $s->content])->toArray();
+        }
+
+        $weekInfo = [
+            'week'       => $report->week,
+            'curr_start' => $currStart,
+            'curr_end'   => $report->curr_end ? substr($report->curr_end, 0, 10) : null,
+            'next_start' => $report->next_start ? substr($report->next_start, 0, 10) : null,
+            'next_end'   => $nextEnd,
+        ];
+
+        return Inertia::render('Report/Edit', [
+            'report'      => $report,
+            'mySchedules' => $mySchedules,
+            'weekInfo'    => $weekInfo,
+            'mySites'     => \App\Models\Schedule::where('user_id', $user->id)->distinct()->pluck('content')->filter()->values()->toArray(),
+        ]);
     }
 
     public function update(UpdateReportRequest $request, WeeklyReport $report): RedirectResponse

@@ -30,7 +30,7 @@ class ScheduleService
             ->get()
             ->groupBy('user_id')
             ->map(fn($rows) => $rows->mapWithKeys(fn($s) => [
-                substr($s->date, 0, 10) => $s->content ?? ''
+                $s->date->format('Y-m-d') => $s->content ?? ''
             ])->toArray())
             ->toArray();
     }

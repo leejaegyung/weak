@@ -1,7 +1,7 @@
 <template>
   <AppLayout page-title="알림 설정">
     <!-- 헤더 -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;max-width:680px;margin-left:auto;margin-right:auto;">
       <div style="background:#F5F3FF;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <div style="max-width:680px;display:flex;flex-direction:column;gap:18px;">
+    <div style="max-width:680px;display:flex;flex-direction:column;gap:18px;margin:0 auto;width:100%;">
 
       <!-- Webhook 설정 카드 -->
       <form @submit.prevent="submit" class="card">
@@ -24,7 +24,7 @@
         </div>
 
         <!-- 활성화 토글 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:14px 16px;background:#F5EDDB;border-radius:12px;border:2px solid #1A1100;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:14px 16px;background:#F5EDDB;border-radius:12px;border:2px solid #1A1100;">
           <div>
             <div style="font-size:13px;font-weight:700;">Webhook 활성화</div>
             <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">활성화 시 반려·미제출 알림이 메신저로 발송됩니다</div>
@@ -68,9 +68,65 @@
           <p style="font-size:11px;color:#9A8F7A;margin-top:6px;">Slack / Mattermost Incoming Webhook URL을 입력하세요</p>
         </div>
 
+        <!-- ── 매일 아침 자동 발송 ── -->
+        <div style="background:#F0F9FF;border:2px solid #BAE6FD;border-radius:12px;padding:16px;margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:#0369A1;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            매일 아침 팀 일정 자동 발송
+          </div>
+
+          <!-- 자동 발송 토글 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+              <div style="font-size:12px;font-weight:700;">자동 발송 활성화</div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">평일(월~금) 지정 시간에 당일 팀 일정을 자동 발송</div>
+            </div>
+            <label style="position:relative;display:inline-flex;align-items:center;cursor:pointer;">
+              <input type="checkbox" v-model="form.webhook_daily_enabled" style="opacity:0;width:0;height:0;position:absolute;" />
+              <div :style="{
+                width:'44px', height:'24px', borderRadius:'12px', border:'2px solid #1A1100',
+                background: form.webhook_daily_enabled ? '#0EA5E9' : '#E5E7EB',
+                transition:'background 0.2s', position:'relative', flexShrink:0,
+              }">
+                <div :style="{
+                  position:'absolute', top:'2px',
+                  left: form.webhook_daily_enabled ? '20px' : '2px',
+                  width:'16px', height:'16px', borderRadius:'50%',
+                  background:'#1A1100', transition:'left 0.2s',
+                }"></div>
+              </div>
+            </label>
+          </div>
+
+          <!-- 발송 시간 -->
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;">
+              <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:5px;">발송 시간</label>
+              <input v-model="form.webhook_daily_time" type="time"
+                :disabled="!form.webhook_daily_enabled"
+                class="input-field"
+                style="max-width:140px;"
+                :style="{ opacity: form.webhook_daily_enabled ? 1 : 0.45 }" />
+            </div>
+            <div style="font-size:11px;color:#0369A1;line-height:1.6;padding-top:16px;">
+              설정 시간에 당일 팀 일정을<br>항목별로 그룹화하여 발송합니다
+            </div>
+          </div>
+
+          <!-- 발송 형식 예시 -->
+          <div style="margin-top:12px;background:#fff;border:1.5px solid #BAE6FD;border-radius:8px;padding:10px 12px;font-size:11px;color:#1A1100;line-height:1.8;">
+            <div style="color:#0369A1;font-weight:700;margin-bottom:4px;">발송 형식 예시</div>
+            <div>📅 <strong>2026년 05월 19일(월) 팀 일정</strong></div>
+            <div>✈️ 출장: 홍길동, 김철수</div>
+            <div>🌐 mbc 제작: 이영희</div>
+            <div>🌐 KBS 방송: 홍길동, 박민수</div>
+            <div>✏ 주간보고 작성: 김철수</div>
+          </div>
+        </div>
+
         <!-- 알림 트리거 안내 -->
         <div style="background:#FFF8EE;border:2px solid #E8E0D0;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
-          <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#4A3F2A;">자동 발송 조건</div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#4A3F2A;">기타 자동 발송 조건</div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#4A3F2A;">
               <span style="width:20px;height:20px;background:#FEE2E2;border:1.5px solid #DC2626;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -128,13 +184,17 @@ import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  webhook_url:     { type: String,  default: '' },
-  webhook_enabled: { type: Boolean, default: false },
+  webhook_url:           { type: String,  default: '' },
+  webhook_enabled:       { type: Boolean, default: false },
+  webhook_daily_enabled: { type: Boolean, default: false },
+  webhook_daily_time:    { type: String,  default: '09:00' },
 })
 
 const form = useForm({
-  webhook_url:     props.webhook_url,
-  webhook_enabled: props.webhook_enabled,
+  webhook_url:           props.webhook_url,
+  webhook_enabled:       props.webhook_enabled,
+  webhook_daily_enabled: props.webhook_daily_enabled,
+  webhook_daily_time:    props.webhook_daily_time,
 })
 
 const submit = () => form.post('/admin/settings/webhook')
@@ -158,8 +218,8 @@ const testWebhook = async () => {
 const toMonday = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr)
-  const day = d.getDay() // 0=일, 1=월 ... 6=토
-  const diff = day === 0 ? -6 : 1 - day // 월요일까지의 차이
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   return d.toISOString().slice(0, 10)
 }

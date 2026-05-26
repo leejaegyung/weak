@@ -135,33 +135,64 @@
           </button>
         </div>
 
-        <!-- 세부 항목 (- bullet) -->
+        <!-- 내용(sub_items) 목록 -->
         <div style="margin-left:25px;display:flex;flex-direction:column;gap:4px;">
-          <div v-for="(sub, sIdx) in (item.sub_items || [])" :key="sIdx"
-            style="display:flex;gap:6px;align-items:flex-start;">
-            <span style="color:#9A8F7A;font-size:12px;font-weight:700;flex-shrink:0;margin-top:7px;width:10px;">-</span>
-            <textarea
-              v-model="item.sub_items[sIdx]"
-              @input="(e) => { autoResize(e.target); emitUpdate() }"
-              class="input-field"
-              rows="1"
-              placeholder="세부 내용"
-              style="flex:1;resize:none;overflow:hidden;min-height:32px;font-size:12px;line-height:1.5;padding-top:5px;padding-bottom:5px;color:#4A3F2A;" />
-            <button type="button" @click="removeSubItem(idx, sIdx)"
-              style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;margin-top:3px;"
-              @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
-              @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
+          <div v-for="(sub, sIdx) in normalizeSubItems(item.sub_items)" :key="sIdx">
+            <!-- 내용 행 -->
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span style="color:#9A8F7A;font-size:12px;font-weight:700;flex-shrink:0;margin-top:7px;width:10px;">-</span>
+              <textarea
+                :value="sub.content"
+                @input="(e) => { updateSubContent(idx, sIdx, e.target.value); autoResize(e.target) }"
+                class="input-field"
+                rows="1"
+                placeholder="내용"
+                style="flex:1;resize:none;overflow:hidden;min-height:32px;font-size:12px;line-height:1.5;padding-top:5px;padding-bottom:5px;color:#4A3F2A;" />
+              <button type="button" @click="removeSubItem(idx, sIdx)"
+                style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;margin-top:3px;"
+                @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <!-- details 하위 목록 -->
+            <div style="margin-left:26px;margin-top:2px;display:flex;flex-direction:column;gap:3px;">
+              <div v-for="(detail, dIdx) in (sub.details || [])" :key="dIdx"
+                style="display:flex;gap:6px;align-items:flex-start;">
+                <span style="color:#C5BAA8;font-size:11px;flex-shrink:0;margin-top:7px;width:10px;">└</span>
+                <textarea
+                  :value="detail"
+                  @input="(e) => { updateDetail(idx, sIdx, dIdx, e.target.value); autoResize(e.target) }"
+                  class="input-field"
+                  rows="1"
+                  placeholder="세부항목"
+                  style="flex:1;resize:none;overflow:hidden;min-height:28px;font-size:11px;line-height:1.5;padding-top:4px;padding-bottom:4px;color:#6B5E4A;" />
+                <button type="button" @click="removeDetail(idx, sIdx, dIdx)"
+                  style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:3px;border-radius:5px;flex-shrink:0;transition:color 0.1s;margin-top:3px;"
+                  @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                  @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <!-- 세부항목 추가 버튼 (내용이 있을 때만) -->
+              <button v-if="sub.content || (sub.details && sub.details.length > 0)"
+                type="button" @click="addDetail(idx, sIdx)"
+                style="display:inline-flex;align-items:center;gap:3px;background:none;border:1px dashed #D0C9BC;border-radius:5px;padding:2px 8px;font-size:10px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;align-self:flex-start;margin-top:1px;"
+                @mouseenter="e=>{e.currentTarget.style.borderColor='#9A8F7A';e.currentTarget.style.color='#4A3F2A';}"
+                @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.color='#9A8F7A';}">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                세부항목 추가
+              </button>
+            </div>
           </div>
 
-          <!-- 세부항목 추가 버튼 -->
+          <!-- 내용 추가 버튼 -->
           <button type="button" @click="addSubItem(idx)"
             style="display:inline-flex;align-items:center;gap:4px;background:none;border:1.5px dashed #D0C9BC;border-radius:6px;padding:3px 9px;font-size:11px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.1s;align-self:flex-start;margin-top:2px;"
             @mouseenter="e=>{e.currentTarget.style.borderColor='#FD4401';e.currentTarget.style.color='#FD4401';}"
             @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.color='#9A8F7A';}">
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            세부항목 추가
+            내용 추가
           </button>
         </div>
       </div>
@@ -435,16 +466,66 @@ const removeItem = (idx) => {
   emit('update:modelValue', arr)
 }
 
+// sub_items backward compat normalize (string → {content, details})
+const normalizeSubItems = (subs) => {
+  if (!Array.isArray(subs)) return []
+  return subs.map(s => typeof s === 'string' ? { content: s, details: [] } : { content: s.content || '', details: s.details || [] })
+}
+
+const updateSubContent = (idx, sIdx, val) => {
+  const arr = props.modelValue.map((item, i) => {
+    if (i !== idx) return item
+    const subs = normalizeSubItems(item.sub_items)
+    subs[sIdx] = { ...subs[sIdx], content: val }
+    return { ...item, sub_items: subs }
+  })
+  emit('update:modelValue', arr)
+}
+
+const addDetail = (idx, sIdx) => {
+  const arr = props.modelValue.map((item, i) => {
+    if (i !== idx) return item
+    const subs = normalizeSubItems(item.sub_items)
+    subs[sIdx] = { ...subs[sIdx], details: [...(subs[sIdx].details || []), ''] }
+    return { ...item, sub_items: subs }
+  })
+  emit('update:modelValue', arr)
+}
+
+const updateDetail = (idx, sIdx, dIdx, val) => {
+  const arr = props.modelValue.map((item, i) => {
+    if (i !== idx) return item
+    const subs = normalizeSubItems(item.sub_items)
+    const details = [...(subs[sIdx].details || [])]
+    details[dIdx] = val
+    subs[sIdx] = { ...subs[sIdx], details }
+    return { ...item, sub_items: subs }
+  })
+  emit('update:modelValue', arr)
+}
+
+const removeDetail = (idx, sIdx, dIdx) => {
+  const arr = props.modelValue.map((item, i) => {
+    if (i !== idx) return item
+    const subs = normalizeSubItems(item.sub_items)
+    const details = [...(subs[sIdx].details || [])]
+    details.splice(dIdx, 1)
+    subs[sIdx] = { ...subs[sIdx], details }
+    return { ...item, sub_items: subs }
+  })
+  emit('update:modelValue', arr)
+}
+
 const addSubItem = (idx) => {
   emit('update:modelValue', props.modelValue.map((item, i) =>
-    i !== idx ? item : { ...item, sub_items: [...(item.sub_items || []), ''] }
+    i !== idx ? item : { ...item, sub_items: [...normalizeSubItems(item.sub_items), { content: '', details: [] }] }
   ))
 }
 
 const removeSubItem = (idx, sIdx) => {
   emit('update:modelValue', props.modelValue.map((item, i) => {
     if (i !== idx) return item
-    const subs = [...(item.sub_items || [])]
+    const subs = normalizeSubItems(item.sub_items)
     subs.splice(sIdx, 1)
     return { ...item, sub_items: subs }
   }))

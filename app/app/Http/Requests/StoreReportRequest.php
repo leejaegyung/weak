@@ -30,6 +30,7 @@ class StoreReportRequest extends FormRequest
             'todo_items.*.content'   => ['nullable', 'string'],
             'notes'                  => ['nullable', 'string'],
             'requests'               => ['nullable', 'string'],
+            'action'                 => ['nullable', 'in:draft,submit'],
         ];
     }
 

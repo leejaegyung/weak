@@ -72,6 +72,33 @@ class ScheduleController extends Controller
         ]);
     }
 
+    /** 월별 팀 일정 조회 (월간 달력용) */
+    public function monthly(Request $request): JsonResponse
+    {
+        $request->validate(['month' => ['required', 'regex:/^\d{4}-\d{2}$/']]);
+
+        $month     = Carbon::parse($request->query('month') . '-01');
+        $startDate = $month->copy()->startOfMonth()->format('Y-m-d');
+        $endDate   = $month->copy()->endOfMonth()->format('Y-m-d');
+
+        $users = User::where('is_active', true)
+            ->where('is_hidden', false)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position])
+            ->toArray();
+
+        $teamSchedules = $this->scheduleService->getTeamSchedules($startDate, $endDate);
+
+        return response()->json([
+            'users'         => $users,
+            'teamSchedules' => $teamSchedules,
+            'startDate'     => $startDate,
+            'endDate'       => $endDate,
+        ]);
+    }
+
     public function upsert(Request $request): JsonResponse
     {
         $request->validate([

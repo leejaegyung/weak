@@ -1,6 +1,6 @@
 <template>
   <AppLayout page-title="개인설정">
-    <div style="max-width:720px;display:flex;flex-direction:column;gap:20px;">
+    <div style="max-width:720px;display:flex;flex-direction:column;gap:20px;margin:0 auto;width:100%;">
 
       <!-- 헤더 -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">

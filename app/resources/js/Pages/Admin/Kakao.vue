@@ -2,7 +2,7 @@
   <AppLayout page-title="카카오 연동">
 
     <!-- 헤더 -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto;">
       <div style="background:#FEF9C3;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="18" height="18" viewBox="0 0 512 512" fill="#3A1D0E">
           <path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/>
@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <div style="max-width:700px;display:flex;flex-direction:column;gap:18px;">
+    <div style="max-width:700px;display:flex;flex-direction:column;gap:18px;margin:0 auto;width:100%;">
 
       <!-- ── 순서도 ── -->
       <div class="card">
@@ -82,45 +82,54 @@
       </form>
 
       <!-- 팀원 카카오 연동 현황 -->
-      <div class="card">
-        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+      <div class="card" style="padding-bottom:0;">
+        <!-- 헤더 (클릭으로 토글) -->
+        <button type="button" @click="teamOpen = !teamOpen"
+          style="width:100%;background:none;border:none;cursor:pointer;padding:0 0 16px;font-family:inherit;display:flex;align-items:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          팀원 연동 현황
-          <span style="margin-left:auto;font-size:12px;font-weight:600;color:#9A8F7A;">
-            {{ connectedCount }}/{{ users.length }}명 연동
-          </span>
-        </div>
+          <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">팀원 연동 현황</span>
+          <span style="font-size:12px;font-weight:600;color:#9A8F7A;">{{ connectedCount }}/{{ users.length }}명 연동</span>
+          <svg :style="{ marginLeft:'auto', transition:'transform 0.2s', transform: teamOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
 
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div v-for="user in users" :key="user.id"
-            style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid #E8E0D0;"
-            :style="{ background: user.connected ? '#F0FDF4' : '#FAFAF8', borderColor: user.connected ? '#86EFAC' : '#E8E0D0' }">
-            <div style="width:32px;height:32px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1A1100;flex-shrink:0;">
-              {{ user.name.charAt(0) }}
+        <!-- 접히는 콘텐츠 -->
+        <Transition name="team-collapse">
+          <div v-if="teamOpen" style="overflow:hidden;">
+            <div style="display:flex;flex-direction:column;gap:6px;padding-bottom:16px;">
+              <div v-for="user in users" :key="user.id"
+                style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid #E8E0D0;"
+                :style="{ background: user.connected ? '#F0FDF4' : '#FAFAF8', borderColor: user.connected ? '#86EFAC' : '#E8E0D0' }">
+                <div style="width:32px;height:32px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1A1100;flex-shrink:0;">
+                  {{ user.name.charAt(0) }}
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;color:#1A1100;">{{ user.name }}</div>
+                  <div v-if="user.position" style="font-size:11px;color:#9A8F7A;">{{ user.position }}</div>
+                </div>
+                <div v-if="user.connected"
+                  style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#16A34A;border:1.5px solid #86EFAC;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  연동됨
+                </div>
+                <div v-else
+                  style="display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  미연동
+                </div>
+              </div>
+
+              <div v-if="users.length === 0" style="text-align:center;padding:24px;color:#9A8F7A;font-size:13px;">
+                활성화된 팀원이 없습니다
+              </div>
             </div>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:#1A1100;">{{ user.name }}</div>
-              <div v-if="user.position" style="font-size:11px;color:#9A8F7A;">{{ user.position }}</div>
-            </div>
-            <div v-if="user.connected"
-              style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#16A34A;border:1.5px solid #86EFAC;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-              연동됨
-            </div>
-            <div v-else
-              style="display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
-              미연동
+
+            <div style="margin-bottom:16px;padding:10px 14px;background:#FFF8EE;border-radius:10px;border:1.5px solid #E8E0D0;font-size:12px;color:#6B4F1A;line-height:1.7;">
+              💡 팀원은 <strong>개인설정 → 카카오 연결하기</strong>를 클릭하여 직접 연동할 수 있습니다
             </div>
           </div>
-
-          <div v-if="users.length === 0" style="text-align:center;padding:24px;color:#9A8F7A;font-size:13px;">
-            활성화된 팀원이 없습니다
-          </div>
-        </div>
-
-        <div style="margin-top:12px;padding:10px 14px;background:#FFF8EE;border-radius:10px;border:1.5px solid #E8E0D0;font-size:12px;color:#6B4F1A;line-height:1.7;">
-          💡 팀원은 <strong>개인설정 → 카카오 연결하기</strong>를 클릭하여 직접 연동할 수 있습니다
-        </div>
+        </Transition>
       </div>
 
       <!-- 미제출 알림 발송 -->
@@ -169,6 +178,7 @@ const props = defineProps({
 
 const redirectUri    = ref(props.redirect_uri)
 const connectedCount = computed(() => props.users.filter(u => u.connected).length)
+const teamOpen       = ref(true)
 
 // 순서도 단계
 const steps = [
@@ -235,3 +245,17 @@ const sendAlert = async () => {
   }
 }
 </script>
+
+<style scoped>
+.team-collapse-enter-active,
+.team-collapse-leave-active {
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+.team-collapse-enter-from,
+.team-collapse-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+</style>

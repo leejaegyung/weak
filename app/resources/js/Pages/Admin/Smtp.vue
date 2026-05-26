@@ -1,7 +1,7 @@
 <template>
   <AppLayout page-title="메일(SMTP) 설정">
     <!-- 헤더 -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;max-width:680px;margin-left:auto;margin-right:auto;">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
           <div style="background:#16A34A;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <form @submit.prevent="save" style="display:flex;flex-direction:column;gap:18px;max-width:680px;">
+    <form @submit.prevent="save" style="display:flex;flex-direction:column;gap:18px;max-width:680px;margin:0 auto;width:100%;">
 
       <!-- SMTP 서버 설정 -->
       <div class="card">

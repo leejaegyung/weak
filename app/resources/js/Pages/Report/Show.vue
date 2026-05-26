@@ -159,10 +159,18 @@
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-                    <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
-                      <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in item.sub_items" :key="si">
+                      <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
+                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -177,10 +185,18 @@
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-                    <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
-                      <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in item.sub_items" :key="si">
+                      <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
+                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -199,10 +215,18 @@
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-                    <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
-                      <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in item.sub_items" :key="si">
+                      <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
+                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -237,10 +261,18 @@
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-                    <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
-                      <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in item.sub_items" :key="si">
+                      <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
+                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -259,10 +291,18 @@
                     <span style="font-size:13px;line-height:1.65;color:#1A1100;font-weight:700;">{{ item.title || item.content }}</span>
                   </div>
                   <div v-if="item.sub_items?.length" style="margin-left:0;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-                    <div v-for="(sub, si) in item.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
-                      <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;">-</span>
-                      <span style="font-size:12px;color:#4A3F2A;line-height:1.6;white-space:pre-wrap;" v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in item.sub_items" :key="si">
+                      <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
+                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -299,9 +339,9 @@
 
     <!-- 삭제 확인 모달 -->
     <div v-if="showDeleteModal"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
       @click.self="showDeleteModal=false">
-      <div class="card" style="width:380px;padding:28px;text-align:center;">
+      <div class="card" style="width:380px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
         <div style="width:48px;height:48px;background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
@@ -324,8 +364,8 @@
 
     <!-- 반려 사유 모달 -->
     <div v-if="showRejectModal"
-      style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:6px 6px 0 #1A1100;padding:28px;max-width:420px;width:100%;">
+      style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:6px 6px 0 #1A1100;padding:28px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#DC2626;margin-bottom:6px;">보고서 반려</div>
         <div style="font-size:13px;color:#9A8F7A;margin-bottom:16px;">반려 사유를 입력하면 Webhook 및 카카오 알림으로 전달됩니다.</div>
         <textarea v-model="rejectReason" rows="3" class="input-field"

@@ -63,9 +63,16 @@
                 <div v-if="currBy['지원']?.length" class="item-list">
                   <div v-for="(item, i) in currBy['지원']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
-                    <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in (item.sub_items || [])" :key="si">
+                      <div class="sub-item">
+                        <span class="sub-dash">-</span> <span v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" class="sub-item" style="margin-left:14px;">
+                          <span class="sub-dash">└</span> <span v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
                 <span v-else class="empty-cell">-</span>
@@ -74,9 +81,16 @@
                 <div v-if="nextBy['지원']?.length" class="item-list">
                   <div v-for="(item, i) in nextBy['지원']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
-                    <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in (item.sub_items || [])" :key="si">
+                      <div class="sub-item">
+                        <span class="sub-dash">-</span> <span v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" class="sub-item" style="margin-left:14px;">
+                          <span class="sub-dash">└</span> <span v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
                 <span v-else class="empty-cell">-</span>
@@ -90,9 +104,16 @@
                 <div v-if="currBy['내부작업']?.length" class="item-list">
                   <div v-for="(item, i) in currBy['내부작업']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
-                    <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in (item.sub_items || [])" :key="si">
+                      <div class="sub-item">
+                        <span class="sub-dash">-</span> <span v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" class="sub-item" style="margin-left:14px;">
+                          <span class="sub-dash">└</span> <span v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
                 <span v-else class="empty-cell">-</span>
@@ -119,9 +140,16 @@
                 <div v-if="currBy['공유']?.length" class="item-list">
                   <div v-for="(item, i) in currBy['공유']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
-                    <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in (item.sub_items || [])" :key="si">
+                      <div class="sub-item">
+                        <span class="sub-dash">-</span> <span v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" class="sub-item" style="margin-left:14px;">
+                          <span class="sub-dash">└</span> <span v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
                 <span v-else class="empty-cell">-</span>
@@ -135,9 +163,16 @@
                 <div v-if="currBy['기타']?.length" class="item-list">
                   <div v-for="(item, i) in currBy['기타']" :key="i" class="item-block">
                     <div class="item-title"><span class="item-num">{{ i+1 }}.</span> {{ item.title || item.content }}</div>
-                    <div v-for="(sub, si) in (item.sub_items || [])" :key="si" class="sub-item">
-                      <span class="sub-dash">-</span> <span v-html="autoLink(sub)"></span>
-                    </div>
+                    <template v-for="(sub, si) in (item.sub_items || [])" :key="si">
+                      <div class="sub-item">
+                        <span class="sub-dash">-</span> <span v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                      </div>
+                      <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
+                        <div v-for="(detail, di) in sub.details" :key="di" class="sub-item" style="margin-left:14px;">
+                          <span class="sub-dash">└</span> <span v-html="autoLink(detail)"></span>
+                        </div>
+                      </template>
+                    </template>
                   </div>
                 </div>
                 <span v-else class="empty-cell">-</span>

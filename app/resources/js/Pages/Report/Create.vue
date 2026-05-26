@@ -1,10 +1,47 @@
 <template>
   <AppLayout page-title="보고서 작성">
 
+    <!-- ── 제출 중 전체화면 로딩 오버레이 ── -->
+    <Transition name="submit-overlay">
+      <div v-if="submitting"
+        style="position:fixed;inset:0;background:rgba(26,17,0,0.55);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px);">
+        <div style="background:#FFFDF7;border:2px solid #1A1100;border-radius:20px;box-shadow:4px 4px 0 #1A1100;padding:32px 36px;display:flex;flex-direction:column;align-items:center;gap:20px;min-width:220px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;">
+          <!-- 스피너 -->
+          <div style="position:relative;width:56px;height:56px;">
+            <svg style="animation:spin 1s linear infinite;" width="56" height="56" viewBox="0 0 56 56" fill="none">
+              <circle cx="28" cy="28" r="22" stroke="#E8E0D0" stroke-width="5"/>
+              <path d="M28 6 A22 22 0 0 1 50 28" stroke="#FDCB40" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+          </div>
+          <!-- 텍스트 -->
+          <div style="text-align:center;">
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;letter-spacing:-0.02em;margin-bottom:6px;">{{ submitAction === 'draft' ? '임시 저장 중' : '보고서 제출 중' }}</div>
+            <div style="font-size:12px;color:#9A8F7A;line-height:1.6;">일정 동기화 후 보고서를 저장하고 있습니다.<br>잠시만 기다려 주세요...</div>
+          </div>
+          <!-- 단계 표시 -->
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#9A8F7A;">
+            <span :style="{ color: submitStep >= 1 ? '#16A34A' : '#C5BAA8' }">
+              {{ submitStep >= 1 ? '✓' : '○' }} 일정 저장
+            </span>
+            <span style="color:#E8E0D0;">→</span>
+            <span :style="{ color: submitStep >= 2 ? '#16A34A' : submitStep === 1 ? '#FDCB40' : '#C5BAA8' }">
+              {{ submitStep >= 2 ? '✓' : '○' }} {{ submitAction === 'draft' ? '임시 저장' : '보고서 제출' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- 이번 주 보고서 중복 경고 팝업 -->
     <div v-if="showDuplicateAlert"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px);">
-      <div class="card" style="width:400px;padding:28px;text-align:center;">
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px);padding:16px;">
+      <div class="card" style="width:400px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
         <!-- 아이콘 -->
         <div style="width:56px;height:56px;background:#FFF0A0;border:2px solid #1A1100;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,9 +91,24 @@
           이전 보고서
         </button>
         <Link href="/reports" class="btn-secondary">취소</Link>
-        <button type="button" @click="submit" :disabled="form.processing" class="btn-primary">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          {{ form.processing ? '제출 중...' : '제출하기' }}
+        <!-- 임시 저장 버튼 -->
+        <button type="button" @click="saveDraft" :disabled="submitting || form.processing"
+          style="display:inline-flex;align-items:center;gap:6px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+          :style="{ opacity: (submitting || form.processing) ? 0.6 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }"
+          @mouseenter="e=>{ if(!submitting && !form.processing){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+          @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
+          <svg v-if="!(submitting && submitAction==='draft') && !form.processing" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          <svg v-else style="animation:spin 0.8s linear infinite;flex-shrink:0;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          {{ submitting && submitAction === 'draft' ? '저장 중...' : '임시 저장' }}
+        </button>
+        <!-- 제출하기 버튼 -->
+        <button type="button" @click="submitFinal" :disabled="submitting || form.processing" class="btn-primary"
+          :style="{ opacity: (submitting || form.processing) ? 0.7 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }">
+          <svg v-if="!(submitting && submitAction==='submit') && !form.processing" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          <svg v-else style="animation:spin 0.8s linear infinite;flex-shrink:0;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          {{ submitting && submitAction === 'submit' ? '제출 중...' : '제출하기' }}
         </button>
       </div>
     </div>
@@ -111,19 +163,20 @@
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
                 <div @click="openSchedModal(date, '금주')"
-                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;transition:all 0.12s;line-height:1.5;"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px;transition:all 0.12s;line-height:1.5;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">
-                    <template v-for="s in parsedSchedCell(schedules[date]).statuses" :key="s">
-                      <div :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[s].bg, color:SCHED_STATUS_MAP[s].color, border:'1px solid '+SCHED_STATUS_MAP[s].border, width:'fit-content', margin:'0 auto' }">
-                        {{ SCHED_STATUS_MAP[s].icon }} {{ s }}
+                    <template v-for="slot in parsedSchedCell(schedules[date]).slots" :key="slot.time + slot.status">
+                      <div :style="{ display:'flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'2px', fontSize:'10px', fontWeight:'800', background: slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].bg : '#FFEDD5', color: slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].color : '#C2410C', border:'1px solid '+(slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].border : '#FDBA74'), width:'100%', overflow:'hidden' }">
+                        <span style="font-size:9px;opacity:0.6;white-space:nowrap;">({{ slot.time }})</span>
+                        <span v-if="slot.status && SCHED_STATUS_MAP[slot.status]" style="flex-shrink:0;">{{ SCHED_STATUS_MAP[slot.status].icon }}</span>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ [slot.status, slot.sites.join(', ')].filter(Boolean).join(': ') }}</span>
                       </div>
                     </template>
-                    <template v-for="site in parsedSchedCell(schedules[date]).sites" :key="site">
-                      <div style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ site }}</div>
-                    </template>
-                    <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
+                    <div v-if="parsedSchedCell(schedules[date]).content" style="display:flex;align-items:center;gap:2px;padding:1px 5px;border-radius:2px;font-size:10px;font-weight:700;background:#CFFAFE;color:#0E7490;border:1px solid #67E8F9;width:100%;">
+                      ✏ {{ parsedSchedCell(schedules[date]).content }}
+                    </div>
                   </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
                 </div>
@@ -138,19 +191,20 @@
                 style="padding:8px 6px;border-right:1.5px solid #E8E0D0;vertical-align:top;">
                 <div style="font-size:10px;color:#9A8F7A;font-weight:600;text-align:center;margin-bottom:5px;">{{ fmtDateOnly(date) }}</div>
                 <div @click="openSchedModal(date, '차주')"
-                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;transition:all 0.12s;line-height:1.5;"
+                  style="min-height:34px;border:1.5px solid #E8E0D0;border-radius:8px;padding:5px 8px;font-size:12px;color:#4A3F2A;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px;transition:all 0.12s;line-height:1.5;"
                   @mouseenter="e=>{e.currentTarget.style.borderColor='#FDCB40';e.currentTarget.style.background='#FFFBF0';}"
                   @mouseleave="e=>{e.currentTarget.style.borderColor='#E8E0D0';e.currentTarget.style.background='#fff';}">
                   <template v-if="schedules[date]">
-                    <template v-for="s in parsedSchedCell(schedules[date]).statuses" :key="s">
-                      <div :style="{ display:'inline-flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'99px', fontSize:'10px', fontWeight:'800', background:SCHED_STATUS_MAP[s].bg, color:SCHED_STATUS_MAP[s].color, border:'1px solid '+SCHED_STATUS_MAP[s].border, width:'fit-content' }">
-                        {{ SCHED_STATUS_MAP[s].icon }} {{ s }}
+                    <template v-for="slot in parsedSchedCell(schedules[date]).slots" :key="slot.time + slot.status">
+                      <div :style="{ display:'flex', alignItems:'center', gap:'2px', padding:'1px 6px', borderRadius:'2px', fontSize:'10px', fontWeight:'800', background: slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].bg : '#FFEDD5', color: slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].color : '#C2410C', border:'1px solid '+(slot.status && SCHED_STATUS_MAP[slot.status] ? SCHED_STATUS_MAP[slot.status].border : '#FDBA74'), width:'100%', overflow:'hidden' }">
+                        <span style="font-size:9px;opacity:0.6;white-space:nowrap;">({{ slot.time }})</span>
+                        <span v-if="slot.status && SCHED_STATUS_MAP[slot.status]" style="flex-shrink:0;">{{ SCHED_STATUS_MAP[slot.status].icon }}</span>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ [slot.status, slot.sites.join(', ')].filter(Boolean).join(': ') }}</span>
                       </div>
                     </template>
-                    <template v-for="site in parsedSchedCell(schedules[date]).sites" :key="site">
-                      <div style="font-size:10px;color:#6B4F1A;font-weight:700;">{{ site }}</div>
-                    </template>
-                    <div v-if="parsedSchedCell(schedules[date]).detail" style="font-size:10px;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ parsedSchedCell(schedules[date]).detail }}</div>
+                    <div v-if="parsedSchedCell(schedules[date]).content" style="display:flex;align-items:center;gap:2px;padding:1px 5px;border-radius:2px;font-size:10px;font-weight:700;background:#CFFAFE;color:#0E7490;border:1px solid #67E8F9;width:100%;">
+                      ✏ {{ parsedSchedCell(schedules[date]).content }}
+                    </div>
                   </template>
                   <span v-else style="color:#C5BAA8;font-size:11px;">+ 추가</span>
                 </div>
@@ -163,12 +217,12 @@
       <!-- ── 일정 입력 모달 ── -->
       <Transition name="sched-modal-fade">
         <div v-if="schedModalVisible"
-          style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(3px);"
+          style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(3px);padding:16px;"
           @click.self="closeSchedModal">
-          <div style="width:460px;max-width:95vw;background:#FFF8EE;border:2px solid #1A1100;border-radius:18px;box-shadow:6px 6px 0 #1A1100;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="width:460px;max-width:100%;max-height:90vh;background:#FFF8EE;border:2px solid #1A1100;border-radius:18px;box-shadow:6px 6px 0 #1A1100;overflow:hidden;display:flex;flex-direction:column;">
 
             <!-- 모달 헤더 -->
-            <div style="padding:16px 22px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+            <div style="padding:16px 22px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
               <div>
                 <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;color:#1A1100;">
                   {{ schedModalWeek }} 일정 입력
@@ -186,78 +240,134 @@
             </div>
 
             <!-- 모달 바디 -->
-            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
+            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;min-height:0;">
 
-              <!-- 내 사이트 -->
+              <!-- 시간 선택 (라디오) -->
+              <div style="background:#F5EDDB;border:1.5px solid #D0C9BC;border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">시간</span>
+                  <span style="font-size:10px;color:#C5BAA8;">시간대별로 각각 등록됩니다</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button v-for="t in ['종일','오전','오후']" :key="t" type="button" @click="schedModalTime = t"
+                    :style="{
+                      padding:'5px 16px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
+                      border: schedModalTime === t ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalTime === t ? '#1A1100' : '#fff',
+                      color: schedModalTime === t ? '#FDCB40' : '#6B5E4A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s', position:'relative',
+                    }">
+                    {{ t }}
+                    <span v-if="schedModalAllSlots[t].status" :style="{
+                      position:'absolute', top:'-5px', right:'-5px',
+                      width:'8px', height:'8px', borderRadius:'50%',
+                      background: SCHED_STATUS_MAP[schedModalAllSlots[t].status]?.border ?? '#9A8F7A',
+                      border:'1.5px solid #fff',
+                    }"></span>
+                  </button>
+                </div>
+                <!-- 등록된 슬롯 미리보기 -->
+                <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
+                  <template v-for="t in ['종일','오전','오후']" :key="t">
+                    <div v-if="schedModalAllSlots[t].status && SCHED_STATUS_MAP[schedModalAllSlots[t].status]"
+                      :style="{
+                        display:'inline-flex', alignItems:'center', gap:'3px',
+                        padding:'2px 7px', borderRadius:'4px', fontSize:'11px', fontWeight:'700',
+                        background: SCHED_STATUS_MAP[schedModalAllSlots[t].status].bg,
+                        color: SCHED_STATUS_MAP[schedModalAllSlots[t].status].color,
+                        border: '1.5px solid ' + SCHED_STATUS_MAP[schedModalAllSlots[t].status].border,
+                      }">
+                      <span style="opacity:0.6;font-size:10px;">({{ t }})</span>
+                      {{ SCHED_STATUS_MAP[schedModalAllSlots[t].status].icon }} {{ schedModalAllSlots[t].status }}
+                    </div>
+                  </template>
+                  <div v-if="schedModalContent.trim()" style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;background:#CFFAFE;color:#0E7490;border:1.5px solid #67E8F9;">
+                    ✏ {{ schedModalContent }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- 상태 (라디오, 단일, 현재 시간대) -->
+              <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
+                  <span style="font-size:10px;color:#B8B0C8;">{{ schedModalTime }} · 하나만 선택</span>
+                </div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                  <button v-for="tag in SCHED_QUICK_TAGS" :key="tag.label" type="button"
+                    @click="toggleSchedStatus(tag.label)"
+                    :style="{
+                      display:'inline-flex', alignItems:'center', gap:'5px',
+                      padding:'5px 13px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
+                      border: schedModalAllSlots[schedModalTime].status === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalAllSlots[schedModalTime].status === tag.label ? tag.bg : '#fff',
+                      color: schedModalAllSlots[schedModalTime].status === tag.label ? tag.color : '#9A8F7A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                      boxShadow: schedModalAllSlots[schedModalTime].status === tag.label ? '2px 2px 0 #1A1100' : 'none',
+                    }">
+                    <span>{{ tag.icon }}</span>{{ tag.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 내 사이트 (현재 시간대) -->
               <div v-if="mySites.length"
                 style="background:#FFFBF0;border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">내 사이트</span>
+                  <span style="font-size:10px;color:#C5BAA8;">{{ schedModalTime }}</span>
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
                     @click="toggleSchedSite(site)"
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
-                      padding:'4px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: schedModalSites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: schedModalSites.includes(site) ? '#FDCB40' : '#fff',
-                      color: schedModalSites.includes(site) ? '#1A1100' : '#6B5E4A',
+                      padding:'4px 12px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
+                      border: schedModalAllSlots[schedModalTime].sites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: schedModalAllSlots[schedModalTime].sites.includes(site) ? '#FDCB40' : '#fff',
+                      color: schedModalAllSlots[schedModalTime].sites.includes(site) ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: schedModalSites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
-                    }"
-                    @mouseenter="e=>{ if(!schedModalSites.value.includes(site)){ e.currentTarget.style.background='#F5EDDB'; e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#1A1100'; } }"
-                    @mouseleave="e=>{ if(!schedModalSites.value.includes(site)){ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#6B5E4A'; } }">
+                      boxShadow: schedModalAllSlots[schedModalTime].sites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
+                    }">
                     {{ site }}
                   </button>
                 </div>
               </div>
 
-              <!-- 상태 -->
-              <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;">
+              <!-- 내용 (전체, 단일 칩) -->
+              <div style="background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;padding:10px 12px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
-                  <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
+                  <span style="font-size:11px;color:#0369A1;font-weight:700;letter-spacing:0.03em;">내용</span>
+                  <span style="font-size:10px;color:#7DD3FC;">단일 칩으로 표시됩니다</span>
                 </div>
-                <div style="display:flex;gap:7px;flex-wrap:wrap;">
-                  <button v-for="tag in SCHED_QUICK_TAGS" :key="tag.label" type="button"
-                    @click="toggleSchedStatus(tag)"
-                    :style="{
-                      display:'inline-flex', alignItems:'center', gap:'5px',
-                      padding:'5px 13px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
-                      border: schedModalStatuses.includes(tag.label) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: schedModalStatuses.includes(tag.label) ? tag.bg : '#fff',
-                      color: schedModalStatuses.includes(tag.label) ? tag.color : '#9A8F7A',
-                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: schedModalStatuses.includes(tag.label) ? '2px 2px 0 #1A1100' : 'none',
-                    }"
-                    @mouseenter="e=>{ if(!schedModalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#9A8F7A'; e.currentTarget.style.color='#4A3F2A'; } }"
-                    @mouseleave="e=>{ if(!schedModalStatuses.value.includes(tag.label)){ e.currentTarget.style.borderColor='#D0C9BC'; e.currentTarget.style.color='#9A8F7A'; } }">
-                    <span>{{ tag.icon }}</span>{{ tag.label }}
-                  </button>
+                <!-- 미리보기 칩 (하나) -->
+                <div v-if="schedModalContent.trim()" style="margin-bottom:8px;">
+                  <div style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#CFFAFE;color:#0E7490;border:1.5px solid #67E8F9;">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    {{ schedModalContent }}
+                  </div>
                 </div>
+                <textarea
+                  v-model="schedModalContent"
+                  rows="2"
+                  placeholder="내용을 입력하세요 (줄바꿈 없이 하나의 칩)"
+                  style="width:100%;background:#fff;border:1.5px solid #BAE6FD;border-radius:8px;padding:8px 11px;color:#1A1100;font-size:13px;font-family:inherit;outline:none;resize:none;line-height:1.65;transition:border-color 0.12s;"
+                  @focus="e=>e.target.style.borderColor='#0369A1'"
+                  @blur="e=>e.target.style.borderColor='#BAE6FD'"
+                  @keydown.enter.prevent
+                  @keydown.ctrl.enter.prevent="saveSchedModal"
+                  @keydown.meta.enter.prevent="saveSchedModal"
+                ></textarea>
               </div>
-
-              <!-- 내용 입력 -->
-              <textarea
-                v-model="schedModalDetail"
-                rows="3"
-                class="input-field"
-                placeholder="추가 상세 내용 (선택 사항)&#10;(모두 비워두면 해당 날짜 일정이 삭제됩니다)"
-                style="resize:vertical;line-height:1.65;font-size:13px;"
-                @keydown.ctrl.enter.prevent="saveSchedModal"
-                @keydown.meta.enter.prevent="saveSchedModal"
-              ></textarea>
-              <p style="font-size:11px;color:#9A8F7A;margin-top:-6px;">Ctrl+Enter로 빠르게 저장</p>
+              <p style="font-size:11px;color:#9A8F7A;margin-top:4px;">모두 비워두면 해당 날짜 일정이 삭제됩니다 &nbsp;·&nbsp; Ctrl+Enter로 빠르게 저장</p>
             </div>
 
             <!-- 모달 푸터 -->
-            <div style="padding:14px 22px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;">
+            <div style="padding:14px 22px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
               <button v-if="schedules[schedModalDate]" type="button" @click="deleteSchedModal"
                 style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
                 @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
@@ -330,29 +440,67 @@
       <SupportSection title="내부작업" v-model="form.naebu" />
 
       <!-- Todo -->
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:700;">Todo 목록</div>
-          <button type="button" @click="addTodo" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>추가
-          </button>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <!-- 헤더 -->
+        <div style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span>Todo 목록</span>
         </div>
-        <div v-if="form.todo_items.length === 0" style="text-align:center;padding:16px 0;color:#9A8F7A;font-size:13px;">항목을 추가하세요</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div v-for="(t, idx) in form.todo_items" :key="idx" style="display:flex;gap:8px;align-items:flex-start;">
-            <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:9px;" />
-            <textarea v-model="t.content" rows="1"
-              @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
-              class="input-field todo-textarea"
-              :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55' }"
-              placeholder="할 일을 입력하세요" />
-            <button type="button" @click="removeTodo(idx)"
-              style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
-              @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
-              @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
+        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+          <div v-if="form.todo_items.length === 0" style="text-align:center;padding:16px 0;color:#9A8F7A;font-size:13px;">항목을 추가하세요</div>
+          <!-- todo item 각각 -->
+          <div v-for="(t, idx) in form.todo_items" :key="idx"
+            style="border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px 8px;background:#FDFAF5;margin-bottom:0;">
+            <!-- 번호 + checkbox + 텍스트 -->
+            <div style="display:flex;gap:7px;align-items:center;margin-bottom:6px;">
+              <span style="font-size:11px;color:#9A8F7A;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">{{ idx+1 }}.</span>
+              <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
+              <textarea v-model="t.content" rows="1"
+                @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
+                class="input-field todo-textarea"
+                :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55', fontWeight:'700', fontSize:'13px' }"
+                placeholder="할 일을 입력하세요" />
+              <button type="button" @click="removeTodo(idx)"
+                style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;"
+                @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <!-- sub_items (내용) -->
+            <div style="margin-left:40px;display:flex;flex-direction:column;gap:3px;">
+              <div v-for="(sub, sIdx) in (t.sub_items || [])" :key="sIdx"
+                style="display:flex;gap:6px;align-items:flex-start;">
+                <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;margin-top:7px;">-</span>
+                <textarea :value="typeof sub === 'string' ? sub : sub.content"
+                  @input="e => { updateTodoSub(idx, sIdx, e.target.value); e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
+                  class="input-field"
+                  rows="1"
+                  placeholder="내용"
+                  style="flex:1;resize:none;overflow:hidden;min-height:28px;font-size:12px;line-height:1.5;padding-top:4px;padding-bottom:4px;color:#4A3F2A;" />
+                <button type="button" @click="removeTodoSub(idx, sIdx)"
+                  style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:3px;border-radius:5px;flex-shrink:0;"
+                  @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                  @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <button type="button" @click="addTodoSub(idx)"
+                style="display:inline-flex;align-items:center;gap:4px;background:none;border:1.5px dashed #D0C9BC;border-radius:6px;padding:3px 9px;font-size:11px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;align-self:flex-start;margin-top:2px;"
+                @mouseenter="e=>{e.currentTarget.style.borderColor='#FD4401';e.currentTarget.style.color='#FD4401';}"
+                @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.color='#9A8F7A';}">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                내용 추가
+              </button>
+            </div>
           </div>
+          <!-- 전체 항목 추가 버튼 -->
+          <button type="button" @click="addTodo"
+            style="display:inline-flex;align-items:center;gap:5px;background:rgba(26,17,0,0.04);border:1.5px dashed #C5BAA8;border-radius:8px;padding:6px 14px;font-size:12px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.1s;"
+            @mouseenter="e=>{e.currentTarget.style.borderColor='#FD4401';e.currentTarget.style.color='#FD4401';e.currentTarget.style.background='rgba(253,68,1,0.04)';}"
+            @mouseleave="e=>{e.currentTarget.style.borderColor='#C5BAA8';e.currentTarget.style.color='#9A8F7A';e.currentTarget.style.background='rgba(26,17,0,0.04)';}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            항목 추가
+          </button>
         </div>
       </div>
 
@@ -384,7 +532,7 @@
     </form>
     <!-- 이전 보고서 미리보기 모달 -->
     <div v-if="showPrevModal"
-      style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);padding:16px;"
       @click.self="showPrevModal=false;isFullscreen=false">
       <div class="card" :style="isFullscreen
         ? 'position:fixed;inset:16px;width:auto;max-width:none;max-height:none;display:flex;flex-direction:column;padding:0;overflow:hidden;z-index:201;border-radius:12px;'
@@ -440,6 +588,13 @@
             </div>
             <div v-else-if="previewLoading" style="flex:1;display:flex;align-items:center;justify-content:center;color:#9A8F7A;font-size:13px;">
               불러오는 중...
+            </div>
+            <div v-else-if="previewError" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#B91C1C;font-size:13px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              보고서를 불러오지 못했습니다. 다시 시도해 주세요.
+            </div>
+            <div v-else-if="!previewData" style="flex:1;display:flex;align-items:center;justify-content:center;color:#9A8F7A;font-size:13px;">
+              데이터를 불러올 수 없습니다.
             </div>
             <table v-else :style="isFullscreen
               ? 'width:100%;border-collapse:collapse;font-size:13.5px;table-layout:fixed;flex:1;'
@@ -571,10 +726,18 @@
 <style scoped>
 .sched-modal-fade-enter-active, .sched-modal-fade-leave-active { transition: all 0.2s ease; }
 .sched-modal-fade-enter-from, .sched-modal-fade-leave-to { opacity: 0; transform: scale(0.97); }
+
+/* 제출 오버레이 트랜지션 */
+.submit-overlay-enter-active { transition: opacity 0.2s ease; }
+.submit-overlay-leave-active  { transition: opacity 0.15s ease; }
+.submit-overlay-enter-from, .submit-overlay-leave-to { opacity: 0; }
+
+/* 스피너 회전 */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
@@ -647,41 +810,72 @@ const SCHED_STATUS_LABELS = SCHED_QUICK_TAGS.map(t => t.label)
 const SCHED_STATUS_MAP    = Object.fromEntries(SCHED_QUICK_TAGS.map(t => [t.label, t]))
 const DAY_KR_LIST = ['일', '월', '화', '수', '목', '금', '토']
 
-// 셀 파싱 — 다중 상태/사이트 지원 (Schedule/Index.vue와 동일한 로직)
+// 셀 파싱 — 신규 포맷: [시간]상태:사이트 + 구버전 호환
+const SCHED_TIME_ORDER = ['종일', '오전', '오후']
 const parsedSchedCell = (text) => {
-  if (!text || !text.trim()) return { statuses: [], sites: [], detail: '' }
-  const raw = text.trim()
-  const nlIdx = raw.indexOf('\n')
-  const headerLine = nlIdx === -1 ? raw : raw.substring(0, nlIdx)
-  const detail     = nlIdx === -1 ? '' : raw.substring(nlIdx + 1).trim()
+  if (!text?.trim()) return { slots: [], content: '' }
+  const lines = text.trim().split('\n')
+  const slots = []
+  const contentLines = []
+  const hasNewFmt = lines.some(l => /^\[[^\]]+\]/.test(l.trim()))
 
-  const colonIdx = headerLine.indexOf(':')
-  if (colonIdx > 0) {
-    const before = headerLine.substring(0, colonIdx).trim()
-    const after  = headerLine.substring(colonIdx + 1).trim()
-    const potentialStatuses = before.split(',').map(s => s.trim()).filter(s => s)
-    if (potentialStatuses.length && potentialStatuses.every(s => SCHED_STATUS_LABELS.includes(s))) {
-      const sites = after ? after.split(',').map(s => s.trim()).filter(s => s) : []
-      return { statuses: potentialStatuses, sites, detail }
+  if (hasNewFmt) {
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      const m = trimmed.match(/^\[([^\]]+)\](.*)$/)
+      if (m) {
+        const time = m[1]
+        const rest = m[2]
+        const ci   = rest.indexOf(':')
+        let status = '', sites = []
+        if (ci >= 0) {
+          status = rest.substring(0, ci).trim()
+          sites  = rest.substring(ci + 1).split(',').map(s => s.trim()).filter(Boolean)
+        } else {
+          status = rest.trim()
+        }
+        slots.push({ time, status, sites })
+      } else {
+        contentLines.push(trimmed)
+      }
     }
+  } else {
+    // 구버전: 첫 줄 상태/사이트 → 종일 슬롯으로
+    const header = lines[0]?.trim() ?? ''
+    const ci = header.indexOf(':')
+    let legacyStatus = '', legacySites = [], detailStart = 1
+    if (ci === 0) {
+      legacySites = header.substring(1).split(',').map(s => s.trim()).filter(Boolean)
+    } else if (ci > 0) {
+      const before = header.substring(0, ci).split(',').map(s => s.trim()).filter(Boolean)
+      if (before.every(s => SCHED_STATUS_LABELS.includes(s))) {
+        legacyStatus = before[0] ?? ''
+        legacySites  = header.substring(ci + 1).split(',').map(s => s.trim()).filter(Boolean)
+      } else { detailStart = 0 }
+    } else {
+      const parts = header.split(',').map(s => s.trim()).filter(Boolean)
+      if (parts.length && parts.every(s => SCHED_STATUS_LABELS.includes(s))) legacyStatus = parts[0] ?? ''
+      else if (SCHED_STATUS_LABELS.includes(header)) legacyStatus = header
+      else detailStart = 0
+    }
+    if (legacyStatus || legacySites.length) slots.push({ time: '종일', status: legacyStatus, sites: legacySites })
+    for (let i = detailStart; i < lines.length; i++) { const t = lines[i].trim(); if (t) contentLines.push(t) }
   }
-  const parts = headerLine.split(',').map(s => s.trim()).filter(s => s)
-  if (parts.length && parts.every(s => SCHED_STATUS_LABELS.includes(s))) {
-    return { statuses: parts, sites: [], detail }
-  }
-  const lines = raw.split('\n').map(l => l.trim()).filter(l => l)
-  if (lines.length && SCHED_STATUS_LABELS.includes(lines[0])) {
-    return { statuses: [lines[0]], sites: [], detail: lines.slice(1).join('\n') }
-  }
-  return { statuses: [], sites: [], detail: raw }
+
+  return { slots, content: contentLines.join(' ').trim() }
 }
 
-const schedModalVisible  = ref(false)
-const schedModalDate     = ref('')
-const schedModalWeek     = ref('')
-const schedModalStatuses = ref([])   // 다중 선택
-const schedModalSites    = ref([])   // 다중 선택
-const schedModalDetail   = ref('')
+const schedModalVisible = ref(false)
+const schedModalDate    = ref('')
+const schedModalWeek    = ref('')
+const schedModalTime    = ref('종일')   // 현재 편집 중인 시간대
+const schedModalContent = ref('')       // 내용 (단일)
+const schedModalAllSlots = reactive({
+  '종일': { status: '', sites: [] },
+  '오전': { status: '', sites: [] },
+  '오후': { status: '', sites: [] },
+})
 
 const schedModalDayKr = computed(() => {
   if (!schedModalDate.value) return ''
@@ -689,26 +883,42 @@ const schedModalDayKr = computed(() => {
   return DAY_KR_LIST[d.getDay()]
 })
 
+const resetSchedSlots = () => {
+  for (const t of SCHED_TIME_ORDER) {
+    schedModalAllSlots[t].status = ''
+    schedModalAllSlots[t].sites  = []
+  }
+}
+
 const openSchedModal = (date, week) => {
-  schedModalDate.value     = date
-  schedModalWeek.value     = week
+  schedModalDate.value = date
+  schedModalWeek.value = week
   const parsed = parsedSchedCell(schedules.value[date] ?? '')
-  schedModalStatuses.value = parsed.statuses
-  schedModalSites.value    = parsed.sites
-  schedModalDetail.value   = parsed.detail
-  schedModalVisible.value  = true
+  resetSchedSlots()
+  for (const slot of parsed.slots) {
+    if (schedModalAllSlots[slot.time]) {
+      schedModalAllSlots[slot.time].status = slot.status
+      schedModalAllSlots[slot.time].sites  = [...slot.sites]
+    }
+  }
+  schedModalContent.value = parsed.content
+  schedModalTime.value    = '종일'
+  schedModalVisible.value = true
 }
 const closeSchedModal = () => { schedModalVisible.value = false }
 
 const buildSchedContent = () => {
-  const parts = []
-  const statusPart = schedModalStatuses.value.join(',')
-  const sitePart   = schedModalSites.value.join(',')
-  if (statusPart && sitePart) parts.push(`${statusPart}:${sitePart}`)
-  else if (statusPart)        parts.push(statusPart)
-  else if (sitePart)          parts.push(sitePart)
-  if (schedModalDetail.value.trim()) parts.push(schedModalDetail.value.trim())
-  return parts.join('\n')
+  const lines = []
+  for (const time of SCHED_TIME_ORDER) {
+    const slot = schedModalAllSlots[time]
+    if (slot.status || slot.sites.length) {
+      const sitePart = slot.sites.join(',')
+      lines.push(`[${time}]${slot.status}${sitePart ? ':' + sitePart : ''}`)
+    }
+  }
+  const c = schedModalContent.value.replace(/\n/g, ' ').trim()
+  if (c) lines.push(c)
+  return lines.join('\n')
 }
 
 const saveSchedModal = () => {
@@ -722,16 +932,17 @@ const deleteSchedModal = () => {
   schedModalVisible.value = false
 }
 
-// 다중 선택 토글
-const toggleSchedStatus = (tag) => {
-  const idx = schedModalStatuses.value.indexOf(tag.label)
-  if (idx === -1) schedModalStatuses.value.push(tag.label)
-  else            schedModalStatuses.value.splice(idx, 1)
+// 상태 단일 선택 (현재 시간대)
+const toggleSchedStatus = (label) => {
+  const slot = schedModalAllSlots[schedModalTime.value]
+  slot.status = slot.status === label ? '' : label
 }
+// 사이트 토글 (현재 시간대)
 const toggleSchedSite = (site) => {
-  const idx = schedModalSites.value.indexOf(site)
-  if (idx === -1) schedModalSites.value.push(site)
-  else            schedModalSites.value.splice(idx, 1)
+  const slot = schedModalAllSlots[schedModalTime.value]
+  const idx  = slot.sites.indexOf(site)
+  if (idx === -1) slot.sites.push(site)
+  else            slot.sites.splice(idx, 1)
 }
 // ─────────────────────────────────────────────────────
 
@@ -758,14 +969,35 @@ const form = useForm({
 
 const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'
 
-const addTodo    = () => form.todo_items.push({ content: '', done: false })
+const addTodo    = () => form.todo_items.push({ content: '', done: false, sub_items: [] })
 const removeTodo = (idx) => form.todo_items.splice(idx, 1)
+const addTodoSub = (idx) => {
+  form.todo_items[idx].sub_items = [...(form.todo_items[idx].sub_items || []), '']
+}
+const removeTodoSub = (idx, sIdx) => {
+  form.todo_items[idx].sub_items.splice(sIdx, 1)
+}
+const updateTodoSub = (idx, sIdx, val) => {
+  const subs = form.todo_items[idx].sub_items || []
+  subs[sIdx] = typeof subs[sIdx] === 'string' ? val : { ...subs[sIdx], content: val }
+  form.todo_items[idx].sub_items = [...subs]
+}
 
-const submit = async () => {
+// ── 제출 로딩 상태 ──
+const submitting   = ref(false)
+const submitStep   = ref(0)       // 0: 대기, 1: 일정 저장 중, 2: 보고서 저장/제출 중
+const submitAction = ref('draft') // 'draft' | 'submit'
+
+const doSubmit = async (action = 'draft') => {
   if (props.existingReport) {
     showDuplicateAlert.value = true
     return
   }
+  if (submitting.value) return  // 중복 클릭 방지
+
+  submitAction.value = action
+  submitting.value   = true
+  submitStep.value   = 1  // 1단계: 일정 저장
 
   // 일정 팀 일정판에 먼저 저장
   const allDates = [...currDates.value, ...nextDates.value]
@@ -780,9 +1012,11 @@ const submit = async () => {
         )
       )
     } catch (e) {
-      console.warn('일정 저장 실패 (보고서 제출은 계속됩니다)', e)
+      console.warn('일정 저장 실패 (보고서 저장은 계속됩니다)', e)
     }
   }
+
+  submitStep.value = 2  // 2단계: 보고서 저장
 
   form.transform(data => ({
     week:       data.week,
@@ -800,8 +1034,18 @@ const submit = async () => {
     todo_items: data.todo_items,
     notes:      data.notes,
     requests:   data.requests,
-  })).post('/reports')
+    action:     action,
+  })).post('/reports', {
+    onError: () => { submitting.value = false; submitStep.value = 0 },
+  })
 }
+
+// 임시 저장 (draft)
+const saveDraft   = () => doSubmit('draft')
+// 최종 제출 (submitted)
+const submitFinal = () => doSubmit('submit')
+// form @submit.prevent 호환용 (기본: 제출하기)
+const submit      = submitFinal
 
 // 지원 항목 복사/붙여넣기 클립보드 (이번 주 ↔ 다음 주 양방향)
 const jiWonClipboard = ref(null)
@@ -824,15 +1068,21 @@ const previewReport  = ref(null)   // 선택된 보고서 메타
 const previewData    = ref(null)   // 로드된 보고서 데이터
 const previewLoading = ref(false)
 
+const previewError   = ref(false)
+
 const selectPrev = async (r) => {
   if (previewReport.value?.id === r.id) return
-  previewReport.value = r
-  previewData.value   = null
+  previewReport.value  = r
+  previewData.value    = null
+  previewError.value   = false
   previewLoading.value = true
   try {
     const res = await window.axios.get(`/reports/${r.id}/load`)
     previewData.value = res.data
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error('이전 보고서 로드 실패:', e)
+    previewError.value = true
+  }
   previewLoading.value = false
 }
 

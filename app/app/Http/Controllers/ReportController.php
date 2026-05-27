@@ -134,9 +134,14 @@ class ReportController extends Controller
 
         $report = $this->reportService->create($data, $userId, $submitNow);
 
-        $message = $submitNow ? '보고서가 제출되었습니다.' : '보고서가 임시 저장되었습니다.';
-        return redirect()->route('reports.show', $report->id)
-            ->with('success', $message);
+        if ($submitNow) {
+            return redirect()->route('reports.show', $report->id)
+                ->with('success', '보고서가 제출되었습니다.');
+        }
+
+        // 임시 저장 → 편집 페이지로 이동 (데이터 유지하며 이어서 작성)
+        return redirect()->route('reports.edit', $report->id)
+            ->with('success', '임시 저장되었습니다.');
     }
 
     public function show(WeeklyReport $report): Response

@@ -73,6 +73,7 @@ class ReportService
         $reports = $query->get()->map(fn($r) => [
             'id'           => $r->id,
             'week'         => $r->week,
+            'week_label'   => $r->week_label,
             'status'       => $r->status,
             'status_label' => $r->status_label,
             'curr_start'   => $r->curr_start?->format('Y-m-d'),

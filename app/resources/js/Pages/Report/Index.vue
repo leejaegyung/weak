@@ -140,7 +140,7 @@
           </div>
           <div>
             <div style="font-size:13px;font-weight:700;">{{ r.user?.name ?? '-' }}</div>
-            <div style="font-size:11px;color:#9A8F7A;">{{ r.week ?? '-' }}</div>
+            <div style="font-size:11px;color:#9A8F7A;">{{ r.week_label || r.week || '-' }}</div>
           </div>
         </div>
         <span style="font-size:12px;color:#4A3F2A;">
@@ -309,7 +309,7 @@
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;margin-bottom:8px;">보고서를 삭제할까요?</div>
         <div style="font-size:13px;color:#9A8F7A;line-height:1.7;margin-bottom:22px;">
           <strong style="color:#1A1100;">{{ deleteTarget?.user?.name }}</strong>님의
-          <strong style="color:#1A1100;">{{ deleteTarget?.week }}</strong> 보고서가<br>
+          <strong style="color:#1A1100;">{{ deleteTarget?.week_label || deleteTarget?.week }}</strong> 보고서가<br>
           영구적으로 삭제됩니다. 되돌릴 수 없습니다.
         </div>
         <div style="display:flex;gap:8px;justify-content:center;">

@@ -111,7 +111,7 @@
           </div>
           <div>
             <h2 style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.02em;">주간업무보고</h2>
-            <p style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ report.week }}</p>
+            <p style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ report.week_label || report.week }}</p>
           </div>
         </div>
         <!-- 오른쪽 정보 격자 -->

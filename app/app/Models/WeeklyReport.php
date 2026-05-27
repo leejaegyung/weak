@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WeeklyReport extends Model
 {
     use HasFactory;
+
+    protected $appends = ['status_label', 'week_label'];
 
     protected $fillable = [
         'user_id', 'week', 'status', 'reject_reason',
@@ -46,5 +49,16 @@ class WeeklyReport extends Model
             'rejected'  => '반려됨',
             default     => '작성 중',
         };
+    }
+
+    /** "2026-W22" → "2026년 5월 4주차" */
+    public function getWeekLabelAttribute(): string
+    {
+        if (!$this->week || !str_contains($this->week, '-W')) return $this->week ?? '';
+        [$year, $w]  = explode('-W', $this->week);
+        $monday      = Carbon::now()->setISODate((int) $year, (int) $w, 1);
+        $month       = $monday->month;
+        $weekOfMonth = (int) ceil($monday->day / 7);
+        return "{$year}년 {$month}월 {$weekOfMonth}주차";
     }
 }

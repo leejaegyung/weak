@@ -267,12 +267,14 @@ class ReportController extends Controller
         $user = Auth::user();
         if ($report->user_id !== $user->id) abort(403);
         if (!in_array($report->status, ['draft', 'rejected'])) {
-            return back()->withErrors(['status' => '이미 제출된 보고서입니다.']);
+            return redirect()->route('reports.show', $report->id)
+                ->withErrors(['status' => '이미 제출된 보고서입니다.']);
         }
 
         $report->update(['status' => 'submitted', 'submitted_at' => now()]);
 
-        return back()->with('success', '보고서가 제출되었습니다.');
+        return redirect()->route('reports.show', $report->id)
+            ->with('success', '보고서가 제출되었습니다.');
     }
 
     /** 관리자: 반려 */

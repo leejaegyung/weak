@@ -69,16 +69,7 @@
           ✕ 반려
         </button>
 
-        <!-- 인쇄 미리보기 -->
-        <Link :href="`/reports/${report.id}/print`" target="_blank"
-          style="display:inline-flex;align-items:center;gap:5px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;text-decoration:none;transition:all 0.1s;"
-          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
-          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          인쇄 미리보기
-        </Link>
-
-        <!-- 수정 버튼: 본인이거나 관리자면 항상 표시 -->
+<!-- 수정 버튼: 본인이거나 관리자면 항상 표시 -->
         <Link v-if="isOwn || isAdmin" :href="`/reports/${report.id}/edit`"
           class="btn-secondary btn-sm"
           style="display:inline-flex;align-items:center;gap:5px;">

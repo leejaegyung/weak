@@ -312,17 +312,6 @@ class ReportController extends Controller
         return back()->with('success', '보고서가 반려되었습니다.');
     }
 
-    /** 인쇄 미리보기 */
-    public function printView(WeeklyReport $report): Response
-    {
-        $user = Auth::user();
-        if (!$user->isAdmin() && $report->user_id !== $user->id) abort(403);
-
-        $report->load('user');
-
-        return Inertia::render('Report/Print', ['report' => $report]);
-    }
-
     /** 이전 보고서 내용 불러오기 (JSON) */
     public function loadReport(WeeklyReport $report): \Illuminate\Http\JsonResponse
     {

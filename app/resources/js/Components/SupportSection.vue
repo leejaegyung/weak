@@ -223,42 +223,46 @@
         borderRadius: '10px',
         boxShadow: '4px 4px 0 #1A1100',
         zIndex: 9999,
-        maxHeight: '240px',
-        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: '264px',
         fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif',
       }">
-      <!-- 드롭다운 헤더 (전체 목록일 때) -->
+      <!-- 드롭다운 헤더 (전체 목록일 때, sticky 고정) -->
       <div v-if="dropdownOpen"
-        style="padding:6px 14px;font-size:10px;font-weight:800;color:#9A8F7A;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1.5px solid #F0EBE0;background:#FDFAF5;">
-        저장된 항목
+        style="flex-shrink:0;padding:6px 14px;font-size:10px;font-weight:800;color:#9A8F7A;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1.5px solid #F0EBE0;background:#FDFAF5;border-radius:8px 8px 0 0;">
+        저장된 항목 <span style="color:#C5BAA8;font-weight:600;">({{ activeSuggestions.length }})</span>
       </div>
-      <div v-for="(s, si) in activeSuggestions" :key="si"
-        @mousedown.prevent="selectSuggestion(focusedTitleIdx, s)"
-        :style="{
-          padding: '9px 14px',
-          fontSize: '12px',
-          fontWeight: '600',
-          color: '#1A1100',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: hoverIdx === si ? '#FFF0A0' : 'transparent',
-          transition: 'background 0.07s',
-        }"
-        @mouseenter="hoverIdx = si"
-        @mouseleave="hoverIdx = -1">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-        <!-- 타이핑 연관어 하이라이트 -->
-        <span v-if="!dropdownOpen && currentQuery">
-          <template v-for="(part, pi) in highlight(s, currentQuery)" :key="pi">
-            <strong v-if="part.match" style="color:#FD4401;font-weight:800;">{{ part.text }}</strong>
-            <span v-else>{{ part.text }}</span>
-          </template>
-        </span>
-        <span v-else>{{ s }}</span>
+      <!-- 스크롤 가능한 목록 영역 -->
+      <div style="overflow-y:auto;flex:1;border-radius:0 0 8px 8px;">
+        <div v-for="(s, si) in activeSuggestions" :key="si"
+          @mousedown.prevent="selectSuggestion(focusedTitleIdx, s)"
+          :style="{
+            padding: '9px 14px',
+            fontSize: '12px',
+            fontWeight: '600',
+            color: '#1A1100',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: hoverIdx === si ? '#FFF0A0' : 'transparent',
+            transition: 'background 0.07s',
+          }"
+          @mouseenter="hoverIdx = si"
+          @mouseleave="hoverIdx = -1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <!-- 타이핑 연관어 하이라이트 -->
+          <span v-if="!dropdownOpen && currentQuery">
+            <template v-for="(part, pi) in highlight(s, currentQuery)" :key="pi">
+              <strong v-if="part.match" style="color:#FD4401;font-weight:800;">{{ part.text }}</strong>
+              <span v-else>{{ part.text }}</span>
+            </template>
+          </span>
+          <span v-else>{{ s }}</span>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -441,8 +445,22 @@ const onDocClick = (e) => {
   const inContainer = Object.values(containerRefs.value).some(el => el?.contains(e.target))
   if (!inContainer) closeAll()
 }
-onMounted(()  => document.addEventListener('mousedown', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
+
+// 스크롤 시 드롭다운 위치 재계산 (position:fixed가 페이지 스크롤 따라가도록)
+const onScroll = () => {
+  if (showDropdown.value && focusedTitleIdx.value >= 0) {
+    updateDropPos(focusedTitleIdx.value)
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onDocClick)
+  window.addEventListener('scroll', onScroll, true)   // capture: 중첩 스크롤도 감지
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocClick)
+  window.removeEventListener('scroll', onScroll, true)
+})
 
 // ── 공통 유틸 ─────────────────────────────────────────
 const autoResize = (el) => {

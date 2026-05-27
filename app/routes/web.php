@@ -39,7 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/reports/{report}', [ReportController::class, 'update'])->name('reports.update');
     Route::delete('/reports/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
     Route::get('/reports/{report}/load', [ReportController::class, 'loadReport'])->name('reports.load');
-    Route::get('/reports/{report}/print', [ReportController::class, 'printView'])->name('reports.print');
 
     // 보고서 상태 변경
     Route::post('/reports/{report}/submit', [ReportController::class, 'submit'])->name('reports.submit');

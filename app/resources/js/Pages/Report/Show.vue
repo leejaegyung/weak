@@ -238,12 +238,20 @@
           <tr style="border-bottom:2px solid #1A1100;">
             <td style="padding:12px 8px;text-align:center;font-size:12px;font-weight:700;background:#F5EDDB;border-right:2px solid #1A1100;vertical-align:top;">Todo</td>
             <td colspan="2" style="padding:12px 16px;vertical-align:top;">
-              <div v-if="report.todo_items?.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 24px;">
-                <div v-for="(t, i) in report.todo_items" :key="i" style="display:flex;gap:8px;align-items:flex-start;">
-                  <span style="font-size:15px;flex-shrink:0;margin-top:1px;"
-                    :style="{ color: t.done ? '#16A34A' : '#9A8F7A' }">{{ t.done ? '☑' : '☐' }}</span>
-                  <span style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"
-                    :style="{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#9A8F7A' : '#1A1100' }">{{ t.content }}</span>
+              <div v-if="report.todo_items?.length" style="display:flex;flex-direction:column;gap:8px;">
+                <div v-for="(t, i) in report.todo_items" :key="i">
+                  <div style="display:flex;gap:8px;align-items:flex-start;">
+                    <span style="font-size:15px;flex-shrink:0;margin-top:1px;"
+                      :style="{ color: t.done ? '#16A34A' : '#9A8F7A' }">{{ t.done ? '☑' : '☐' }}</span>
+                    <span style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;font-weight:700;"
+                      :style="{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#9A8F7A' : '#1A1100' }">{{ t.content }}</span>
+                  </div>
+                  <div v-if="t.sub_items?.length" style="margin-left:24px;margin-top:3px;display:flex;flex-direction:column;gap:2px;">
+                    <div v-for="(sub, si) in t.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
+                      <span style="color:#9A8F7A;flex-shrink:0;font-size:12px;margin-top:1px;">-</span>
+                      <span style="font-size:12px;line-height:1.5;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ typeof sub === 'string' ? sub : sub?.content }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <span v-else style="color:#D0C9BC;font-size:13px;">-</span>

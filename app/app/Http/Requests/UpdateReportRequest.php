@@ -25,8 +25,10 @@ class UpdateReportRequest extends FormRequest
             'next_plan.*.title'      => ['nullable', 'string'],
             'next_plan.*.content'    => ['nullable', 'string'],
             'next_plan.*.sub_items'  => ['nullable', 'array'],
-            'todo_items'             => ['nullable', 'array'],
-            'todo_items.*.content'   => ['nullable', 'string'],
+            'todo_items'              => ['nullable', 'array'],
+            'todo_items.*.content'    => ['nullable', 'string'],
+            'todo_items.*.done'       => ['nullable', 'boolean'],
+            'todo_items.*.sub_items'  => ['nullable', 'array'],
             'notes'                  => ['nullable', 'string'],
             'requests'               => ['nullable', 'string'],
         ];

@@ -125,9 +125,17 @@
               <td class="cat-td todo-cat">Todo 항목<br><span style="font-size:9px;font-weight:400;">(달성미정)</span></td>
               <td colspan="2" class="work-td">
                 <div class="todo-grid">
-                  <div v-for="(t, i) in report.todo_items" :key="i" class="todo-item">
-                    <span class="todo-check" :class="{ done: t.done }">{{ t.done ? '☑' : '☐' }}</span>
-                    <span class="todo-text" :class="{ done: t.done }">{{ t.content }}</span>
+                  <div v-for="(t, i) in report.todo_items" :key="i" class="todo-item-block">
+                    <div class="todo-item">
+                      <span class="todo-check" :class="{ done: t.done }">{{ t.done ? '☑' : '☐' }}</span>
+                      <span class="todo-text" :class="{ done: t.done }">{{ t.content }}</span>
+                    </div>
+                    <div v-if="t.sub_items?.length" class="todo-sub-list">
+                      <div v-for="(sub, si) in t.sub_items" :key="si" class="todo-sub-item">
+                        <span class="todo-sub-dash">-</span>
+                        <span class="todo-sub-text">{{ typeof sub === 'string' ? sub : sub?.content }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </td>
@@ -325,10 +333,15 @@
       .empty-cell { color: #bbb; font-size: 12px; }
 
       /* Todo */
-      .todo-grid { display: flex; flex-direction: column; gap: 4px; }
+      .todo-grid { display: flex; flex-direction: column; gap: 6px; }
+      .todo-item-block {}
       .todo-item { display: flex; gap: 6px; align-items: flex-start; font-size: 11.5px; }
       .todo-check { flex-shrink: 0; font-size: 13px; color: #888; }
       .todo-check.done { color: #16A34A; }
+      .todo-sub-list { margin-left: 20px; margin-top: 2px; display: flex; flex-direction: column; gap: 1px; }
+      .todo-sub-item { display: flex; gap: 4px; align-items: flex-start; }
+      .todo-sub-dash { color: #888; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
+      .todo-sub-text { font-size: 10.5px; color: #444; line-height: 1.5; white-space: pre-wrap; }
       .todo-text { line-height: 1.5; color: #111; }
       .todo-text.done { text-decoration: line-through; color: #999; }
 

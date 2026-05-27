@@ -1224,7 +1224,18 @@ const saveDraft = async () => {
     const payload = buildPayload('draft')
     let res
     if (draftId.value) {
-      res = await window.axios.patch(`/reports/${draftId.value}/draft`, payload)
+      try {
+        res = await window.axios.patch(`/reports/${draftId.value}/draft`, payload)
+      } catch (patchErr) {
+        // 404: 서버에 해당 draft 없음 → draftId 초기화 후 새로 생성
+        if (patchErr.response?.status === 404) {
+          draftId.value = null
+          res = await window.axios.post('/reports/draft', payload)
+          draftId.value = res.data.id
+        } else {
+          throw patchErr
+        }
+      }
     } else {
       res = await window.axios.post('/reports/draft', payload)
       draftId.value = res.data.id
@@ -1255,7 +1266,17 @@ const submitFinal = async () => {
   // draft로 저장된 게 있으면 → update 후 submit 엔드포인트 사용
   if (draftId.value) {
     try {
-      await window.axios.patch(`/reports/${draftId.value}/draft`, buildPayload('draft'))
+      try {
+        await window.axios.patch(`/reports/${draftId.value}/draft`, buildPayload('draft'))
+      } catch (patchErr) {
+        // 404: 서버에 해당 draft 없음 → draftId 초기화 후 새 draft로 생성
+        if (patchErr.response?.status === 404) {
+          const newRes = await window.axios.post('/reports/draft', buildPayload('draft'))
+          draftId.value = newRes.data.id
+        } else {
+          throw patchErr
+        }
+      }
       form.post(`/reports/${draftId.value}/submit`, {
         onSuccess: () => { clearLocal() },
         onError:  () => { submitting.value = false; submitStep.value = 0 },

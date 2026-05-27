@@ -21,10 +21,10 @@ class WeeklyReport extends Model
     protected function casts(): array
     {
         return [
-            'curr_start'   => 'date',
-            'curr_end'     => 'date',
-            'next_start'   => 'date',
-            'next_end'     => 'date',
+            'curr_start'   => 'date:Y-m-d',
+            'curr_end'     => 'date:Y-m-d',
+            'next_start'   => 'date:Y-m-d',
+            'next_end'     => 'date:Y-m-d',
             'curr_work'    => 'array',
             'next_plan'    => 'array',
             'todo_items'   => 'array',

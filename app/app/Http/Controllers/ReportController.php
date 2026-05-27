@@ -12,6 +12,7 @@ use App\Services\ReportService;
 use App\Services\ScheduleService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -142,6 +143,42 @@ class ReportController extends Controller
         // 임시 저장 → 편집 페이지로 이동 (데이터 유지하며 이어서 작성)
         return redirect()->route('reports.edit', $report->id)
             ->with('success', '임시 저장되었습니다.');
+    }
+
+    /** AJAX 임시 저장 (페이지 이동 없음, JSON 응답) */
+    public function storeDraft(StoreReportRequest $request): JsonResponse
+    {
+        $data   = $request->validated();
+        $userId = Auth::id();
+        unset($data['action']);
+
+        // 해당 주차 기존 보고서가 있으면 업데이트
+        $existing = $this->reportService->findByWeekAndUser($data['week'], $userId);
+        if ($existing) {
+            if ($existing->status === 'draft') {
+                $this->reportService->update($existing, $data);
+                return response()->json(['id' => $existing->id]);
+            }
+            return response()->json(['message' => '이미 제출된 보고서입니다.'], 409);
+        }
+
+        $report = $this->reportService->create($data, $userId, false);
+        return response()->json(['id' => $report->id]);
+    }
+
+    /** AJAX 임시 저장 업데이트 (기존 draft 수정, JSON 응답) */
+    public function updateDraft(StoreReportRequest $request, WeeklyReport $report): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $report->user_id !== $user->id) abort(403);
+        if ($report->status !== 'draft') {
+            return response()->json(['message' => '임시 저장 상태가 아닙니다.'], 409);
+        }
+
+        $data = $request->validated();
+        unset($data['action']);
+        $this->reportService->update($report, $data);
+        return response()->json(['id' => $report->id]);
     }
 
     public function show(WeeklyReport $report): Response

@@ -91,18 +91,28 @@
           이전 보고서
         </button>
         <Link href="/reports" class="btn-secondary">취소</Link>
-        <!-- 임시 저장 버튼 -->
-        <button type="button" @click="saveDraft" :disabled="submitting || form.processing"
-          style="display:inline-flex;align-items:center;gap:6px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
-          :style="{ opacity: (submitting || form.processing) ? 0.6 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }"
-          @mouseenter="e=>{ if(!submitting && !form.processing){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
-          @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
-          <svg v-if="!(submitting && submitAction==='draft') && !form.processing" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-          </svg>
-          <svg v-else style="animation:spin 0.8s linear infinite;flex-shrink:0;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          {{ submitting && submitAction === 'draft' ? '저장 중...' : '임시 저장' }}
-        </button>
+        <!-- 임시 저장 버튼 + 토스트 -->
+        <div style="display:inline-flex;align-items:center;gap:8px;position:relative;">
+          <button type="button" @click="saveDraft" :disabled="draftSaving || submitting"
+            style="display:inline-flex;align-items:center;gap:6px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+            :style="{ opacity: (draftSaving || submitting) ? 0.6 : 1, cursor: (draftSaving || submitting) ? 'not-allowed' : 'pointer' }"
+            @mouseenter="e=>{ if(!draftSaving && !submitting){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+            @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
+            <svg v-if="!draftSaving" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <svg v-else style="animation:spin 0.8s linear infinite;flex-shrink:0;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            {{ draftSaving ? '저장 중...' : '임시 저장' }}
+          </button>
+          <!-- 임시 저장 토스트 메시지 -->
+          <transition name="draft-toast">
+            <span v-if="draftToast"
+              style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;white-space:nowrap;"
+              :style="{ background: draftToastOk ? '#D1FAE5' : '#FEE2E2', color: draftToastOk ? '#065F46' : '#991B1B' }">
+              {{ draftToast }}
+            </span>
+          </transition>
+        </div>
         <!-- 제출하기 버튼 -->
         <button type="button" @click="submitFinal" :disabled="submitting || form.processing" class="btn-primary"
           :style="{ opacity: (submitting || form.processing) ? 0.7 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }">
@@ -734,6 +744,8 @@
 
 /* 스피너 회전 */
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.draft-toast-enter-active, .draft-toast-leave-active { transition: opacity 0.3s, transform 0.3s; }
+.draft-toast-enter-from, .draft-toast-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>
 
 <script setup>
@@ -988,64 +1000,116 @@ const submitting   = ref(false)
 const submitStep   = ref(0)       // 0: 대기, 1: 일정 저장 중, 2: 보고서 저장/제출 중
 const submitAction = ref('draft') // 'draft' | 'submit'
 
-const doSubmit = async (action = 'draft') => {
-  if (props.existingReport) {
-    showDuplicateAlert.value = true
+// ── 임시 저장 상태 ──
+const draftId      = ref(null)    // 저장된 draft report id
+const draftSaving  = ref(false)
+const draftToast   = ref('')      // 토스트 메시지
+const draftToastOk = ref(true)    // true=성공, false=실패
+let draftToastTimer = null
+
+const showDraftToast = (msg, ok = true) => {
+  draftToast.value   = msg
+  draftToastOk.value = ok
+  clearTimeout(draftToastTimer)
+  draftToastTimer = setTimeout(() => { draftToast.value = '' }, 3000)
+}
+
+// 공통 페이로드 빌더
+const buildPayload = (action = 'draft') => ({
+  week:       form.week,
+  curr_start: form.curr_start,
+  curr_end:   form.curr_end,
+  next_start: form.next_start,
+  next_end:   form.next_end,
+  curr_work: [
+    ...form.jiWon_curr.map(i => ({ title: i.title, content: i.title, category: '지원',    sub_items: i.sub_items })),
+    ...form.naebu.map(i      => ({ title: i.title, content: i.title, category: '내부작업', sub_items: i.sub_items })),
+    ...form.gongyu.map(i     => ({ title: i.title, content: i.title, category: '공유',    sub_items: i.sub_items })),
+    ...form.gita.map(i       => ({ title: i.title, content: i.title, category: '기타',    sub_items: i.sub_items })),
+  ],
+  next_plan:  form.jiWon_next.map(i => ({ title: i.title, content: i.title, category: '지원', sub_items: i.sub_items })),
+  todo_items: form.todo_items,
+  notes:      form.notes,
+  requests:   form.requests,
+  action,
+})
+
+// 일정 저장 헬퍼
+const saveSchedules = async () => {
+  const allDates = [...currDates.value, ...nextDates.value]
+  if (!allDates.length) return
+  try {
+    await Promise.all(
+      allDates.map(date =>
+        window.axios.post('/schedules/upsert', { date, content: schedules.value[date] || null })
+      )
+    )
+  } catch (e) {
+    console.warn('일정 저장 실패 (보고서 저장은 계속됩니다)', e)
+  }
+}
+
+// ── 임시 저장 (AJAX, 페이지 이동 없음) ──
+const saveDraft = async () => {
+  if (props.existingReport) { showDuplicateAlert.value = true; return }
+  if (draftSaving.value) return
+
+  draftSaving.value = true
+  await saveSchedules()
+
+  try {
+    const payload = buildPayload('draft')
+    let res
+    if (draftId.value) {
+      res = await window.axios.patch(`/reports/${draftId.value}/draft`, payload)
+    } else {
+      res = await window.axios.post('/reports/draft', payload)
+      draftId.value = res.data.id
+    }
+    showDraftToast('임시 저장되었습니다.', true)
+  } catch (e) {
+    const msg = e.response?.data?.message || '저장에 실패했습니다.'
+    showDraftToast(msg, false)
+    console.error('임시 저장 실패:', e)
+  } finally {
+    draftSaving.value = false
+  }
+}
+
+// ── 최종 제출 ──
+const submitFinal = async () => {
+  if (props.existingReport) { showDuplicateAlert.value = true; return }
+  if (submitting.value) return
+
+  submitAction.value = 'submit'
+  submitting.value   = true
+  submitStep.value   = 1
+
+  await saveSchedules()
+  submitStep.value = 2
+
+  // draft로 저장된 게 있으면 → update 후 submit 엔드포인트 사용
+  if (draftId.value) {
+    try {
+      await window.axios.patch(`/reports/${draftId.value}/draft`, buildPayload('draft'))
+      form.post(`/reports/${draftId.value}/submit`, {
+        onError: () => { submitting.value = false; submitStep.value = 0 },
+      })
+    } catch (e) {
+      submitting.value = false; submitStep.value = 0
+      console.error('제출 실패:', e)
+    }
     return
   }
-  if (submitting.value) return  // 중복 클릭 방지
 
-  submitAction.value = action
-  submitting.value   = true
-  submitStep.value   = 1  // 1단계: 일정 저장
-
-  // 일정 팀 일정판에 먼저 저장
-  const allDates = [...currDates.value, ...nextDates.value]
-  if (allDates.length) {
-    try {
-      await Promise.all(
-        allDates.map(date =>
-          window.axios.post('/schedules/upsert', {
-            date,
-            content: schedules.value[date] || null,
-          })
-        )
-      )
-    } catch (e) {
-      console.warn('일정 저장 실패 (보고서 저장은 계속됩니다)', e)
-    }
-  }
-
-  submitStep.value = 2  // 2단계: 보고서 저장
-
-  form.transform(data => ({
-    week:       data.week,
-    curr_start: data.curr_start,
-    curr_end:   data.curr_end,
-    next_start: data.next_start,
-    next_end:   data.next_end,
-    curr_work: [
-      ...data.jiWon_curr.map(i => ({ title: i.title, content: i.title, category: '지원',    sub_items: i.sub_items })),
-      ...data.naebu.map(i      => ({ title: i.title, content: i.title, category: '내부작업', sub_items: i.sub_items })),
-      ...data.gongyu.map(i     => ({ title: i.title, content: i.title, category: '공유',    sub_items: i.sub_items })),
-      ...data.gita.map(i       => ({ title: i.title, content: i.title, category: '기타',    sub_items: i.sub_items })),
-    ],
-    next_plan: data.jiWon_next.map(i => ({ title: i.title, content: i.title, category: '지원', sub_items: i.sub_items })),
-    todo_items: data.todo_items,
-    notes:      data.notes,
-    requests:   data.requests,
-    action:     action,
-  })).post('/reports', {
+  // draft 없으면 → 기존 create+submit 흐름
+  form.transform(data => buildPayload('submit')).post('/reports', {
     onError: () => { submitting.value = false; submitStep.value = 0 },
   })
 }
 
-// 임시 저장 (draft)
-const saveDraft   = () => doSubmit('draft')
-// 최종 제출 (submitted)
-const submitFinal = () => doSubmit('submit')
-// form @submit.prevent 호환용 (기본: 제출하기)
-const submit      = submitFinal
+// form @submit.prevent 호환용
+const submit = submitFinal
 
 // 지원 항목 복사/붙여넣기 클립보드 (이번 주 ↔ 다음 주 양방향)
 const jiWonClipboard = ref(null)

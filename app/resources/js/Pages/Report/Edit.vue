@@ -475,13 +475,16 @@ const props = defineProps({
 const showSchedule = ref(false)
 const schedules    = ref({ ...props.mySchedules })
 
+const fmtLocalDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+
 const currDates = computed(() => {
   const start = props.weekInfo?.curr_start ?? form.curr_start
   if (!start) return []
   return Array.from({ length: 5 }, (_, i) => {
     const d = new Date(start + 'T00:00:00')
     d.setDate(d.getDate() + i)
-    return d.toISOString().split('T')[0]
+    return fmtLocalDate(d)
   })
 })
 const nextDates = computed(() => {
@@ -490,7 +493,7 @@ const nextDates = computed(() => {
   return Array.from({ length: 5 }, (_, i) => {
     const d = new Date(start + 'T00:00:00')
     d.setDate(d.getDate() + i)
-    return d.toISOString().split('T')[0]
+    return fmtLocalDate(d)
   })
 })
 const fmtDateOnly = (d) => {

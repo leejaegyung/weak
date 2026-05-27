@@ -845,12 +845,15 @@ const showDuplicateAlert = ref(false)
 const showSchedule = ref(false)
 const schedules    = ref({ ...props.mySchedules })
 
+const fmtLocalDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+
 const currDates = computed(() => {
   if (!form.curr_start) return []
   return Array.from({ length: 5 }, (_, i) => {
     const d = new Date(form.curr_start + 'T00:00:00')
     d.setDate(d.getDate() + i)
-    return d.toISOString().split('T')[0]
+    return fmtLocalDate(d)
   })
 })
 const nextDates = computed(() => {
@@ -858,7 +861,7 @@ const nextDates = computed(() => {
   return Array.from({ length: 5 }, (_, i) => {
     const d = new Date(form.next_start + 'T00:00:00')
     d.setDate(d.getDate() + i)
-    return d.toISOString().split('T')[0]
+    return fmtLocalDate(d)
   })
 })
 const fmtDay = (d) => {

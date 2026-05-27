@@ -221,7 +221,10 @@ class ReportController extends Controller
             $schedulesRaw = \App\Models\Schedule::where('user_id', $user->id)
                 ->whereBetween('date', [$currStart, $nextEnd])
                 ->get();
-            $mySchedules = $schedulesRaw->mapWithKeys(fn($s) => [substr((string)$s->date, 0, 10) => $s->content])->toArray();
+            $mySchedules = $schedulesRaw
+                ->filter(fn($s) => $s->date !== null)
+                ->mapWithKeys(fn($s) => [$s->date->format('Y-m-d') => ($s->content ?? '')])
+                ->toArray();
         }
 
         $weekInfo = [
@@ -236,7 +239,7 @@ class ReportController extends Controller
             'report'      => $report,
             'mySchedules' => $mySchedules,
             'weekInfo'    => $weekInfo,
-            'mySites'     => \App\Models\Schedule::where('user_id', $user->id)->distinct()->pluck('content')->filter()->values()->toArray(),
+            'mySites'     => $user->sites->pluck('name')->toArray(),
         ]);
     }
 

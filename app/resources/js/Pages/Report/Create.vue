@@ -456,10 +456,9 @@
           <span>Todo 목록</span>
         </div>
         <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
-          <div v-if="form.todo_items.length === 0" style="text-align:center;padding:16px 0;color:#9A8F7A;font-size:13px;">항목을 추가하세요</div>
           <!-- todo item 각각 -->
           <div v-for="(t, idx) in form.todo_items" :key="idx"
-            style="border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px 8px;background:#FDFAF5;margin-bottom:0;">
+            style="border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px 8px;background:#FDFAF5;">
             <!-- 번호 + checkbox + 텍스트 -->
             <div style="display:flex;gap:7px;align-items:center;margin-bottom:6px;">
               <span style="font-size:11px;color:#9A8F7A;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">{{ idx+1 }}.</span>
@@ -503,16 +502,89 @@
               </button>
             </div>
           </div>
-          <!-- 전체 항목 추가 버튼 -->
-          <button type="button" @click="addTodo"
-            style="display:inline-flex;align-items:center;gap:5px;background:rgba(26,17,0,0.04);border:1.5px dashed #C5BAA8;border-radius:8px;padding:6px 14px;font-size:12px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.1s;"
-            @mouseenter="e=>{e.currentTarget.style.borderColor='#FD4401';e.currentTarget.style.color='#FD4401';e.currentTarget.style.background='rgba(253,68,1,0.04)';}"
-            @mouseleave="e=>{e.currentTarget.style.borderColor='#C5BAA8';e.currentTarget.style.color='#9A8F7A';e.currentTarget.style.background='rgba(26,17,0,0.04)';}">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            항목 추가
-          </button>
+
+          <!-- 항목 추가 버튼 (사이트 드롭다운 포함) -->
+          <div style="position:relative;align-self:flex-start;" ref="todoAddBtnRef">
+            <button type="button" @click="toggleTodoDrop"
+              style="display:inline-flex;align-items:center;gap:5px;background:rgba(26,17,0,0.04);border:1.5px dashed #C5BAA8;border-radius:8px;padding:6px 14px;font-size:12px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.1s;"
+              @mouseenter="e=>{e.currentTarget.style.borderColor='#FD4401';e.currentTarget.style.color='#FD4401';e.currentTarget.style.background='rgba(253,68,1,0.04)';}"
+              @mouseleave="e=>{e.currentTarget.style.borderColor='#C5BAA8';e.currentTarget.style.color='#9A8F7A';e.currentTarget.style.background='rgba(26,17,0,0.04)';}">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              + 항목 추가
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Todo 항목 추가 드롭다운 (body 텔레포트) -->
+      <Teleport to="body">
+        <div v-if="todoDropOpen && mySites.length"
+          :style="{
+            position: 'fixed',
+            top:   todoDropPos.top  + 'px',
+            left:  todoDropPos.left + 'px',
+            width: todoDropPos.width + 'px',
+            background: '#fff',
+            border: '2px solid #1A1100',
+            borderRadius: '10px',
+            boxShadow: '4px 4px 0 #1A1100',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '264px',
+            fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif',
+          }">
+          <!-- 헤더 -->
+          <div style="flex-shrink:0;padding:6px 14px;font-size:10px;font-weight:800;color:#9A8F7A;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1.5px solid #F0EBE0;background:#FDFAF5;border-radius:8px 8px 0 0;">
+            사이트 선택 <span style="color:#C5BAA8;font-weight:600;">({{ mySites.length }})</span>
+          </div>
+          <!-- 목록 -->
+          <div style="overflow-y:auto;flex:1;border-radius:0 0 8px 8px;">
+            <div v-for="(site, si) in mySites" :key="si"
+              @mousedown.prevent="addTodoFromSite(site)"
+              :style="{
+                padding: '9px 14px',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#1A1100',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: todoDropHover === si ? '#FFF0A0' : 'transparent',
+                transition: 'background 0.07s',
+              }"
+              @mouseenter="todoDropHover = si"
+              @mouseleave="todoDropHover = -1">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              {{ site }}
+            </div>
+            <!-- 직접 입력 -->
+            <div
+              @mousedown.prevent="addTodo(); todoDropOpen = false"
+              :style="{
+                padding: '9px 14px',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#9A8F7A',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderTop: '1.5px solid #F0EBE0',
+                background: todoDropHover === -2 ? '#F5EDDB' : 'transparent',
+                transition: 'background 0.07s',
+              }"
+              @mouseenter="todoDropHover = -2"
+              @mouseleave="todoDropHover = -1">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              직접 입력
+            </div>
+          </div>
+        </div>
+      </Teleport>
 
       <!-- 공유 (전체 폭) -->
       <SupportSection title="공유" v-model="form.gongyu" />
@@ -749,7 +821,7 @@
 </style>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SupportSection from '@/Components/SupportSection.vue'
@@ -980,6 +1052,41 @@ const form = useForm({
 })
 
 const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'
+
+// ── Todo 드롭다운 ─────────────────────────────────────
+const todoAddBtnRef = ref(null)
+const todoDropOpen  = ref(false)
+const todoDropHover = ref(-1)
+const todoDropPos   = ref({ top: 0, left: 0, width: 220 })
+
+const toggleTodoDrop = () => {
+  // mySites 없으면 바로 빈 항목 추가
+  if (!props.mySites?.length) { addTodo(); return }
+  todoDropOpen.value = !todoDropOpen.value
+  todoDropHover.value = -1
+  if (todoDropOpen.value) {
+    nextTick(() => {
+      const el = todoAddBtnRef.value
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      todoDropPos.value = { top: r.bottom + 4, left: r.left, width: Math.max(r.width, 200) }
+    })
+  }
+}
+
+const addTodoFromSite = (site) => {
+  form.todo_items.push({ content: site, done: false, sub_items: [] })
+  todoDropOpen.value = false
+}
+
+// 드롭다운 바깥 클릭 닫기
+const onTodoDocClick = (e) => {
+  if (todoDropOpen.value && todoAddBtnRef.value && !todoAddBtnRef.value.contains(e.target)) {
+    todoDropOpen.value = false
+  }
+}
+onMounted(() => document.addEventListener('mousedown', onTodoDocClick))
+onBeforeUnmount(() => document.removeEventListener('mousedown', onTodoDocClick))
 
 const addTodo    = () => form.todo_items.push({ content: '', done: false, sub_items: [] })
 const removeTodo = (idx) => form.todo_items.splice(idx, 1)

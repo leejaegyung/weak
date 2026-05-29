@@ -94,6 +94,8 @@
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">전체 목록</span>
           <span style="font-size:12px;color:#9A8F7A;font-weight:600;">{{ users.length }}명</span>
         </div>
+        <div class="user-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div style="min-width:600px;">
         <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1.3fr 1.3fr 1fr 1fr 44px;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
           <span>이름</span><span>아이디</span><span>직급</span><span>권한</span><span>마지막 접속</span><span>숨김</span><span>상태</span><span></span>
         </div>
@@ -168,6 +170,8 @@
         </div>
         <div v-if="users.length === 0"
           style="padding:48px 20px;text-align:center;color:#9A8F7A;font-size:13px;">등록된 사용자가 없습니다</div>
+        </div><!-- min-width -->
+        </div><!-- user-table-scroll -->
       </div>
     </template>
 
@@ -368,3 +372,11 @@ const doDelete = () => {
 const approve   = (id) => router.post(`/admin/users/${id}/approve`)
 const rejectReg = (id) => router.post(`/admin/users/${id}/reject-registration`)
 </script>
+
+<style scoped>
+/* 사용자 테이블 스크롤 */
+.user-table-scroll { -webkit-overflow-scrolling: touch; }
+.user-table-scroll::-webkit-scrollbar { height: 4px; }
+.user-table-scroll::-webkit-scrollbar-track { background: #F5EDDB; }
+.user-table-scroll::-webkit-scrollbar-thumb { background: #C8BFA8; border-radius: 4px; }
+</style>

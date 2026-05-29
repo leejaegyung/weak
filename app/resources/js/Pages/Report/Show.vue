@@ -90,10 +90,11 @@
     </div>
 
     <!-- 보고서 본문 (Excel 스타일) -->
-    <div class="card" style="overflow:hidden;padding:0;">
+    <div class="report-scroll-wrap">
+    <div class="card report-card" style="overflow:hidden;padding:0;">
 
-      <!-- 보고서 헤더 -->
-      <div style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #1A1100;background:#fff;">
+      <!-- 보고서 헤더 (데스크탑) -->
+      <div class="report-header-desktop" style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #1A1100;background:#fff;">
         <div style="padding:16px 22px;display:flex;align-items:center;gap:12px;">
           <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -122,8 +123,41 @@
         </table>
       </div>
 
+      <!-- 보고서 헤더 (모바일) -->
+      <div class="report-header-mobile" style="padding:14px 16px;border-bottom:2px solid #1A1100;background:#fff;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">주간업무보고</div>
+            <div style="font-size:11px;color:#9A8F7A;">{{ report.week_label || report.week }}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+          <div style="background:#F5EDDB;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:10px;color:#9A8F7A;font-weight:700;margin-bottom:2px;">이름</div>
+            <div style="font-weight:700;">{{ report.user?.name ?? '-' }}</div>
+          </div>
+          <div style="background:#F5EDDB;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:10px;color:#9A8F7A;font-weight:700;margin-bottom:2px;">직급</div>
+            <div style="font-weight:600;">{{ report.user?.position ?? '사원' }}</div>
+          </div>
+          <div style="background:#F5EDDB;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:10px;color:#9A8F7A;font-weight:700;margin-bottom:2px;">전주</div>
+            <div style="font-weight:600;font-size:11px;">{{ fmtRange(report.curr_start, report.curr_end) }}</div>
+          </div>
+          <div style="background:#F5EDDB;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:10px;color:#9A8F7A;font-weight:700;margin-bottom:2px;">금주</div>
+            <div style="font-weight:600;font-size:11px;">{{ fmtRange(report.next_start, report.next_end) }}</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 본문 테이블 -->
-      <table style="width:100%;border-collapse:collapse;">
+      <div class="report-table-scroll"><table class="report-body-table" style="width:100%;border-collapse:collapse;">
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
             <th style="width:72px;padding:10px 8px;text-align:center;font-size:11px;font-weight:700;color:#9A8F7A;border-right:2px solid #1A1100;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.04em;">구분</th>
@@ -326,8 +360,9 @@
             <td colspan="3" style="padding:48px;text-align:center;color:#9A8F7A;font-size:13px;">작성된 내용이 없습니다</td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </table></div><!-- report-table-scroll -->
+    </div><!-- report-card -->
+    </div><!-- report-scroll-wrap -->
 
     <!-- 제출일 / 검토일 정보 -->
     <div style="display:flex;gap:16px;margin-top:12px;padding:0 4px;">
@@ -459,3 +494,50 @@ const allCategories = computed(() => [
 const showDeleteModal = ref(false)
 const doDelete = () => router.delete(`/reports/${props.report.id}`)
 </script>
+
+<style scoped>
+/* ===========================
+   보고서 상세 반응형
+   =========================== */
+
+/* 데스크탑: 헤더 desktop 표시, mobile 숨김 */
+.report-header-mobile { display: none; }
+.report-header-desktop { display: flex; }
+
+/* 테이블 스크롤 감싸개 */
+.report-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.report-table-scroll::-webkit-scrollbar { height: 4px; }
+.report-table-scroll::-webkit-scrollbar-track { background: #F5EDDB; }
+.report-table-scroll::-webkit-scrollbar-thumb { background: #C8BFA8; border-radius: 4px; }
+
+.report-body-table { min-width: 480px; }
+
+@media (max-width: 768px) {
+  /* 헤더 전환 */
+  .report-header-desktop { display: none !important; }
+  .report-header-mobile { display: block !important; }
+
+  /* 보고서 카드 자체 스크롤 제거 (테이블만 스크롤) */
+  .report-scroll-wrap { overflow: visible; }
+
+  /* 본문 테이블: 구분 컬럼 좁게, 폰트 작게 */
+  .report-body-table th:first-child,
+  .report-body-table td:first-child {
+    width: 48px !important;
+    padding: 10px 4px !important;
+    font-size: 10px !important;
+  }
+  .report-body-table th,
+  .report-body-table td {
+    padding: 10px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* 지원 행 전주/금주 열: 모바일에서 쌓기 */
+  .report-body-table .support-row-curr,
+  .report-body-table .support-row-next {
+    display: block;
+    width: 100% !important;
+  }
+}
+</style>

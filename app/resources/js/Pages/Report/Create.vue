@@ -441,7 +441,7 @@
       <!-- 보고 기간 -->
       <div class="card" style="background:#FFF0A0;">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:700;margin-bottom:16px;">보고 기간</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div class="date-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
           <div>
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">이번 주 시작</label>
             <input type="date" v-model="form.curr_start" class="input-field" style="background:#fff;" />
@@ -461,8 +461,8 @@
         </div>
       </div>
 
-      <!-- 지원: 이번 주 | 다음 주 (2열) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <!-- 지원: 이번 주 | 다음 주 (2열 → 모바일 1열) -->
+      <div class="support-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
           :canPaste="jiWonClipboard !== null"
           :suggestions="mySites"
@@ -842,6 +842,17 @@
 .draft-toast-enter-from, .draft-toast-leave-to { opacity: 0; transform: translateY(-4px); }
 .draft-banner-enter-active, .draft-banner-leave-active { transition: opacity 0.25s, transform 0.25s; }
 .draft-banner-enter-from, .draft-banner-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* ===========================
+   보고서 작성 반응형
+   =========================== */
+@media (max-width: 768px) {
+  /* 보고 기간 4열 → 2열 */
+  .date-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* 지원 이번주/다음주 2열 → 1열 */
+  .support-grid { grid-template-columns: 1fr !important; }
+}
 </style>
 
 <script setup>

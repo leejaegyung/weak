@@ -32,7 +32,7 @@ class ReportController extends Controller
     public function index(Request $request): Response
     {
         $user   = Auth::user();
-        $userId = $user->isAdmin() ? null : $user->id;
+        $userId = null; // 전체 공개: 일반 사용자도 전체 보고서 목록 조회
         $status = $request->query('status');
         $search = $request->query('search');
 
@@ -184,7 +184,7 @@ class ReportController extends Controller
     public function show(WeeklyReport $report): Response
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $report->user_id !== $user->id) abort(403);
+        // 모든 인증 사용자가 열람 가능 (수정/삭제/제출은 본인·관리자만 프론트에서 제한)
 
         $report->load('user');
 
@@ -202,6 +202,7 @@ class ReportController extends Controller
         return Inertia::render('Report/Show', [
             'report'    => $report,
             'teamUsers' => $teamUsers,
+            'canEdit'   => $user->isAdmin() || $report->user_id === $user->id,
         ]);
     }
 

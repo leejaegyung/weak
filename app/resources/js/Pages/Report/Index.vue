@@ -147,8 +147,14 @@
           {{ r.curr_start ? `${fmt(r.curr_start)} ~ ${fmt(r.curr_end)}` : '-' }}
         </span>
         <span style="font-size:12px;font-weight:600;">{{ r.submitted_at ? String(r.submitted_at).substring(0,10) : '-' }}</span>
-        <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">{{ r.curr_work?.length ?? '-' }}</span>
-        <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">{{ r.todo_items?.length ?? '-' }}</span>
+        <!-- 업무: 전주 업무 항목 수 (curr_work), 미제출은 '-' -->
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">
+          {{ r.status === 'not_submitted' ? '-' : (r.curr_work?.length ?? 0) }}
+        </span>
+        <!-- Todo: 미제출은 '-' -->
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">
+          {{ r.status === 'not_submitted' ? '-' : (r.todo_items?.length ?? 0) }}
+        </span>
         <div style="display:flex;align-items:center;gap:6px;">
           <span :class="statusBadge(r.status)">{{ r.status_label }}</span>
         </div>

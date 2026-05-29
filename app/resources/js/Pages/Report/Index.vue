@@ -13,7 +13,7 @@
         </div>
         <p style="color:#9A8F7A;font-size:13px;margin-left:42px;">팀원들의 주간 보고서를 확인하세요</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="index-header-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <!-- 주차 네비게이션 -->
         <div style="display:flex;align-items:center;gap:6px;">
           <button @click="goWeek(prevWeek)"
@@ -74,8 +74,8 @@
       </div>
     </div>
 
-    <!-- 통계 카드 4개 -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
+    <!-- 통계 카드 -->
+    <div class="stats-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
       <div v-for="stat in statsCards" :key="stat.label"
         class="card"
         :style="{ background: stat.bg, padding:'18px 20px', display:'flex', alignItems:'center', gap:'14px', cursor:'pointer', transition:'transform 0.1s,box-shadow 0.1s' }"
@@ -118,7 +118,9 @@
     </div>
 
     <!-- 테이블 -->
-    <div class="card" style="overflow:hidden;padding:0;">
+    <div class="card table-card" style="overflow:hidden;padding:0;">
+      <div class="table-scroll-wrap" style="overflow-x:auto;min-width:0;">
+      <div style="min-width:580px;">
       <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr 1.5fr 44px;padding:10px 20px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
         <span>작성자</span><span>보고 기간</span><span>제출일</span><span>업무</span><span>Todo</span><span>상태</span><span></span>
       </div>
@@ -175,6 +177,8 @@
 
       <div v-if="reports.length === 0"
         style="padding:48px 20px;text-align:center;color:#9A8F7A;font-size:13px;">검색 결과가 없습니다</div>
+      </div><!-- min-width -->
+      </div><!-- table-scroll-wrap -->
     </div>
 
     <!-- 미제출 알림 채널 선택 모달 -->
@@ -504,4 +508,35 @@ const applyFilter = () => {
 
 <style scoped>
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===========================
+   보고서 목록 반응형
+   =========================== */
+
+/* 통계 그리드: 모바일에서 2열 */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* 헤더 상단 버튼 영역 */
+  .index-header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+}
+
+/* 테이블 스크롤 영역: 스크롤바 스타일 */
+.table-scroll-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll-wrap::-webkit-scrollbar {
+  height: 4px;
+}
+.table-scroll-wrap::-webkit-scrollbar-track {
+  background: #F5EDDB;
+}
+.table-scroll-wrap::-webkit-scrollbar-thumb {
+  background: #C8BFA8;
+  border-radius: 4px;
+}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div style="display:flex;flex-direction:column;height:100vh;background:#FFF8EE;overflow:hidden;">
+  <div class="app-root" style="display:flex;flex-direction:column;height:100vh;background:#FFF8EE;overflow:hidden;">
 
     <!-- ── 오렌지 상단 헤더 ── -->
     <header style="height:56px;background:#FD4401;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:30;position:relative;">
@@ -13,7 +13,7 @@
           </div>
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;">주간업무보고</span>
         </div>
-        <span style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;">
+        <span class="header-page-chip" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;">
           {{ pageTitle || auth?.user?.name }}
         </span>
       </div>
@@ -37,6 +37,7 @@
           <!-- 알림 드롭다운 패널 -->
           <Transition name="notif-drop">
             <div v-if="showNotifications"
+              class="notif-panel"
               style="position:absolute;top:calc(100% + 8px);right:0;width:340px;background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:4px 4px 0 #1A1100;z-index:200;overflow:hidden;">
               <!-- 패널 헤더 -->
               <div style="padding:12px 16px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;justify-content:space-between;align-items:center;">
@@ -90,6 +91,7 @@
           </Transition>
         </div>
         <Link href="/profile"
+          class="header-user-info"
           style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;text-decoration:none;transition:background 0.1s;"
           title="개인설정"
           @mouseenter="e=>e.currentTarget.style.background='rgba(255,255,255,0.25)'"
@@ -109,10 +111,10 @@
       </div>
     </header>
 
-    <div style="display:flex;flex:1;overflow:hidden;">
+    <div class="app-body" style="display:flex;flex:1;overflow:hidden;">
 
       <!-- ── 사이드바 ── -->
-      <aside style="width:180px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 8px;flex-shrink:0;overflow-y:auto;">
+      <aside class="app-sidebar" style="width:180px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 8px;flex-shrink:0;overflow-y:auto;">
 
         <div style="font-size:10px;color:#9A8F7A;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0 8px;margin-bottom:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
           메뉴
@@ -253,27 +255,66 @@
       </aside>
 
       <!-- ── 메인 콘텐츠 ── -->
-      <main style="flex:1;overflow-y:auto;background:#FFF8EE;display:flex;flex-direction:column;">
+      <main class="app-main" style="flex:1;overflow-y:auto;background:#FFF8EE;display:flex;flex-direction:column;">
 
         <!-- 플래시 메시지 -->
-        <div v-if="flash.success && showFlash" style="margin:16px 32px 0;">
+        <div v-if="flash.success && showFlash" class="flash-wrap" style="margin:16px 32px 0;">
           <div style="background:#DCFCE7;border:2px solid #16A34A;border-radius:12px;padding:12px 16px;font-size:13px;color:#15803D;display:flex;justify-content:space-between;align-items:center;">
             {{ flash.success }}
             <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#16A34A;font-weight:700;font-size:16px;line-height:1;">✕</button>
           </div>
         </div>
-        <div v-if="flash.error && showFlash" style="margin:16px 32px 0;">
+        <div v-if="flash.error && showFlash" class="flash-wrap" style="margin:16px 32px 0;">
           <div style="background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;padding:12px 16px;font-size:13px;color:#DC2626;display:flex;justify-content:space-between;align-items:center;">
             {{ flash.error }}
             <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#DC2626;font-weight:700;font-size:16px;line-height:1;">✕</button>
           </div>
         </div>
 
-        <div style="padding:28px 32px;flex:1;">
+        <div class="app-main-padding" style="padding:28px 32px;flex:1;">
           <slot />
         </div>
       </main>
     </div>
+
+    <!-- ── 모바일 하단 내비게이션 ── -->
+    <nav class="mobile-bottom-nav">
+      <Link href="/schedules" :class="['mob-nav-btn', { 'mob-active': isActive('/schedules') }]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="isActive('/schedules') ? '#1A1100' : '#9A8F7A'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
+        </svg>
+        <span>일정</span>
+      </Link>
+
+      <Link href="/reports" :class="['mob-nav-btn', { 'mob-active': isActive('/reports') && !isActive('/reports/create') }]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="isActive('/reports') && !isActive('/reports/create') ? '#1A1100' : '#9A8F7A'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+        </svg>
+        <span>보고서</span>
+      </Link>
+
+      <!-- 작성 버튼 (강조) -->
+      <Link href="/reports/create" class="mob-nav-write" :class="{ 'mob-active': isActive('/reports/create') }">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </Link>
+
+      <Link href="/profile" :class="['mob-nav-btn', { 'mob-active': isActive('/profile') }]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="isActive('/profile') ? '#1A1100' : '#9A8F7A'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+        </svg>
+        <span>내정보</span>
+      </Link>
+
+      <Link v-if="auth?.user?.role === 'admin'" href="/admin/users" :class="['mob-nav-btn', { 'mob-active': isActive('/admin/users') }]" style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="isActive('/admin/users') ? '#1A1100' : '#9A8F7A'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>관리</span>
+        <span v-if="pendingCount > 0" class="mob-nav-badge">{{ pendingCount > 9 ? '9+' : pendingCount }}</span>
+      </Link>
+    </nav>
   </div>
 </template>
 
@@ -376,4 +417,123 @@ const logout = () => router.post('/logout')
 .notif-drop-enter-from, .notif-drop-leave-to { opacity: 0; transform: translateY(-6px); }
 .submenu-enter-active, .submenu-leave-active { transition: all 0.18s ease; overflow: hidden; }
 .submenu-enter-from, .submenu-leave-to { opacity: 0; transform: translateY(-4px); }
+
+/* ===========================
+   모바일 하단 내비게이션
+   =========================== */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 62px;
+  background: #FFF8EE;
+  border-top: 2px solid #1A1100;
+  z-index: 100;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.mob-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 10px;
+  color: #9A8F7A;
+  font-weight: 600;
+  font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+  transition: all 0.12s;
+  border: 1.5px solid transparent;
+  min-width: 50px;
+  position: relative;
+}
+.mob-nav-btn.mob-active {
+  background: #FDCB40;
+  border-color: #1A1100;
+  color: #1A1100;
+  font-weight: 800;
+  box-shadow: 2px 2px 0 #1A1100;
+}
+
+/* 작성 버튼 - 원형 강조 */
+.mob-nav-write {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px; height: 48px;
+  background: #FD4401;
+  border: 2px solid #1A1100;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 #1A1100;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.mob-nav-write:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #1A1100; }
+
+.mob-nav-badge {
+  position: absolute;
+  top: 2px; right: 4px;
+  background: #DC2626;
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  font-family: 'Space Grotesk', sans-serif;
+  border-radius: 99px;
+  min-width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  border: 1px solid #fff;
+}
+
+/* ===========================
+   반응형 미디어 쿼리
+   =========================== */
+@media (max-width: 768px) {
+  /* 뷰포트 높이 고정 해제 */
+  .app-root {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+  .app-body {
+    overflow: visible !important;
+    flex: 1;
+  }
+
+  /* 사이드바 숨김 */
+  .app-sidebar { display: none !important; }
+
+  /* 하단 네비 표시 */
+  .mobile-bottom-nav { display: flex !important; }
+
+  /* 메인 콘텐츠 패딩 조정 (하단 네비 공간 확보) */
+  .app-main-padding { padding: 16px 16px 80px 16px !important; }
+  .flash-wrap { margin: 12px 16px 0 !important; }
+
+  /* 헤더 페이지 칩 숨김 */
+  .header-page-chip { display: none !important; }
+
+  /* 유저 정보 버튼 숨김 (내정보는 하단 네비에서) */
+  .header-user-info { display: none !important; }
+
+  /* 알림 드롭다운: 화면 너비에 맞춤 */
+  .notif-panel {
+    width: min(340px, calc(100vw - 20px)) !important;
+    right: 0 !important;
+    left: auto !important;
+  }
+}
+
+/* 매우 좁은 화면 (320px) */
+@media (max-width: 380px) {
+  .mob-nav-btn { padding: 5px 7px; min-width: 42px; font-size: 9px; }
+  .mob-nav-write { width: 44px; height: 44px; }
+}
 </style>

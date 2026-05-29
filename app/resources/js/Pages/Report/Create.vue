@@ -123,6 +123,35 @@
       </div>
     </div>
 
+    <!-- 임시저장 불러오기 배너 -->
+    <Transition name="draft-banner">
+      <div v-if="hasDraft && !props.existingReport"
+        style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FFF8EE;border:2px solid #FDCB40;border-radius:12px;padding:10px 16px;margin-bottom:16px;box-shadow:2px 2px 0 #1A1100;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          <span style="font-size:13px;font-weight:700;color:#92400E;">임시저장된 내용이 있습니다.</span>
+          <span style="font-size:11px;color:#B45309;">불러오기를 클릭하면 저장했던 내용이 채워집니다.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <button type="button" @click="discardDraft"
+            style="background:none;border:1.5px solid #D0C9BC;border-radius:8px;padding:4px 10px;font-size:12px;color:#9A8F7A;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.1s;"
+            @mouseenter="e=>{e.currentTarget.style.borderColor='#DC2626';e.currentTarget.style.color='#DC2626';}"
+            @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.color='#9A8F7A';}">
+            삭제
+          </button>
+          <button type="button" @click="loadDraft"
+            style="background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;display:inline-flex;align-items:center;gap:5px;"
+            @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+            @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+            임시저장 불러오기
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <form @submit.prevent="submit" style="display:flex;flex-direction:column;gap:18px;">
 
       <!-- 내 주간 일정 (팀 일정판 연동) — 토글 -->
@@ -811,6 +840,8 @@
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .draft-toast-enter-active, .draft-toast-leave-active { transition: opacity 0.3s, transform 0.3s; }
 .draft-toast-enter-from, .draft-toast-leave-to { opacity: 0; transform: translateY(-4px); }
+.draft-banner-enter-active, .draft-banner-leave-active { transition: opacity 0.25s, transform 0.25s; }
+.draft-banner-enter-from, .draft-banner-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>
 
 <script setup>
@@ -1065,19 +1096,36 @@ const saveToLocal = () => {
 
 const clearLocal = () => {
   try { localStorage.removeItem(LS_KEY) } catch {}
+  hasDraft.value = false
 }
 
+// 임시저장 존재 여부 확인 (주차 만료 체크 포함)
+const hasDraft = ref(false)
+
+const checkLocalDraft = () => {
+  if (props.existingReport) { hasDraft.value = false; return }
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    if (!raw) { hasDraft.value = false; return }
+    const saved = JSON.parse(raw)
+    // 주차가 다르면 만료 처리
+    if (saved.week && form.week && saved.week !== form.week) {
+      clearLocal(); return
+    }
+    hasDraft.value = !!(saved.__draftId || saved.week)
+  } catch { hasDraft.value = false }
+}
+
+// 임시저장 불러오기 (수동)
 const restoreFromLocal = () => {
   if (props.existingReport) return
   try {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return
     const saved = JSON.parse(raw)
-    // 저장된 주차와 현재 주차가 다르면 복원 안함
     if (saved.week && form.week && saved.week !== form.week) { clearLocal(); return }
     formFields.forEach(k => { if (saved[k] !== undefined) form[k] = saved[k] })
     if (saved.__draftId) draftId.value = saved.__draftId
-    // 복원 후 textarea 높이 재계산
     nextTick(() => {
       requestAnimationFrame(() => {
         document.querySelectorAll('.todo-textarea, .auto-resize-ta').forEach(el => {
@@ -1086,6 +1134,17 @@ const restoreFromLocal = () => {
       })
     })
   } catch { clearLocal() }
+}
+
+const loadDraft = () => {
+  restoreFromLocal()
+  hasDraft.value = false
+  showDraftToast('임시저장 내용을 불러왔습니다.', true)
+}
+
+const discardDraft = () => {
+  clearLocal()
+  draftId.value = null
 }
 
 // ── Todo 항목별 ▼ 드롭다운 ────────────────────────────
@@ -1126,7 +1185,7 @@ const onTodoDocClick = (e) => {
 onMounted(() => {
   document.addEventListener('mousedown', onTodoDocClick)
   window.addEventListener('scroll', onTodoScroll, true)
-  restoreFromLocal()
+  checkLocalDraft()  // auto-restore 대신 배너만 표시
 })
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onTodoDocClick)
@@ -1241,6 +1300,7 @@ const saveDraft = async () => {
       draftId.value = res.data.id
     }
     saveToLocal()   // draftId 포함해서 즉시 저장
+    hasDraft.value = true
     showDraftToast('임시 저장되었습니다.', true)
   } catch (e) {
     const msg = e.response?.data?.message || '저장에 실패했습니다.'

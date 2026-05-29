@@ -147,9 +147,9 @@
           {{ r.curr_start ? `${fmt(r.curr_start)} ~ ${fmt(r.curr_end)}` : '-' }}
         </span>
         <span style="font-size:12px;font-weight:600;">{{ r.submitted_at ? String(r.submitted_at).substring(0,10) : '-' }}</span>
-        <!-- 업무: 전주 업무 항목 수 (curr_work), 미제출은 '-' -->
+        <!-- 업무: 전주 지원 항목 수 (curr_work 중 지원 카테고리), 미제출은 '-' -->
         <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">
-          {{ r.status === 'not_submitted' ? '-' : (r.curr_work?.length ?? 0) }}
+          {{ r.status === 'not_submitted' ? '-' : (r.curr_work?.filter(i => i.category === '지원').length ?? 0) }}
         </span>
         <!-- Todo: 미제출은 '-' -->
         <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;">

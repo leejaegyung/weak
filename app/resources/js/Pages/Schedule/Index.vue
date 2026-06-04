@@ -171,16 +171,9 @@
     </div>
 
     <!-- 팀 일정 그리드 (주간) -->
-    <!-- table-layout:fixed → 컨테이너 너비에 맞게 항상 꽉 차게 표시 (스크롤 없음) -->
     <div v-if="viewMode === 'week'" class="card" style="padding:0;overflow:hidden;">
-      <table style="border-collapse:collapse;width:100%;table-layout:fixed;">
-        <!-- 컬럼 비율 고정 -->
-        <colgroup>
-          <!-- 이름 열: 고정 너비 -->
-          <col :style="{ width: isAdmin ? '130px' : '110px' }" />
-          <!-- 날짜 열 10개: 나머지 균등 분배 -->
-          <col v-for="i in 10" :key="i" />
-        </colgroup>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="border-collapse:collapse;min-width:1050px;width:100%;">
         <!-- 주차 헤더 -->
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
@@ -197,15 +190,16 @@
             <th :style="nameColStyle" style="padding:8px 14px;"></th>
             <th v-for="(date, i) in [...currDates, ...nextDates]" :key="date"
               :style="{
-                padding:'8px 4px',
+                padding:'8px 6px',
                 textAlign:'center',
-                fontSize:'11px',
+                fontSize:'12px',
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
+                minWidth: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
-              <div style="font-size:10px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
             </th>
           </tr>
         </thead>
@@ -226,9 +220,9 @@
             @drop.prevent="onDrop(ui)"
             @dragend="onDragEnd">
 
-            <!-- 이름 열: overflow:hidden 필수 (table-layout:fixed 효과 적용) -->
-            <td style="padding:8px 10px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;overflow:hidden;">
-              <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <!-- 이름 열 -->
+            <td style="padding:10px 14px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;white-space:nowrap;">
+              <div style="display:flex;align-items:center;gap:8px;">
                 <div v-if="isAdmin"
                   style="cursor:grab;color:#C5BAA8;flex-shrink:0;padding:2px;display:flex;align-items:center;user-select:none;"
                   title="드래그하여 순서 변경">
@@ -240,20 +234,17 @@
                 </div>
                 <div
                   @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
-                  :style="{ display:'flex', alignItems:'center', gap:'5px', cursor: weekReportMap[user.id] ? 'pointer' : 'default', minWidth:0, overflow:'hidden' }"
-                  :title="weekReportMap[user.id] ? `${user.name} 주간보고 보기` : `${user.name} — 이번 주 보고서 없음`">
-                  <!-- 아바타 -->
-                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
+                  :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
+                  :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
+                  <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
                     {{ user.name.charAt(0) }}
                   </div>
-                  <!-- 이름·직급 (말줄임) -->
-                  <div style="min-width:0;overflow:hidden;">
-                    <div :style="{ fontSize:'12px', fontWeight:'700', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
-                    <div v-if="user.position" style="font-size:10px;color:#9A8F7A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ user.position }}</div>
+                  <div>
+                    <div :style="{ fontSize:'12px', fontWeight:'700', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
+                    <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
                   </div>
-                  <!-- 보고서 뱃지 -->
                   <span v-if="weekReportMap[user.id]"
-                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 4px;font-weight:700;flex-shrink:0;white-space:nowrap;">
+                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">
                     보고서
                   </span>
                 </div>
@@ -266,18 +257,18 @@
               :style="{
                 borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                padding:'6px 4px',
+                padding:'6px',
                 verticalAlign:'top',
+                minWidth:'80px',
                 cursor: user.id === currentUserId ? 'pointer' : 'default',
                 transition:'background 0.1s',
                 position:'relative',
-                overflow:'hidden',
               }"
               @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
               <!-- 내용 표시 (시간대별 슬롯 칩 — 네모, 좌측정렬) -->
-              <div style="min-height:44px;padding:3px 2px;display:flex;flex-direction:column;gap:2px;align-items:stretch;min-width:0;">
+              <div style="min-height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
                 <template v-if="localSchedules[user.id]?.[date]">
                   <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots" :key="slot.time + slot.status">
                     <!-- 슬롯 1개 = 1 칩 (상태 + 사이트 한 줄 통합) -->
@@ -316,6 +307,7 @@
           </tr>
         </tbody>
       </table>
+      </div><!-- /overflow-x:auto -->
     </div>
 
     <!-- 순서 저장 알림 -->

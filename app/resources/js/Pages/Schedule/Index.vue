@@ -171,9 +171,16 @@
     </div>
 
     <!-- 팀 일정 그리드 (주간) -->
-    <!-- schedule-wrap: 카드 스타일 + 가로 스크롤을 하나의 요소에서 처리 -->
-    <div v-if="viewMode === 'week'" class="card schedule-scroll-card" style="padding:0;">
-      <table style="border-collapse:collapse;min-width:1100px;width:100%;">
+    <!-- table-layout:fixed → 컨테이너 너비에 맞게 항상 꽉 차게 표시 (스크롤 없음) -->
+    <div v-if="viewMode === 'week'" class="card" style="padding:0;overflow:hidden;">
+      <table style="border-collapse:collapse;width:100%;table-layout:fixed;">
+        <!-- 컬럼 비율 고정 -->
+        <colgroup>
+          <!-- 이름 열: 고정 너비 -->
+          <col :style="{ width: isAdmin ? '130px' : '110px' }" />
+          <!-- 날짜 열 10개: 나머지 균등 분배 -->
+          <col v-for="i in 10" :key="i" />
+        </colgroup>
         <!-- 주차 헤더 -->
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
@@ -190,16 +197,15 @@
             <th :style="nameColStyle" style="padding:8px 14px;"></th>
             <th v-for="(date, i) in [...currDates, ...nextDates]" :key="date"
               :style="{
-                padding:'8px 6px',
+                padding:'8px 4px',
                 textAlign:'center',
-                fontSize:'12px',
+                fontSize:'11px',
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                minWidth: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
-              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
+              <div style="font-size:10px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
             </th>
           </tr>
         </thead>
@@ -257,18 +263,18 @@
               :style="{
                 borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                padding:'6px',
+                padding:'6px 4px',
                 verticalAlign:'top',
-                minWidth:'80px',
                 cursor: user.id === currentUserId ? 'pointer' : 'default',
                 transition:'background 0.1s',
                 position:'relative',
+                overflow:'hidden',
               }"
               @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
               <!-- 내용 표시 (시간대별 슬롯 칩 — 네모, 좌측정렬) -->
-              <div style="min-height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
+              <div style="min-height:44px;padding:3px 2px;display:flex;flex-direction:column;gap:2px;align-items:stretch;min-width:0;">
                 <template v-if="localSchedules[user.id]?.[date]">
                   <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots" :key="slot.time + slot.status">
                     <!-- 슬롯 1개 = 1 칩 (상태 + 사이트 한 줄 통합) -->

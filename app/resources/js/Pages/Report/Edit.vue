@@ -374,7 +374,7 @@
               <div v-for="(sub, sIdx) in (t.sub_items || [])" :key="sIdx"
                 style="display:flex;gap:6px;align-items:flex-start;">
                 <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;margin-top:7px;">-</span>
-                <textarea :value="typeof sub === 'string' ? sub : sub.content"
+                <textarea :value="sub === null || sub === undefined ? '' : (typeof sub === 'string' ? sub : (sub?.content ?? ''))"
                   @input="e => { updateTodoSub(idx, sIdx, e.target.value); e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
                   class="input-field"
                   rows="1"
@@ -644,12 +644,30 @@ const toggleSchedSite = (site) => {
 }
 // ─────────────────────────────────────────────────────
 
-// DB에 배열 대신 객체가 저장된 경우에도 안전하게 처리
+// DB에 배열 대신 객체가 저장된 경우, sub_items에 null이 있는 경우 안전하게 처리
 const splitByCat = (arr, cat) => {
   if (!arr || !Array.isArray(arr)) return []
   return arr
     .filter(i => i && typeof i === 'object' && i.category === cat)
-    .map(i => ({ title: i.title || i.content || '', sub_items: Array.isArray(i.sub_items) ? i.sub_items : [] }))
+    .map(i => ({
+      title: i.title || i.content || '',
+      sub_items: Array.isArray(i.sub_items)
+        ? i.sub_items.filter(s => s !== null && s !== undefined)
+        : [],
+    }))
+}
+
+// todo_items의 sub_items에서 null 제거
+const safeTodoItems = (items) => {
+  if (!Array.isArray(items)) return []
+  return items.map(t => ({
+    ...t,
+    done: t?.done ?? false,
+    content: t?.content ?? '',
+    sub_items: Array.isArray(t?.sub_items)
+      ? t.sub_items.filter(s => s !== null && s !== undefined)
+      : [],
+  }))
 }
 
 // 날짜 문자열 안전 추출 (Carbon 직렬화 결과가 다양할 수 있으므로 앞 10자리 추출)
@@ -665,7 +683,7 @@ const form = useForm({
   naebu:      splitByCat(props.report.curr_work, '내부작업'),
   gongyu:     splitByCat(props.report.curr_work, '공유'),
   gita:       splitByCat(props.report.curr_work, '기타'),
-  todo_items: Array.isArray(props.report.todo_items) ? props.report.todo_items : [],
+  todo_items: safeTodoItems(props.report.todo_items),
   notes:      props.report.notes    ?? '',
   requests:   props.report.requests ?? '',
 })

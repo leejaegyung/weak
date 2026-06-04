@@ -485,9 +485,15 @@ const removeItem = (idx) => {
 }
 
 // sub_items backward compat normalize (string → {content, details})
+// null/undefined 항목은 제거하여 TypeError 방지
 const normalizeSubItems = (subs) => {
   if (!Array.isArray(subs)) return []
-  return subs.map(s => typeof s === 'string' ? { content: s, details: [] } : { content: s.content || '', details: s.details || [] })
+  return subs
+    .filter(s => s !== null && s !== undefined)
+    .map(s => typeof s === 'string'
+      ? { content: s, details: [] }
+      : { content: s?.content ?? '', details: Array.isArray(s?.details) ? s.details : [] }
+    )
 }
 
 const updateSubContent = (idx, sIdx, val) => {

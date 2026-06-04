@@ -267,7 +267,8 @@
       </aside>
 
       <!-- ── 메인 콘텐츠 ── -->
-      <main class="app-main" style="flex:1;overflow-y:auto;background:#FFF8EE;display:flex;flex-direction:column;">
+      <!-- min-width:0 → flex 자식이 컨테이너 밖으로 넘치지 않도록 제한 -->
+      <main class="app-main" style="flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;background:#FFF8EE;display:flex;flex-direction:column;">
 
         <!-- 플래시 메시지 -->
         <div v-if="flash.success && showFlash" class="flash-wrap" style="margin:16px 32px 0;">
@@ -283,7 +284,7 @@
           </div>
         </div>
 
-        <div class="app-main-padding" style="padding:28px 32px;flex:1;">
+        <div class="app-main-padding" style="padding:28px 32px;flex:1;min-width:0;">
           <slot />
         </div>
       </main>

@@ -171,8 +171,10 @@
     </div>
 
     <!-- 팀 일정 그리드 (주간) -->
-    <div v-if="viewMode === 'week'" class="card" style="overflow:auto;padding:0;">
-      <table style="width:100%;border-collapse:collapse;min-width:900px;">
+    <div v-if="viewMode === 'week'" class="card" style="overflow:hidden;padding:0;">
+      <!-- 가로 스크롤 래퍼 — 배율 무관하게 안전하게 스크롤 -->
+      <div style="overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;width:100%;">
+      <table style="border-collapse:collapse;min-width:900px;width:max-content;min-width:max(900px,100%);">
         <!-- 주차 헤더 -->
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
@@ -195,7 +197,7 @@
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                minWidth: '80px',
+                minWidth: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
               <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
@@ -306,6 +308,7 @@
           </tr>
         </tbody>
       </table>
+      </div><!-- /overflow-x scroll wrapper -->
     </div>
 
     <!-- 순서 저장 알림 -->

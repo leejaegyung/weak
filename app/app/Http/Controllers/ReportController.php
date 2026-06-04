@@ -214,8 +214,9 @@ class ReportController extends Controller
         $report->load('user');
 
         // 보고서 기간의 일정 로드 (curr_start ~ next_end)
-        $currStart = $report->curr_start ? substr($report->curr_start, 0, 10) : null;
-        $nextEnd   = $report->next_end   ? substr($report->next_end,   0, 10) : null;
+        // Carbon 객체에는 substr() 사용 불가 → format() 사용
+        $currStart = $report->curr_start?->format('Y-m-d');
+        $nextEnd   = $report->next_end?->format('Y-m-d');
 
         $mySchedules = [];
         if ($currStart && $nextEnd) {
@@ -231,8 +232,8 @@ class ReportController extends Controller
         $weekInfo = [
             'week'       => $report->week,
             'curr_start' => $currStart,
-            'curr_end'   => $report->curr_end ? substr($report->curr_end, 0, 10) : null,
-            'next_start' => $report->next_start ? substr($report->next_start, 0, 10) : null,
+            'curr_end'   => $report->curr_end?->format('Y-m-d'),
+            'next_start' => $report->next_start?->format('Y-m-d'),
             'next_end'   => $nextEnd,
         ];
 

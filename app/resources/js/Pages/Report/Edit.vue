@@ -644,23 +644,30 @@ const toggleSchedSite = (site) => {
 }
 // ─────────────────────────────────────────────────────
 
-const splitByCat = (arr, cat) =>
-  (arr || []).filter(i => i.category === cat)
-             .map(i => ({ title: i.title || i.content || '', sub_items: i.sub_items || [] }))
+// DB에 배열 대신 객체가 저장된 경우에도 안전하게 처리
+const splitByCat = (arr, cat) => {
+  if (!arr || !Array.isArray(arr)) return []
+  return arr
+    .filter(i => i && typeof i === 'object' && i.category === cat)
+    .map(i => ({ title: i.title || i.content || '', sub_items: Array.isArray(i.sub_items) ? i.sub_items : [] }))
+}
+
+// 날짜 문자열 안전 추출 (Carbon 직렬화 결과가 다양할 수 있으므로 앞 10자리 추출)
+const safeDateStr = (v) => (v ? String(v).substring(0, 10) : '')
 
 const form = useForm({
-  curr_start: props.report.curr_start?.substring(0, 10) ?? '',
-  curr_end:   props.report.curr_end?.substring(0, 10)   ?? '',
-  next_start: props.report.next_start?.substring(0, 10) ?? '',
-  next_end:   props.report.next_end?.substring(0, 10)   ?? '',
+  curr_start: safeDateStr(props.report.curr_start),
+  curr_end:   safeDateStr(props.report.curr_end),
+  next_start: safeDateStr(props.report.next_start),
+  next_end:   safeDateStr(props.report.next_end),
   jiWon_curr: splitByCat(props.report.curr_work, '지원'),
   jiWon_next: splitByCat(props.report.next_plan, '지원'),
   naebu:      splitByCat(props.report.curr_work, '내부작업'),
   gongyu:     splitByCat(props.report.curr_work, '공유'),
   gita:       splitByCat(props.report.curr_work, '기타'),
-  todo_items: props.report.todo_items ?? [],
-  notes:      props.report.notes      ?? '',
-  requests:   props.report.requests   ?? '',
+  todo_items: Array.isArray(props.report.todo_items) ? props.report.todo_items : [],
+  notes:      props.report.notes    ?? '',
+  requests:   props.report.requests ?? '',
 })
 
 const addTodo    = () => form.todo_items.push({ content: '', done: false, sub_items: [] })

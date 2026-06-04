@@ -9,7 +9,7 @@ class UserService
 {
     public function list(): array
     {
-        return User::orderBy('name')->get()->map(fn($u) => [
+        return User::orderBy('sort_order')->orderBy('name')->get()->map(fn($u) => [
             'id'            => $u->id,
             'name'          => $u->name,
             'username'      => $u->username,

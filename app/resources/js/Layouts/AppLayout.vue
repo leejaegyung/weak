@@ -268,7 +268,7 @@
 
       <!-- ── 메인 콘텐츠 ── -->
       <!-- min-width:0 → flex 자식이 컨테이너 밖으로 넘치지 않도록 제한 -->
-      <main class="app-main" style="flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;background:#FFF8EE;display:flex;flex-direction:column;">
+      <main class="app-main" style="flex:1;min-width:0;overflow-y:auto;overflow-x:auto;background:#FFF8EE;display:flex;flex-direction:column;">
 
         <!-- 플래시 메시지 -->
         <div v-if="flash.success && showFlash" class="flash-wrap" style="margin:16px 32px 0;">

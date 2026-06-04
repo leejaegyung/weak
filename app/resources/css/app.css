@@ -37,6 +37,27 @@
     padding: 22px;
   }
 
+  /* ── 가로 스크롤 카드 (팀 일정판 등 넓은 테이블용) ── */
+  .schedule-scroll-card {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+  .schedule-scroll-card::-webkit-scrollbar {
+    height: 6px;
+  }
+  .schedule-scroll-card::-webkit-scrollbar-track {
+    background: #F5EDDB;
+    border-radius: 3px;
+  }
+  .schedule-scroll-card::-webkit-scrollbar-thumb {
+    background: #C8BFA8;
+    border-radius: 3px;
+  }
+  .schedule-scroll-card::-webkit-scrollbar-thumb:hover {
+    background: #9A8F7A;
+  }
+
   /* ── 버튼 기본 ── */
   .btn-primary {
     display: inline-flex;

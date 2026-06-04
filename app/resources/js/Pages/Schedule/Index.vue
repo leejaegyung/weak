@@ -171,10 +171,9 @@
     </div>
 
     <!-- 팀 일정 그리드 (주간) -->
-    <div v-if="viewMode === 'week'" class="card" style="overflow:hidden;padding:0;">
-      <!-- 가로 스크롤 래퍼 — 배율 무관하게 안전하게 스크롤 -->
-      <div style="overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;width:100%;">
-      <table style="border-collapse:collapse;min-width:900px;width:max-content;min-width:max(900px,100%);">
+    <!-- schedule-wrap: 카드 스타일 + 가로 스크롤을 하나의 요소에서 처리 -->
+    <div v-if="viewMode === 'week'" class="card schedule-scroll-card" style="padding:0;">
+      <table style="border-collapse:collapse;min-width:1100px;width:100%;">
         <!-- 주차 헤더 -->
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
@@ -308,7 +307,6 @@
           </tr>
         </tbody>
       </table>
-      </div><!-- /overflow-x scroll wrapper -->
     </div>
 
     <!-- 순서 저장 알림 -->

@@ -378,7 +378,8 @@ const openNotification = async (n) => {
 
   // 링크 이동 (단일 Inertia 요청만 발생)
   // unreadCount는 새 페이지 로드 시 HandleInertiaRequests에서 자동 갱신됨
-  if (n.link) {
+  // 404/403/500 발생 시 bootstrap/app.php의 Inertia 에러 핸들러가 처리
+  if (n.link && typeof n.link === 'string' && n.link.startsWith('/')) {
     router.get(n.link)
   }
 }

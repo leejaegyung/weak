@@ -21,5 +21,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Inertia 요청에서 발생한 HTTP 에러(404/403/500/503)를
+        // HTML 오버레이 대신 Inertia 컴포넌트로 렌더링
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+            $status = $response->getStatusCode();
+
+            if (
+                request()->header('X-Inertia') &&
+                in_array($status, [404, 403, 500, 503])
+            ) {
+                return \Inertia\Inertia::render('Error', ['status' => $status])
+                    ->toResponse(request())
+                    ->setStatusCode($status);
+            }
+
+            return $response;
+        });
     })->create();

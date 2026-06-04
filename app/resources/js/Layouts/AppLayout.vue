@@ -28,9 +28,9 @@
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
             <!-- 미읽음 뱃지 -->
-            <span v-if="unreadCount > 0"
+            <span v-if="localUnreadCount > 0"
               style="position:absolute;top:-5px;right:-5px;background:#FDCB40;color:#1A1100;font-size:10px;font-weight:800;font-family:'Space Grotesk',sans-serif;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #1A1100;">
-              {{ unreadCount > 9 ? '9+' : unreadCount }}
+              {{ localUnreadCount > 9 ? '9+' : localUnreadCount }}
             </span>
           </button>
 
@@ -342,9 +342,14 @@ const showNotifications = ref(false)
 const notifLoading      = ref(false)
 const notifications     = ref([])
 
+// 로컬 미읽음 카운트 (page.props.unreadCount 기반, 즉시 UI 반영용)
+const localUnreadCount = ref(unreadCount.value)
+watch(unreadCount, v => { localUnreadCount.value = v })
+
 const toggleNotifications = async () => {
   showNotifications.value = !showNotifications.value
-  if (showNotifications.value && notifications.value.length === 0) {
+  if (showNotifications.value) {
+    // 열 때마다 최신 목록 불러오기
     await loadNotifications()
   }
 }
@@ -361,22 +366,31 @@ const loadNotifications = async () => {
 }
 
 const openNotification = async (n) => {
+  // 읽음 처리 (비동기, 실패해도 UI는 진행)
   if (!n.is_read) {
-    await window.axios.post(`/notifications/${n.id}/read`)
     n.is_read = true
-    // Inertia 공유 데이터 갱신 없이 로컬 카운트 반영
-    router.reload({ only: ['unreadCount'] })
+    if (localUnreadCount.value > 0) localUnreadCount.value--
+    window.axios.post(`/notifications/${n.id}/read`).catch(e => console.error(e))
   }
+
+  // 드롭다운 닫기
+  showNotifications.value = false
+
+  // 링크 이동 (단일 Inertia 요청만 발생)
+  // unreadCount는 새 페이지 로드 시 HandleInertiaRequests에서 자동 갱신됨
   if (n.link) {
-    showNotifications.value = false
     router.get(n.link)
   }
 }
 
 const markAllRead = async () => {
-  await window.axios.post('/notifications/read-all')
-  notifications.value.forEach(n => { n.is_read = true })
-  router.reload({ only: ['unreadCount'] })
+  try {
+    await window.axios.post('/notifications/read-all')
+    notifications.value.forEach(n => { n.is_read = true })
+    localUnreadCount.value = 0
+    // 서버 공유 데이터(unreadCount) 동기화 — 링크 이동 없을 때만 필요
+    router.reload({ only: ['unreadCount'] })
+  } catch (e) { console.error(e) }
 }
 
 // v-click-outside 디렉티브 (전역 등록 없이 인라인 처리)

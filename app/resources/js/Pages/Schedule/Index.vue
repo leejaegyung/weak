@@ -226,9 +226,9 @@
             @drop.prevent="onDrop(ui)"
             @dragend="onDragEnd">
 
-            <!-- 이름 열 -->
-            <td style="padding:10px 14px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;white-space:nowrap;">
-              <div style="display:flex;align-items:center;gap:8px;">
+            <!-- 이름 열: overflow:hidden 필수 (table-layout:fixed 효과 적용) -->
+            <td style="padding:8px 10px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:6px;min-width:0;">
                 <div v-if="isAdmin"
                   style="cursor:grab;color:#C5BAA8;flex-shrink:0;padding:2px;display:flex;align-items:center;user-select:none;"
                   title="드래그하여 순서 변경">
@@ -240,17 +240,20 @@
                 </div>
                 <div
                   @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
-                  :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
-                  :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
-                  <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
+                  :style="{ display:'flex', alignItems:'center', gap:'5px', cursor: weekReportMap[user.id] ? 'pointer' : 'default', minWidth:0, overflow:'hidden' }"
+                  :title="weekReportMap[user.id] ? `${user.name} 주간보고 보기` : `${user.name} — 이번 주 보고서 없음`">
+                  <!-- 아바타 -->
+                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
                     {{ user.name.charAt(0) }}
                   </div>
-                  <div>
-                    <div :style="{ fontSize:'12px', fontWeight:'700', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
-                    <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
+                  <!-- 이름·직급 (말줄임) -->
+                  <div style="min-width:0;overflow:hidden;">
+                    <div :style="{ fontSize:'12px', fontWeight:'700', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
+                    <div v-if="user.position" style="font-size:10px;color:#9A8F7A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ user.position }}</div>
                   </div>
+                  <!-- 보고서 뱃지 -->
                   <span v-if="weekReportMap[user.id]"
-                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">
+                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 4px;font-weight:700;flex-shrink:0;white-space:nowrap;">
                     보고서
                   </span>
                 </div>

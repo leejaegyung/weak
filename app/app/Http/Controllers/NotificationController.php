@@ -31,4 +31,11 @@ class NotificationController extends Controller
         $this->notificationService->markAllRead(Auth::id());
         return response()->json(['ok' => true]);
     }
+
+    /** 단일 알림 삭제 */
+    public function destroy(int $id): JsonResponse
+    {
+        $this->notificationService->delete($id, Auth::id());
+        return response()->json(['ok' => true]);
+    }
 }

@@ -54,16 +54,13 @@
                 <div v-else-if="notifications.length === 0" style="padding:32px;text-align:center;color:#9A8F7A;font-size:12px;">알림이 없습니다</div>
                 <div v-else>
                   <div v-for="n in notifications" :key="n.id"
-                    @click="openNotification(n)"
                     :style="{
                       padding:'12px 16px',
                       borderBottom:'1px solid #F5EDDB',
-                      cursor: n.link ? 'pointer' : 'default',
                       background: n.is_read ? 'transparent' : '#FFFBEB',
                       transition:'background 0.1s',
-                    }"
-                    @mouseenter="e=>{ if(!n.is_read || n.link) e.currentTarget.style.background='#FFF8EE' }"
-                    @mouseleave="e=>e.currentTarget.style.background=n.is_read?'transparent':'#FFFBEB'">
+                      position:'relative',
+                    }">
                     <div style="display:flex;gap:10px;align-items:flex-start;">
                       <!-- 타입 아이콘 -->
                       <div :style="{
@@ -75,14 +72,29 @@
                         <svg v-if="n.type==='rejected'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                         <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                       </div>
-                      <div style="flex:1;min-width:0;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                      <!-- 본문 (링크 있으면 클릭 가능) -->
+                      <div
+                        style="flex:1;min-width:0;padding-right:20px;"
+                        :style="{ cursor: n.link ? 'pointer' : 'default' }"
+                        @click="openNotification(n)">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
                           <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ n.title }}</span>
-                          <span v-if="!n.is_read" style="width:6px;height:6px;border-radius:50%;background:#FD4401;flex-shrink:0;margin-left:6px;"></span>
+                          <span v-if="!n.is_read" style="width:6px;height:6px;border-radius:50%;background:#FD4401;flex-shrink:0;"></span>
                         </div>
                         <div v-if="n.body" style="font-size:11px;color:#4A3F2A;line-height:1.5;margin-bottom:3px;">{{ n.body }}</div>
                         <div style="font-size:10px;color:#9A8F7A;">{{ n.created_at }}</div>
                       </div>
+                      <!-- X 닫기 버튼 -->
+                      <button
+                        @click.stop="deleteNotification(n)"
+                        style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;color:#C8BFA8;padding:3px;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:color 0.1s,background 0.1s;line-height:1;"
+                        @mouseenter="e=>{e.currentTarget.style.color='#DC2626';e.currentTarget.style.background='#FEE2E2';}"
+                        @mouseleave="e=>{e.currentTarget.style.color='#C8BFA8';e.currentTarget.style.background='none';}"
+                        title="알림 삭제">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -391,6 +403,17 @@ const markAllRead = async () => {
     localUnreadCount.value = 0
     // 서버 공유 데이터(unreadCount) 동기화 — 링크 이동 없을 때만 필요
     router.reload({ only: ['unreadCount'] })
+  } catch (e) { console.error(e) }
+}
+
+const deleteNotification = async (n) => {
+  try {
+    await window.axios.delete(`/notifications/${n.id}`)
+    // 로컬 목록에서 즉시 제거
+    const idx = notifications.value.findIndex(x => x.id === n.id)
+    if (idx !== -1) notifications.value.splice(idx, 1)
+    // 읽지 않은 알림이었으면 배지 감소
+    if (!n.is_read && localUnreadCount.value > 0) localUnreadCount.value--
   } catch (e) { console.error(e) }
 }
 

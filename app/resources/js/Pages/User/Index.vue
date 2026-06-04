@@ -81,7 +81,7 @@
           <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:700;margin-bottom:2px;">{{ u.name }}</div>
           <div style="font-size:12px;color:#4A3F2A;margin-bottom:12px;">@{{ u.username }}</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <span style="background:#FD4401;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;border:1.5px solid #1A1100;font-family:'Space Grotesk',sans-serif;">{{ u.role === 'admin' ? '관리자' : '사원' }}</span>
+            <span style="background:#FD4401;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;border:1.5px solid #1A1100;font-family:'Space Grotesk',sans-serif;">{{ u.role === 'admin' ? '관리자' : '일반 사용자' }}</span>
             <span v-if="u.position" style="background:rgba(26,17,0,0.06);color:#4A3F2A;font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;border:1.5px solid rgba(26,17,0,0.15);">{{ u.position }}</span>
             <span v-if="u.last_login_at" style="margin-left:auto;font-size:10px;color:#9A8F7A;align-self:center;">{{ u.last_login_at?.substring(0,10) }}</span>
           </div>
@@ -120,7 +120,7 @@
           <div>
             <span style="display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;"
               :style="u.role==='admin' ? 'background:#FD440115;color:#FD4401;border:1.5px solid #FD4401;' : 'background:rgba(26,17,0,0.05);color:#4A3F2A;border:1.5px solid rgba(26,17,0,0.15);'">
-              {{ u.role === 'admin' ? '관리자' : '사원' }}
+              {{ u.role === 'admin' ? '관리자' : '일반 사용자' }}
             </span>
           </div>
           <!-- 마지막 접속 -->
@@ -292,7 +292,7 @@
             <div>
               <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">권한 *</label>
               <select v-model="userForm.role" class="input-field">
-                <option value="user">사원</option>
+                <option value="user">일반 사용자</option>
                 <option value="admin">관리자</option>
               </select>
             </div>

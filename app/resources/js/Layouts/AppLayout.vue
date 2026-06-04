@@ -112,7 +112,7 @@
             {{ auth?.user?.name?.charAt(0) }}
           </div>
           <span style="font-size:13px;font-weight:700;color:#fff;">{{ auth?.user?.name }}</span>
-          <span style="font-size:11px;color:rgba(255,255,255,0.7);">{{ auth?.user?.role === 'admin' ? '관리자' : '사원' }}</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.7);">{{ auth?.user?.role === 'admin' ? '관리자' : '일반 사용자' }}</span>
         </Link>
         <button @click="logout"
           style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.8);display:flex;align-items:center;padding:4px;">

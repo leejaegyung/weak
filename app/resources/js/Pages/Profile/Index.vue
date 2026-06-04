@@ -39,7 +39,7 @@
             </div>
             <div>
               <label style="font-size:11px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:6px;">권한</label>
-              <input type="text" :value="profileUser.role === 'admin' ? '관리자' : '일반사원'" disabled
+              <input type="text" :value="profileUser.role === 'admin' ? '관리자' : '일반 사용자'" disabled
                 class="input-field" style="background:#F5EDDB;color:#9A8F7A;cursor:not-allowed;" />
             </div>
           </div>

@@ -199,10 +199,23 @@ class ReportController extends Controller
                 'report_id' => $weekReports->get($u->id),
             ])->values()->toArray();
 
+        // 같은 사용자의 이전/다음 주 보고서
+        $prevReport = WeeklyReport::where('user_id', $report->user_id)
+            ->where('curr_start', '<', $report->curr_start)
+            ->orderBy('curr_start', 'desc')
+            ->value('id');
+
+        $nextReport = WeeklyReport::where('user_id', $report->user_id)
+            ->where('curr_start', '>', $report->curr_start)
+            ->orderBy('curr_start', 'asc')
+            ->value('id');
+
         return Inertia::render('Report/Show', [
-            'report'    => $report,
-            'teamUsers' => $teamUsers,
-            'canEdit'   => $user->isAdmin() || $report->user_id === $user->id,
+            'report'        => $report,
+            'teamUsers'     => $teamUsers,
+            'canEdit'       => $user->isAdmin() || $report->user_id === $user->id,
+            'prevReportId'  => $prevReport,
+            'nextReportId'  => $nextReport,
         ]);
     }
 

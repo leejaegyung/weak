@@ -33,10 +33,36 @@
 
     <!-- 상단 액션 바 -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
-      <Link href="/reports" class="btn-secondary" style="display:inline-flex;align-items:center;gap:5px;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        목록으로
-      </Link>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <Link href="/reports" class="btn-secondary" style="display:inline-flex;align-items:center;gap:5px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          목록으로
+        </Link>
+        <!-- 이전 주 -->
+        <Link v-if="prevReportId" :href="`/reports/${prevReportId}`"
+          style="display:inline-flex;align-items:center;gap:4px;background:#fff;color:#4A3F2A;border:2px solid #D0C9BC;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.12s;"
+          @mouseenter="e=>{e.currentTarget.style.borderColor='#1A1100';e.currentTarget.style.background='#F5EDDB';}"
+          @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.background='#fff';}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          전주
+        </Link>
+        <span v-else style="display:inline-flex;align-items:center;gap:4px;background:#FAFAF8;color:#C5BAA8;border:2px solid #E8E0D0;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:default;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          전주
+        </span>
+        <!-- 다음 주 -->
+        <Link v-if="nextReportId" :href="`/reports/${nextReportId}`"
+          style="display:inline-flex;align-items:center;gap:4px;background:#fff;color:#4A3F2A;border:2px solid #D0C9BC;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.12s;"
+          @mouseenter="e=>{e.currentTarget.style.borderColor='#1A1100';e.currentTarget.style.background='#F5EDDB';}"
+          @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.background='#fff';}">
+          다음주
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </Link>
+        <span v-else style="display:inline-flex;align-items:center;gap:4px;background:#FAFAF8;color:#C5BAA8;border:2px solid #E8E0D0;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:default;">
+          다음주
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <span :class="statusBadge(report.status)" style="font-size:13px;padding:5px 14px;">{{ report.status_label }}</span>
 
@@ -424,8 +450,10 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { autoLink } from '@/utils/autoLink.js'
 
 const props = defineProps({
-  report:    { type: Object, required: true },
-  teamUsers: { type: Array,  default: () => [] },
+  report:       { type: Object, required: true },
+  teamUsers:    { type: Array,  default: () => [] },
+  prevReportId: { type: Number, default: null },
+  nextReportId: { type: Number, default: null },
 })
 
 const page    = usePage()

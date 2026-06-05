@@ -79,7 +79,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // 설정 — 카카오 연동
     Route::get('/settings/kakao',             [KakaoController::class, 'show'])->name('admin.settings.kakao');
     Route::post('/settings/kakao',            [KakaoController::class, 'update'])->name('admin.settings.kakao.update');
-    Route::post('/settings/kakao/send',       [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
+    Route::post('/settings/kakao/send',          [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
+    Route::post('/settings/kakao/send-daily',    [KakaoController::class, 'sendDailyNow'])->name('admin.settings.kakao.send-daily');
+    Route::post('/settings/kakao/daily-settings',[KakaoController::class, 'updateDailySettings'])->name('admin.settings.kakao.daily-settings');
 
     // 설정 — SMTP 메일
     Route::get('/settings/smtp',              [SettingController::class, 'smtp'])->name('admin.settings.smtp');

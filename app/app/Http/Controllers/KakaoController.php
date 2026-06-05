@@ -32,10 +32,12 @@ class KakaoController extends Controller
             ]);
 
         return Inertia::render('Admin/Kakao', [
-            'rest_api_key'    => Setting::get('kakao_rest_api_key', ''),
-            'client_secret'   => Setting::get('kakao_client_secret', ''),
-            'redirect_uri'    => route('auth.kakao.callback'),
-            'users'           => $users,
+            'rest_api_key'        => Setting::get('kakao_rest_api_key', ''),
+            'client_secret'       => Setting::get('kakao_client_secret', ''),
+            'redirect_uri'        => route('auth.kakao.callback'),
+            'users'               => $users,
+            'kakao_daily_enabled' => Setting::get('kakao_daily_enabled', '0') === '1',
+            'kakao_daily_time'    => Setting::get('kakao_daily_time', '09:00'),
         ]);
     }
 
@@ -89,5 +91,29 @@ class KakaoController extends Controller
         if ($failNames)    $message .= ($message ? ' / ' : '') . count($failNames) . '명 실패(카카오 미연동 포함): ' . implode(', ', $failNames);
 
         return response()->json(['ok' => empty($failNames) || !empty($successNames), 'message' => $message]);
+    }
+
+    /** 오늘 팀 일정 카카오 즉시 발송 (수동 테스트) */
+    public function sendDailyNow(): JsonResponse
+    {
+        $date   = Carbon::now()->timezone('Asia/Seoul')->toDateString();
+        $result = $this->kakaoService->sendDailySchedule($date);
+        $ok     = $result['sent'] > 0;
+        $msg    = $ok
+            ? "{$result['sent']}명 발송 완료" . ($result['failed'] > 0 ? ", {$result['failed']}명 실패" : '')
+            : "발송 실패 — 오늘({$date}) 일정이 없거나 카카오 연동 팀원이 없습니다";
+        return response()->json(['ok' => $ok, 'message' => $msg, 'date' => $date]);
+    }
+
+    /** 카카오 자동발송 설정 저장 */
+    public function updateDailySettings(Request $request): JsonResponse
+    {
+        $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'time'    => ['required', 'regex:/^\d{2}:\d{2}$/'],
+        ]);
+        Setting::set('kakao_daily_enabled', $request->enabled ? '1' : '0');
+        Setting::set('kakao_daily_time', $request->time);
+        return response()->json(['ok' => true]);
     }
 }

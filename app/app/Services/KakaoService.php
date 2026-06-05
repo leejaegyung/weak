@@ -6,6 +6,8 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+// WebhookService::buildDailyMessage() 공용 사용
 
 class KakaoService
 {
@@ -138,6 +140,40 @@ class KakaoService
             Log::error('카카오 사용자 토큰 갱신 예외: ' . $e->getMessage());
         }
         return false;
+    }
+
+    // ─── 매일 아침 팀 일정 카카오 자동 발송 ──────────────────────────
+
+    /**
+     * 당일 팀 일정을 카카오 연동된 모든 팀원에게 발송
+     * @return array ['sent' => n, 'failed' => n]
+     */
+    public function sendDailySchedule(string $date): array
+    {
+        // 메시지 텍스트 생성 (WebhookService 공용 빌더 사용)
+        $message = app(WebhookService::class)->buildDailyMessage($date);
+        if (!$message) return ['sent' => 0, 'failed' => 0];
+
+        // 카카오 연동된 활성 팀원 조회
+        $users = User::where('is_active', true)
+            ->whereNotNull('kakao_access_token')
+            ->get();
+
+        $sent   = 0;
+        $failed = 0;
+
+        foreach ($users as $user) {
+            // 카카오는 200자 제한 — 초과 시 앞 195자 + '…'
+            $text = mb_strlen($message) > 200
+                ? mb_substr($message, 0, 195) . '…'
+                : $message;
+
+            $ok = $this->sendToUser($user, $text);
+            $ok ? $sent++ : $failed++;
+        }
+
+        Log::info("[카카오 자동발송] {$date} — 성공:{$sent}, 실패:{$failed}");
+        return ['sent' => $sent, 'failed' => $failed];
     }
 
     /** 사용자 카카오 연동 해제 */

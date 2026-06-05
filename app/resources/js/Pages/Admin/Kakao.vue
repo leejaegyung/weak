@@ -160,6 +160,63 @@
         </p>
       </div>
 
+      <!-- ── 매일 아침 팀 일정 자동 발송 ── -->
+      <div class="card" style="background:#FFFBEB;border-color:#FDCB40;">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
+          </svg>
+          매일 아침 팀 일정 자동 발송
+        </div>
+        <p style="font-size:12px;color:#9A8F7A;margin-bottom:16px;line-height:1.7;">
+          평일(월~금) 지정 시간에 당일 팀 일정을 카카오 연동된 팀원 전원에게 자동 발송합니다.<br>
+          <strong style="color:#D97706;">카카오 미연동 팀원은 수신에서 제외됩니다.</strong>
+        </p>
+
+        <!-- 자동 발송 활성화 토글 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #E8E0D0;border-radius:12px;padding:14px 18px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:2px;">자동 발송 활성화</div>
+            <div style="font-size:11px;color:#9A8F7A;">평일(월~금) 지정 시간에 자동으로 카카오 발송</div>
+          </div>
+          <button type="button" @click="toggleKakaoDaily"
+            :style="{
+              width:'44px', height:'24px', borderRadius:'99px', border:'2px solid #1A1100',
+              background: dailyEnabled ? '#FDCB40' : '#E8E0D0',
+              position:'relative', cursor:'pointer', flexShrink:0, transition:'background 0.15s',
+            }">
+            <span :style="{
+              position:'absolute', top:'2px', width:'16px', height:'16px', borderRadius:'50%',
+              background:'#1A1100', transition:'left 0.15s',
+              left: dailyEnabled ? '22px' : '2px',
+            }"></span>
+          </button>
+        </div>
+
+        <!-- 발송 시간 -->
+        <div v-if="dailyEnabled" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">발송 시간</label>
+            <input type="time" v-model="dailyTime" @change="saveDailySettings"
+              style="background:#fff;border:2px solid #1A1100;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#1A1100;outline:none;" />
+          </div>
+          <span style="font-size:12px;color:#9A8F7A;margin-bottom:10px;">설정 후 서버 크론잡이 등록되어 있어야 작동합니다</span>
+        </div>
+
+        <!-- 수동 즉시 발송 -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button @click="sendKakaoDaily" :disabled="dailySending"
+            style="background:#FEE500;color:#1A1100;border:2px solid #1A1100;border-radius:12px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            {{ dailySending ? '발송 중...' : '오늘 일정 지금 발송 (테스트)' }}
+          </button>
+          <p v-if="dailyResult" style="font-size:12px;font-weight:600;margin:0;"
+            :style="{ color: dailyOk ? '#16A34A' : '#DC2626' }">
+            {{ dailyResult }}
+          </p>
+        </div>
+      </div>
+
     </div>
   </AppLayout>
 </template>
@@ -170,10 +227,12 @@ import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  rest_api_key:  { type: String, default: '' },
-  client_secret: { type: String, default: '' },
-  redirect_uri:  { type: String, default: '' },
-  users:         { type: Array,  default: () => [] },
+  rest_api_key:        { type: String,  default: '' },
+  client_secret:       { type: String,  default: '' },
+  redirect_uri:        { type: String,  default: '' },
+  users:               { type: Array,   default: () => [] },
+  kakao_daily_enabled: { type: Boolean, default: false },
+  kakao_daily_time:    { type: String,  default: '09:00' },
 })
 
 const redirectUri    = ref(props.redirect_uri)
@@ -221,6 +280,44 @@ const toMonday = (dateStr) => {
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   return d.toISOString().slice(0, 10)
+}
+
+// ── 카카오 자동발송 설정 ──
+const dailyEnabled = ref(props.kakao_daily_enabled)
+const dailyTime    = ref(props.kakao_daily_time)
+const dailySending = ref(false)
+const dailyResult  = ref('')
+const dailyOk      = ref(false)
+
+const saveDailySettings = async () => {
+  try {
+    await window.axios.post('/admin/settings/kakao/daily-settings', {
+      enabled: dailyEnabled.value,
+      time: dailyTime.value,
+    })
+  } catch (e) { console.error(e) }
+}
+
+const toggleKakaoDaily = async () => {
+  dailyEnabled.value = !dailyEnabled.value
+  await saveDailySettings()
+}
+
+const sendKakaoDaily = async () => {
+  dailySending.value = true
+  dailyResult.value  = ''
+  try {
+    const res = await window.axios.post('/admin/settings/kakao/send-daily')
+    dailyOk.value     = res.data.ok
+    dailyResult.value = res.data.ok
+      ? `✓ ${res.data.message}`
+      : `✗ ${res.data.message}`
+  } catch (e) {
+    dailyOk.value     = false
+    dailyResult.value = '✗ 오류: ' + (e.response?.data?.message ?? e.message)
+  } finally {
+    dailySending.value = false
+  }
 }
 
 // 미제출 알림 발송

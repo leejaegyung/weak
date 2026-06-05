@@ -19,13 +19,24 @@ Schedule::call(function () {
     if ($enabled !== '1') return;
 
     $now = Carbon::now()->timezone('Asia/Seoul');
-
-    // 설정 시간과 일치할 때만 발송
     if ($now->format('H:i') !== $time) return;
-
-    // 주말(토·일)은 발송하지 않음
     if ($now->isWeekend()) return;
 
     app(WebhookService::class)->sendDailySchedule($now->toDateString());
+
+})->everyMinute()->timezone('Asia/Seoul');
+
+// ── 매일 지정 시간 팀 일정 카카오 자동 발송 ──
+Schedule::call(function () {
+    $enabled = Setting::get('kakao_daily_enabled', '0');
+    $time    = Setting::get('kakao_daily_time', '09:00');
+
+    if ($enabled !== '1') return;
+
+    $now = Carbon::now()->timezone('Asia/Seoul');
+    if ($now->format('H:i') !== $time) return;
+    if ($now->isWeekend()) return;
+
+    app(\App\Services\KakaoService::class)->sendDailySchedule($now->toDateString());
 
 })->everyMinute()->timezone('Asia/Seoul');

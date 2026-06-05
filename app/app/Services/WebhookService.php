@@ -55,11 +55,9 @@ class WebhookService
     //  매일 아침 팀 일정 자동 발송
     // ═══════════════════════════════════════════════
 
-    /** 당일 팀 일정 Webhook 발송 (스케줄러에서 호출) */
-    public function sendDailySchedule(string $date): bool
+    /** 당일 팀 일정 메시지 텍스트 생성 (Webhook·카카오 공용) */
+    public function buildDailyMessage(string $date): ?string
     {
-        if (!$this->isEnabled()) return false;
-
         $schedules = Schedule::with('user')
             ->where('date', $date)
             ->whereNotNull('content')
@@ -69,16 +67,15 @@ class WebhookService
             ->sortBy(fn($s) => $s->user->sort_order ?? 9999)
             ->values();
 
-        if ($schedules->isEmpty()) return false;
+        if ($schedules->isEmpty()) return null;
 
-        // 그룹화: 항목 → [사람, 사람]
         $statusGroups = [];
         $siteGroups   = [];
         $otherGroups  = [];
 
         foreach ($schedules as $sched) {
-            $name    = $sched->user->name ?? '?';
-            $parsed  = $this->parseContent($sched->content ?? '');
+            $name   = $sched->user->name ?? '?';
+            $parsed = $this->parseContent($sched->content ?? '');
 
             foreach ($parsed['statuses'] as $status) {
                 $statusGroups[$status][] = $name;
@@ -91,39 +88,33 @@ class WebhookService
             }
         }
 
-        // 항목이 하나도 없으면 발송 안 함
-        if (empty($statusGroups) && empty($siteGroups) && empty($otherGroups)) return false;
+        if (empty($statusGroups) && empty($siteGroups) && empty($otherGroups)) return null;
 
-        // 날짜 표시
         $carbon = Carbon::parse($date)->locale('ko');
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
-        $header = "📅 **{$carbon->format('Y년 m월 d일')}({$dayKr}) 팀 일정**\n";
+        $lines  = ["📅 **{$carbon->format('Y년 m월 d일')}({$dayKr}) 팀 일정**"];
 
-        $lines = [$header];
-
-        // 상태 (외근/출장/반차/휴가)
-        if (!empty($statusGroups)) {
-            foreach ($statusGroups as $status => $people) {
-                $statusIcon = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'][$status] ?? '•';
-                $lines[] = "{$statusIcon} {$status}: " . implode(', ', $people);
-            }
+        foreach ($statusGroups as $status => $people) {
+            $icon    = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'][$status] ?? '•';
+            $lines[] = "{$icon} {$status}: " . implode(', ', $people);
+        }
+        foreach ($siteGroups as $site => $people) {
+            $lines[] = "🌐 {$site}: " . implode(', ', $people);
+        }
+        foreach ($otherGroups as $item => $people) {
+            $lines[] = "✏ {$item}: " . implode(', ', $people);
         }
 
-        // 현장/사이트
-        if (!empty($siteGroups)) {
-            foreach ($siteGroups as $site => $people) {
-                $lines[] = "🌐 {$site}: " . implode(', ', $people);
-            }
-        }
+        return implode("\n", $lines);
+    }
 
-        // 기타 일정
-        if (!empty($otherGroups)) {
-            foreach ($otherGroups as $item => $people) {
-                $lines[] = "✏ {$item}: " . implode(', ', $people);
-            }
-        }
-
-        return $this->send(implode("\n", $lines));
+    /** 당일 팀 일정 Webhook 발송 (스케줄러에서 호출) */
+    public function sendDailySchedule(string $date): bool
+    {
+        if (!$this->isEnabled()) return false;
+        $message = $this->buildDailyMessage($date);
+        if (!$message) return false;
+        return $this->send($message);
     }
 
     /** 일정 내용 파싱 — 신형식 [시간대]상태:사이트 및 구형식 모두 지원 */

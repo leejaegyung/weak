@@ -48,6 +48,7 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
             'stream' => [
                 'ssl' => [
+                    'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
                     'allow_self_signed' => true,
                     'verify_peer' => false,
                     'verify_peer_name' => false,

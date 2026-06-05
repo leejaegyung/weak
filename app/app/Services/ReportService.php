@@ -135,7 +135,6 @@ class ReportService
             $query->where('week', $this->weekString($weekStart));
         }
 
-        $all       = (clone $query)->count();
         $draft     = (clone $query)->where('status', 'draft')->count();
         $submitted = (clone $query)->where('status', 'submitted')->count();
         $rejected  = (clone $query)->where('status', 'rejected')->count();
@@ -152,6 +151,9 @@ class ReportService
         } else {
             $notSubmitted = 0;
         }
+
+        // 전체 = 미제출 + 작성중(draft) + 제출됨 + 반려됨 합산
+        $all = $notSubmitted + $draft + $submitted + $rejected;
 
         return compact('all', 'draft', 'notSubmitted', 'submitted', 'rejected');
     }

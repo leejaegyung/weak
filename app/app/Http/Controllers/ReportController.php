@@ -199,7 +199,7 @@ class ReportController extends Controller
                 'report_id' => $weekReports->get($u->id),
             ])->values()->toArray();
 
-        // 같은 사용자의 이전/다음 주 보고서
+        // 같은 사용자의 이전/다음/금주 보고서
         $prevReport = WeeklyReport::where('user_id', $report->user_id)
             ->where('curr_start', '<', $report->curr_start)
             ->orderBy('curr_start', 'desc')
@@ -210,12 +210,19 @@ class ReportController extends Controller
             ->orderBy('curr_start', 'asc')
             ->value('id');
 
+        // 금주: 오늘이 속한 주의 월요일 기준으로 보고서 탐색
+        $thisMonday   = now()->startOfWeek(\Carbon\Carbon::MONDAY)->toDateString();
+        $currentReport = WeeklyReport::where('user_id', $report->user_id)
+            ->whereDate('curr_start', $thisMonday)
+            ->value('id');
+
         return Inertia::render('Report/Show', [
-            'report'        => $report,
-            'teamUsers'     => $teamUsers,
-            'canEdit'       => $user->isAdmin() || $report->user_id === $user->id,
-            'prevReportId'  => $prevReport,
-            'nextReportId'  => $nextReport,
+            'report'          => $report,
+            'teamUsers'       => $teamUsers,
+            'canEdit'         => $user->isAdmin() || $report->user_id === $user->id,
+            'prevReportId'    => $prevReport,
+            'nextReportId'    => $nextReport,
+            'currentReportId' => $currentReport,
         ]);
     }
 

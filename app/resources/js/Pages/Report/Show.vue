@@ -50,6 +50,17 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           전주
         </span>
+        <!-- 금주 -->
+        <Link v-if="currentReportId && currentReportId !== report.id" :href="`/reports/${currentReportId}`"
+          style="display:inline-flex;align-items:center;gap:4px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;text-decoration:none;box-shadow:2px 2px 0 #1A1100;transition:all 0.12s;"
+          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+          금주
+        </Link>
+        <span v-else-if="currentReportId === report.id"
+          style="display:inline-flex;align-items:center;gap:4px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:default;opacity:0.5;">
+          금주
+        </span>
         <!-- 다음 주 -->
         <Link v-if="nextReportId" :href="`/reports/${nextReportId}`"
           style="display:inline-flex;align-items:center;gap:4px;background:#fff;color:#4A3F2A;border:2px solid #D0C9BC;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.12s;"
@@ -450,10 +461,11 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { autoLink } from '@/utils/autoLink.js'
 
 const props = defineProps({
-  report:       { type: Object, required: true },
-  teamUsers:    { type: Array,  default: () => [] },
-  prevReportId: { type: Number, default: null },
-  nextReportId: { type: Number, default: null },
+  report:          { type: Object, required: true },
+  teamUsers:       { type: Array,  default: () => [] },
+  prevReportId:    { type: Number, default: null },
+  nextReportId:    { type: Number, default: null },
+  currentReportId: { type: Number, default: null },
 })
 
 const page    = usePage()

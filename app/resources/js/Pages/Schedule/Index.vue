@@ -580,20 +580,21 @@
       </div>
     </Transition>
 
-    <!-- 일별 상세 모달 -->
+    <!-- 일별 상세 모달 (카테고리 그룹형) -->
     <Transition name="modal-fade">
       <div v-if="showDayModal"
         style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(3px);padding:16px;"
         @click.self="showDayModal=false">
-        <div class="card" style="width:400px;max-width:100%;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+        <div class="card" style="width:560px;max-width:100%;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+
           <!-- 모달 헤더 -->
-          <div style="padding:14px 18px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/></svg>
+          <div style="padding:16px 20px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/></svg>
               </div>
               <div>
-                <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;">{{ fmtDayModalDate(dayModalDate) }}</div>
+                <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;">{{ fmtDayModalDate(dayModalDate) }}</div>
                 <div style="font-size:11px;color:#9A8F7A;">{{ (monthDayEntriesMap[dayModalDate] ?? []).length }}개 일정</div>
               </div>
             </div>
@@ -601,29 +602,97 @@
               style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;"
               @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
               @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-          <!-- 모달 본문 -->
-          <div style="padding:16px 18px;overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;">
-            <div v-for="(entry, i) in (monthDayEntriesMap[dayModalDate] ?? [])" :key="i"
-              :style="{
-                display:'flex', alignItems:'center', gap:'8px', padding:'10px 12px', borderRadius:'10px',
-                background: entry.status && STATUS_STYLE_MAP[entry.status] ? STATUS_STYLE_MAP[entry.status].bg : (entry.content && !entry.status ? '#ECFEFF' : '#FFEDD5'),
-                border: '1.5px solid ' + (entry.status && STATUS_STYLE_MAP[entry.status] ? STATUS_STYLE_MAP[entry.status].border : (entry.content && !entry.status ? '#67E8F9' : '#FDBA74')),
-              }">
-              <span v-if="entry.time" style="padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800;background:rgba(26,17,0,0.08);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">({{ entry.time }})</span>
-              <span v-if="entry.status && STATUS_STYLE_MAP[entry.status]" style="font-size:14px;flex-shrink:0;">{{ STATUS_STYLE_MAP[entry.status].icon }}</span>
-              <span v-else-if="entry.content && !entry.status" style="flex-shrink:0;">✏</span>
-              <span style="font-size:12px;font-weight:800;color:#1A1100;white-space:nowrap;flex-shrink:0;">{{ entry.userName }}</span>
-              <span style="color:#D0C9BC;">—</span>
-              <span :style="{ fontSize:'12px', color: entry.status && STATUS_STYLE_MAP[entry.status] ? STATUS_STYLE_MAP[entry.status].color : (entry.content && !entry.status ? '#0E7490' : '#C2410C'), fontWeight:'700' }">
-                {{ [entry.status, [...entry.sites, entry.content].filter(Boolean).join(', ')].filter(Boolean).join(': ') || '(내용 없음)' }}
-              </span>
+
+          <!-- 모달 본문: 카테고리별 섹션 -->
+          <div style="padding:18px 20px;overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
+
+            <!-- 카테고리 그룹 (외근/출장/반차/휴가) -->
+            <template v-for="tag in QUICK_TAGS" :key="tag.label">
+              <div v-if="dayModalGroups[tag.label]?.length"
+                :style="{ background: tag.bg, border: '2px solid ' + tag.border, borderRadius: '14px', overflow: 'hidden' }">
+                <!-- 카테고리 헤더 -->
+                <div :style="{ padding: '10px 16px', background: tag.bg, borderBottom: '1.5px solid ' + tag.border, display: 'flex', alignItems: 'center', gap: '8px' }">
+                  <span style="font-size:18px;">{{ tag.icon }}</span>
+                  <span :style="{ fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif', fontSize: '14px', fontWeight: '800', color: tag.color }">{{ tag.label }}</span>
+                  <span :style="{ marginLeft: 'auto', fontSize: '11px', fontWeight: '700', color: tag.color, opacity: 0.7 }">{{ dayModalGroups[tag.label].length }}명</span>
+                </div>
+                <!-- 사람 목록 -->
+                <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
+                  <div v-for="(entry, ei) in dayModalGroups[tag.label]" :key="ei"
+                    style="display:flex;align-items:center;gap:8px;">
+                    <!-- 아바타 -->
+                    <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
+                      {{ entry.userName.charAt(0) }}
+                    </div>
+                    <!-- 이름 -->
+                    <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ entry.userName }}</span>
+                    <!-- 시간 (종일 아닌 경우) -->
+                    <span v-if="entry.time && entry.time !== '종일'"
+                      style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">
+                      {{ entry.time }}
+                    </span>
+                    <!-- 사이트 -->
+                    <span v-if="entry.sites?.length"
+                      :style="{ fontSize:'12px', color: tag.color, fontWeight:'600' }">
+                      — {{ entry.sites.join(', ') }}
+                    </span>
+                    <!-- 기타 내용 -->
+                    <span v-else-if="entry.content"
+                      :style="{ fontSize:'12px', color: tag.color, fontWeight:'600' }">
+                      — {{ entry.content }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 현장/사이트 (상태 없이 사이트만 있는 경우) -->
+            <div v-if="dayModalGroups['__site']?.length"
+              style="background:#F0F9FF;border:2px solid #BAE6FD;border-radius:14px;overflow:hidden;">
+              <div style="padding:10px 16px;border-bottom:1.5px solid #BAE6FD;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;">🌐</span>
+                <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;color:#0369A1;">현장 근무</span>
+                <span style="margin-left:auto;font-size:11px;font-weight:700;color:#0369A1;opacity:0.7;">{{ dayModalGroups['__site'].length }}명</span>
+              </div>
+              <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
+                <div v-for="(entry, ei) in dayModalGroups['__site']" :key="ei" style="display:flex;align-items:center;gap:8px;">
+                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
+                    {{ entry.userName.charAt(0) }}
+                  </div>
+                  <span style="font-size:13px;font-weight:700;color:#1A1100;">{{ entry.userName }}</span>
+                  <span v-if="entry.time && entry.time !== '종일'" style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;">{{ entry.time }}</span>
+                  <span style="font-size:12px;color:#0369A1;font-weight:600;">— {{ entry.sites.join(', ') }}</span>
+                </div>
+              </div>
             </div>
+
+            <!-- 기타 메모 -->
+            <div v-if="dayModalGroups['__etc']?.length"
+              style="background:#F0FDFA;border:2px solid #99F6E4;border-radius:14px;overflow:hidden;">
+              <div style="padding:10px 16px;border-bottom:1.5px solid #99F6E4;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;">✏</span>
+                <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;color:#0F766E;">기타 일정</span>
+                <span style="margin-left:auto;font-size:11px;font-weight:700;color:#0F766E;opacity:0.7;">{{ dayModalGroups['__etc'].length }}명</span>
+              </div>
+              <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
+                <div v-for="(entry, ei) in dayModalGroups['__etc']" :key="ei" style="display:flex;align-items:center;gap:8px;">
+                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
+                    {{ entry.userName.charAt(0) }}
+                  </div>
+                  <span style="font-size:13px;font-weight:700;color:#1A1100;">{{ entry.userName }}</span>
+                  <span v-if="entry.time && entry.time !== '종일'" style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;">{{ entry.time }}</span>
+                  <span style="font-size:12px;color:#0F766E;font-weight:600;">— {{ entry.content }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 일정 없음 -->
             <div v-if="!(monthDayEntriesMap[dayModalDate] ?? []).length"
-              style="padding:24px;text-align:center;color:#9A8F7A;font-size:13px;">
-              이 날 일정이 없습니다
+              style="padding:32px;text-align:center;color:#9A8F7A;font-size:13px;">
+              이 날 등록된 일정이 없습니다
             </div>
           </div>
         </div>
@@ -829,6 +898,28 @@ const monthDayEntriesMap = computed(() => {
 const showDayModal  = ref(false)
 const dayModalDate  = ref('')
 const openDayModal  = (date) => { dayModalDate.value = date; showDayModal.value = true }
+
+// 카테고리별 그룹핑 (모달용)
+const dayModalGroups = computed(() => {
+  const entries = monthDayEntriesMap.value[dayModalDate.value] ?? []
+  const groups  = {}
+  for (const entry of entries) {
+    if (entry.status && STATUS_STYLE_MAP[entry.status]) {
+      // 상태(외근/출장/반차/휴가)
+      if (!groups[entry.status]) groups[entry.status] = []
+      groups[entry.status].push(entry)
+    } else if (!entry.status && entry.sites?.length) {
+      // 사이트만 있는 경우 (현장)
+      if (!groups['__site']) groups['__site'] = []
+      groups['__site'].push(entry)
+    } else if (entry.content) {
+      // 기타 메모
+      if (!groups['__etc']) groups['__etc'] = []
+      groups['__etc'].push(entry)
+    }
+  }
+  return groups
+})
 
 const fmtDayModalDate = (date) => {
   if (!date) return ''

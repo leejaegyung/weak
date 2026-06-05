@@ -259,6 +259,18 @@
               {{ pendingCount }}
             </span>
           </Link>
+
+          <Link v-if="auth?.user?.role === 'admin'"
+            href="/admin/settings/api"
+            class="nav-item"
+            :style="isActive('/admin/settings/api') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/admin/settings/api'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+            </div>
+            API 키 관리
+          </Link>
         </nav>
 
         <!-- 이번 주 위젯 -->

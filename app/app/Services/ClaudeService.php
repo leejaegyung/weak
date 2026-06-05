@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +13,38 @@ class ClaudeService
 
     public function __construct()
     {
-        $this->apiKey = config('services.anthropic.api_key', '');
+        $dbKey = Setting::get('api.anthropic_key', '');
+        $this->apiKey = !empty($dbKey) ? $dbKey : config('services.anthropic.api_key', '');
+    }
+
+    public function testConnection(): array
+    {
+        if (empty($this->apiKey)) {
+            return ['ok' => false, 'message' => 'API 키가 설정되지 않았습니다.'];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'x-api-key'         => $this->apiKey,
+                'anthropic-version' => '2023-06-01',
+                'content-type'      => 'application/json',
+            ])->timeout(15)->post('https://api.anthropic.com/v1/messages', [
+                'model'      => $this->model,
+                'max_tokens' => 16,
+                'messages'   => [
+                    ['role' => 'user', 'content' => '안녕'],
+                ],
+            ]);
+
+            if ($response->successful()) {
+                return ['ok' => true, 'message' => 'API 키가 정상적으로 작동합니다.'];
+            }
+
+            $error = $response->json('error.message', '알 수 없는 오류');
+            return ['ok' => false, 'message' => "API 오류: {$error}"];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => '연결 실패: ' . $e->getMessage()];
+        }
     }
 
     public function analyzeIssue(string $title, string $content): array

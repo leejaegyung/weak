@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiSettingController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\IssueController;
@@ -100,6 +101,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/kakao/send',          [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
     Route::post('/settings/kakao/send-daily',    [KakaoController::class, 'sendDailyNow'])->name('admin.settings.kakao.send-daily');
     Route::post('/settings/kakao/daily-settings',[KakaoController::class, 'updateDailySettings'])->name('admin.settings.kakao.daily-settings');
+
+    // 설정 — API 키 관리
+    Route::get('/settings/api',              [ApiSettingController::class, 'index'])->name('admin.settings.api');
+    Route::post('/settings/api',             [ApiSettingController::class, 'update'])->name('admin.settings.api.update');
+    Route::post('/settings/api/test',        [ApiSettingController::class, 'test'])->name('admin.settings.api.test');
 
     // 설정 — SMTP 메일
     Route::get('/settings/smtp',              [SettingController::class, 'smtp'])->name('admin.settings.smtp');

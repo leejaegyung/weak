@@ -29,6 +29,10 @@ class AiService
 
     public function analyzeIssue(string $title, string $content): array
     {
+        if (Setting::get('api.ai_enabled', '1') !== '1') {
+            return ['ok' => false, 'response' => null];
+        }
+
         if (empty($this->apiKey)) {
             return [
                 'ok'       => false,

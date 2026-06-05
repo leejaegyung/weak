@@ -29,14 +29,49 @@
             <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;">AI 분석 서비스</div>
             <div style="font-size:11px;color:#9A8F7A;">요구/이슈 등록 시 자동 검토에 사용할 AI 제공자를 선택합니다</div>
           </div>
-          <!-- 현재 활성 제공자 -->
-          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;white-space:nowrap;">
-            활성: {{ activeProviderName }}
+          <!-- AI 전체 활성/비활성 토글 -->
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:700;color:#4A3F2A;white-space:nowrap;">
+              {{ aiEnabled ? activeProviderName : 'AI 꺼짐' }}
+            </span>
+            <button @click="toggleAi"
+              :style="{
+                width:'46px', height:'26px',
+                borderRadius:'99px',
+                border:'2px solid #1A1100',
+                background: aiEnabled ? '#7C3AED' : '#D1D5DB',
+                cursor:'pointer',
+                position:'relative',
+                transition:'background 0.2s',
+                flexShrink:0,
+                boxShadow: aiEnabled ? '2px 2px 0 #1A1100' : '2px 2px 0 #1A1100',
+              }"
+              :title="aiEnabled ? 'AI 분석 비활성화' : 'AI 분석 활성화'">
+              <div :style="{
+                position:'absolute',
+                top:'3px',
+                left: aiEnabled ? '22px' : '3px',
+                width:'16px', height:'16px',
+                borderRadius:'50%',
+                background:'#fff',
+                border:'1.5px solid rgba(0,0,0,0.15)',
+                transition:'left 0.2s',
+                boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
+              }"></div>
+            </button>
           </div>
         </div>
 
+        <!-- 비활성 안내 배너 -->
+        <Transition name="fade">
+          <div v-if="!aiEnabled" style="margin:0 22px 0;padding:10px 14px;background:#F3F4F6;border:2px solid #D1D5DB;border-radius:10px;font-size:12px;color:#6B7280;display:flex;align-items:center;gap:8px;margin-top:14px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            AI 분석이 비활성화되어 있습니다. 이슈 등록 시 AI 검토가 수행되지 않습니다. 토글을 켜면 즉시 활성화됩니다.
+          </div>
+        </Transition>
+
         <!-- 제공자 카드 목록 -->
-        <div style="padding:16px 22px;display:flex;flex-direction:column;gap:12px;">
+        <div style="padding:16px 22px;display:flex;flex-direction:column;gap:12px;" :style="{ opacity: aiEnabled ? 1 : 0.45, pointerEvents: aiEnabled ? 'auto' : 'none', transition:'opacity 0.2s' }">
           <div v-for="svc in localAiServices" :key="svc.id"
             :style="{
               border: '2px solid',
@@ -345,13 +380,23 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  aiProvider:  { type: String, default: 'anthropic' },
-  aiServices:  { type: Array,  default: () => [] },
-  customApis:  { type: Array,  default: () => [] },
+  aiProvider:  { type: String,  default: 'anthropic' },
+  aiEnabled:   { type: Boolean, default: true },
+  aiServices:  { type: Array,   default: () => [] },
+  customApis:  { type: Array,   default: () => [] },
 })
 
 // ── AI 서비스 ────────────────────────────────────
 const activeProvider = ref(props.aiProvider)
+const aiEnabled      = ref(props.aiEnabled)
+
+const toggleAi = () => {
+  aiEnabled.value = !aiEnabled.value
+  router.post('/admin/settings/api', { service: 'ai_enabled', api_key: aiEnabled.value ? '1' : '0' }, {
+    preserveState: true,
+    preserveScroll: true,
+  })
+}
 
 const localAiServices = reactive(
   props.aiServices.map(svc => ({

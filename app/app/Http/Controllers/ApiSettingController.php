@@ -27,11 +27,13 @@ class ApiSettingController extends Controller
         $anthropicKey = Setting::get('api.anthropic_key', '');
         $openaiKey    = Setting::get('api.openai_key', '');
         $aiProvider   = Setting::get('api.ai_provider', 'anthropic');
+        $aiEnabled    = Setting::get('api.ai_enabled', '1') === '1';
         $customRaw    = Setting::get('api.custom_services', '[]');
         $customList   = json_decode($customRaw, true) ?? [];
 
         return Inertia::render('Admin/ApiSettings', [
             'aiProvider'   => $aiProvider,
+            'aiEnabled'    => $aiEnabled,
             'aiServices'   => [
                 [
                     'id'          => 'anthropic',
@@ -70,11 +72,14 @@ class ApiSettingController extends Controller
             'anthropic'   => Setting::set('api.anthropic_key', $apiKey),
             'openai'      => Setting::set('api.openai_key', $apiKey),
             'ai_provider' => Setting::set('api.ai_provider', $apiKey),
+            'ai_enabled'  => Setting::set('api.ai_enabled', $apiKey),
         };
 
-        $message = $service === 'ai_provider'
-            ? 'AI 제공자가 변경되었습니다.'
-            : (empty($apiKey) ? 'API 키가 삭제되었습니다.' : 'API 키가 저장되었습니다.');
+        $message = match ($service) {
+            'ai_provider' => 'AI 제공자가 변경되었습니다.',
+            'ai_enabled'  => $apiKey === '1' ? 'AI 분석이 활성화되었습니다.' : 'AI 분석이 비활성화되었습니다.',
+            default       => empty($apiKey) ? 'API 키가 삭제되었습니다.' : 'API 키가 저장되었습니다.',
+        };
 
         return back()->with('success', $message);
     }

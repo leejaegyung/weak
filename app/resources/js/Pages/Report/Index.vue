@@ -481,17 +481,6 @@
 
             <!-- 코멘트 입력 (관리자만) -->
             <div v-if="isAdmin" style="padding:14px 20px;border-top:2px solid #E8E0D0;flex-shrink:0;background:#fff;">
-              <div style="margin-bottom:8px;">
-                <select v-model="newCommentSection"
-                  style="border:2px solid #1A1100;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
-                  <option value="general">전체</option>
-                  <option value="curr_work">전주 업무</option>
-                  <option value="next_plan">금주 계획</option>
-                  <option value="todo_items">Todo</option>
-                  <option value="notes">특이사항</option>
-                  <option value="requests">요청사항</option>
-                </select>
-              </div>
               <div style="display:flex;gap:8px;align-items:flex-end;">
                 <textarea v-model="newCommentContent" rows="3" placeholder="코멘트를 입력하세요..."
                   style="flex:1;border:2px solid #1A1100;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;resize:none;transition:border-color 0.12s;"
@@ -502,7 +491,7 @@
                 <button @click="submitComment" :disabled="!newCommentContent.trim() || commentSubmitting"
                   style="background:#7C3AED;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
                   :style="{ opacity: !newCommentContent.trim() || commentSubmitting ? 0.5 : 1 }">
-                  등록
+                  {{ commentSubmitting ? '등록 중...' : '등록' }}
                 </button>
               </div>
               <div style="font-size:10px;color:#C8BFA8;margin-top:4px;">Ctrl+Enter로 등록</div>
@@ -729,14 +718,15 @@ const submitComment = async () => {
   commentSubmitting.value = true
   try {
     const res = await window.axios.post(`/reports/${commentModal.value.reportId}/comments`, {
-      section: newCommentSection.value,
       content: newCommentContent.value.trim(),
     })
     commentModal.value.comments.push(res.data)
     newCommentContent.value = ''
     localCommentCounts.value[commentModal.value.reportId] = commentModal.value.comments.length
-  } catch { /* ignore */ }
-  finally { commentSubmitting.value = false }
+  } catch (e) {
+    console.error('코멘트 등록 실패:', e.response?.data ?? e.message)
+    alert('코멘트 등록에 실패했습니다. (' + (e.response?.status ?? '네트워크 오류') + ')')
+  } finally { commentSubmitting.value = false }
 }
 
 const startEditComment = (c) => {

@@ -33,14 +33,14 @@ class ReportCommentController extends Controller
         if (!Auth::user()->isAdmin()) abort(403);
 
         $data = $request->validate([
-            'section' => ['required', 'string', 'max:50'],
+            'section' => ['nullable', 'string', 'max:50'],
             'content' => ['required', 'string', 'max:1000'],
         ]);
 
         $comment = ReportComment::create([
             'report_id' => $report->id,
             'user_id'   => Auth::id(),
-            'section'   => $data['section'],
+            'section'   => $data['section'] ?? 'general',
             'content'   => $data['content'],
         ]);
 

@@ -116,6 +116,21 @@
           수정
         </Link>
 
+        <!-- 코멘트 버튼 (관리자만) -->
+        <button v-if="isAdmin" @click="openCommentPanel"
+          style="display:inline-flex;align-items:center;gap:5px;background:#EDE9FE;color:#7C3AED;border:2px solid #1A1100;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          코멘트
+          <span v-if="commentCount > 0"
+            style="background:#7C3AED;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px;font-family:'Space Grotesk',sans-serif;">
+            {{ commentCount }}
+          </span>
+        </button>
+
         <!-- 본인: 초안/반려 → 제출 -->
         <template v-if="isOwn && (report.status === 'draft' || report.status === 'rejected')">
           <button @click="submit" class="btn-primary btn-sm">
@@ -433,6 +448,96 @@
       </div>
     </div>
 
+    <!-- 코멘트 패널 모달 -->
+    <div v-if="showCommentPanel"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
+      @click.self="showCommentPanel=false">
+      <div class="card" style="width:520px;max-width:100%;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+        <!-- 헤더 -->
+        <div style="padding:18px 22px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+          <div style="width:38px;height:38px;background:#EDE9FE;border:2px solid #1A1100;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">보고서 코멘트</div>
+            <div style="font-size:11px;color:#9A8F7A;margin-top:1px;">{{ report.user?.name }} · {{ report.week_label || report.week }}</div>
+          </div>
+          <button @click="showCommentPanel=false" style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;display:flex;align-items:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- 코멘트 목록 -->
+        <div style="flex:1;overflow-y:auto;padding:16px 22px;min-height:120px;">
+          <div v-if="commentLoading" style="text-align:center;padding:32px;color:#9A8F7A;font-size:13px;">불러오는 중...</div>
+          <div v-else-if="comments.length === 0" style="text-align:center;padding:32px;color:#9A8F7A;font-size:13px;">아직 코멘트가 없습니다</div>
+          <div v-else style="display:flex;flex-direction:column;gap:10px;">
+            <div v-for="c in comments" :key="c.id"
+              style="background:#F9F7F4;border:1.5px solid #E8E0D0;border-radius:10px;padding:12px 14px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span :style="sectionBadgeStyle(c.section)" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;border:1.5px solid;white-space:nowrap;">{{ sectionLabel(c.section) }}</span>
+                  <span style="font-size:11px;color:#9A8F7A;">{{ c.user_name }} · {{ c.created_at }}</span>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0;">
+                  <button @click="startEdit(c)"
+                    style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:3px;border-radius:5px;display:flex;align-items:center;"
+                    @mouseenter="e=>e.currentTarget.style.color='#7C3AED'"
+                    @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="수정">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button @click="removeComment(c)"
+                    style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:3px;border-radius:5px;display:flex;align-items:center;"
+                    @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                    @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="삭제">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div v-if="editingId === c.id">
+                <textarea v-model="editingText" rows="2"
+                  style="width:100%;border:2px solid #7C3AED;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">
+                  <button @click="editingId=null" style="background:#F5EDDB;color:#4A3F2A;border:1.5px solid #1A1100;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+                  <button @click="saveEdit(c)" style="background:#7C3AED;color:#fff;border:1.5px solid #1A1100;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">저장</button>
+                </div>
+              </div>
+              <div v-else style="font-size:12px;color:#4A3F2A;line-height:1.7;white-space:pre-wrap;word-break:break-word;">{{ c.content }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 입력 영역 -->
+        <div style="padding:14px 22px;border-top:2px solid #1A1100;flex-shrink:0;background:#fff;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <select v-model="newSection"
+              style="border:2px solid #1A1100;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
+              <option value="general">전체</option>
+              <option value="curr_work">전주 업무</option>
+              <option value="next_plan">금주 업무</option>
+              <option value="todo_items">Todo</option>
+              <option value="notes">특이사항</option>
+              <option value="requests">요청사항</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <textarea v-model="newComment" rows="2" placeholder="코멘트를 입력하세요..."
+              style="flex:1;border:2px solid #1A1100;border-radius:10px;padding:8px 12px;font-size:12px;font-family:inherit;outline:none;resize:none;transition:border-color 0.12s;"
+              @focus="e=>e.target.style.borderColor='#7C3AED'"
+              @blur="e=>e.target.style.borderColor='#1A1100'"
+              @keydown.ctrl.enter="addComment"
+              @keydown.meta.enter="addComment"></textarea>
+            <button @click="addComment" :disabled="!newComment.trim() || addingComment"
+              style="background:#7C3AED;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+              :style="{ opacity: !newComment.trim() || addingComment ? 0.5 : 1 }">
+              등록
+            </button>
+          </div>
+          <div style="font-size:10px;color:#C8BFA8;margin-top:4px;">Ctrl+Enter로 등록</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 반려 사유 모달 -->
     <div v-if="showRejectModal"
       style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;">
@@ -533,6 +638,81 @@ const allCategories = computed(() => [
 
 const showDeleteModal = ref(false)
 const doDelete = () => router.delete(`/reports/${props.report.id}`)
+
+// ── 코멘트 패널 ──────────────────────────────────
+const showCommentPanel = ref(false)
+const commentLoading   = ref(false)
+const comments         = ref([])
+const commentCount     = ref(0)
+const newComment       = ref('')
+const newSection       = ref('general')
+const addingComment    = ref(false)
+const editingId        = ref(null)
+const editingText      = ref('')
+
+const openCommentPanel = async () => {
+  showCommentPanel.value = true
+  if (comments.value.length === 0) await loadComments()
+}
+
+const loadComments = async () => {
+  commentLoading.value = true
+  try {
+    const res = await window.axios.get(`/reports/${props.report.id}/comments`)
+    comments.value    = res.data
+    commentCount.value = res.data.length
+  } catch { /* ignore */ }
+  finally { commentLoading.value = false }
+}
+
+const addComment = async () => {
+  if (!newComment.value.trim() || addingComment.value) return
+  addingComment.value = true
+  try {
+    const res = await window.axios.post(`/reports/${props.report.id}/comments`, {
+      section: newSection.value,
+      content: newComment.value.trim(),
+    })
+    comments.value.push(res.data)
+    commentCount.value++
+    newComment.value = ''
+  } catch { /* ignore */ }
+  finally { addingComment.value = false }
+}
+
+const startEdit = (c) => { editingId.value = c.id; editingText.value = c.content }
+const saveEdit  = async (c) => {
+  try {
+    await window.axios.put(`/report-comments/${c.id}`, { content: editingText.value.trim() })
+    c.content = editingText.value.trim()
+    editingId.value = null
+  } catch { /* ignore */ }
+}
+const removeComment = async (c) => {
+  try {
+    await window.axios.delete(`/report-comments/${c.id}`)
+    const idx = comments.value.findIndex(x => x.id === c.id)
+    if (idx !== -1) { comments.value.splice(idx, 1); commentCount.value-- }
+  } catch { /* ignore */ }
+}
+
+const sectionLabel = (s) => ({
+  general:    '전체',
+  curr_work:  '전주 업무',
+  next_plan:  '금주 업무',
+  todo_items: 'Todo',
+  notes:      '특이사항',
+  requests:   '요청사항',
+})[s] ?? s
+
+const sectionBadgeStyle = (s) => ({
+  general:    { background:'#F3F4F6', color:'#374151', borderColor:'#D1D5DB' },
+  curr_work:  { background:'#EFF6FF', color:'#1D4ED8', borderColor:'#BFDBFE' },
+  next_plan:  { background:'#F0FDF4', color:'#15803D', borderColor:'#BBF7D0' },
+  todo_items: { background:'#FFF7ED', color:'#C2410C', borderColor:'#FED7AA' },
+  notes:      { background:'#FDF4FF', color:'#7E22CE', borderColor:'#E9D5FF' },
+  requests:   { background:'#FFFBEB', color:'#92400E', borderColor:'#FDE68A' },
+})[s] ?? { background:'#F3F4F6', color:'#374151', borderColor:'#D1D5DB' }
 </script>
 
 <style scoped>

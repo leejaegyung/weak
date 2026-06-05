@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\IssueController;
 use App\Http\Controllers\KakaoAuthController;
 use App\Http\Controllers\KakaoController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportCommentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingController;
@@ -62,6 +64,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
+    // 요구/이슈
+    Route::get('/issues', [IssueController::class, 'index'])->name('issues.index');
+    Route::post('/issues', [IssueController::class, 'store'])->name('issues.store');
+    Route::delete('/issues/{issue}', [IssueController::class, 'destroy'])->name('issues.destroy');
+
+    // 보고서 코멘트
+    Route::get('/reports/{report}/comments',    [ReportCommentController::class, 'index'])->name('reports.comments.index');
+    Route::post('/reports/{report}/comments',   [ReportCommentController::class, 'store'])->name('reports.comments.store');
+    Route::put('/report-comments/{comment}',    [ReportCommentController::class, 'update'])->name('report-comments.update');
+    Route::delete('/report-comments/{comment}', [ReportCommentController::class, 'destroy'])->name('report-comments.destroy');
+
+});
+
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->name('issues.status');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {

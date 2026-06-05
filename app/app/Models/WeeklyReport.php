@@ -41,6 +41,11 @@ class WeeklyReport extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function comments()
+    {
+        return $this->hasMany(\App\Models\ReportComment::class, 'report_id');
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {

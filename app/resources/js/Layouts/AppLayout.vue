@@ -166,6 +166,17 @@
             보고서 작성
           </Link>
 
+          <Link href="/issues"
+            class="nav-item"
+            :style="isActive('/issues') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
+            <div :style="navIconStyle(isActive('/issues'))">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            요구/이슈
+          </Link>
+
           <Link href="/profile"
             class="nav-item"
             :style="isActive('/profile') ? { background:'#FFF0F0', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
@@ -311,6 +322,13 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
+      </Link>
+
+      <Link href="/issues" :class="['mob-nav-btn', { 'mob-active': isActive('/issues') }]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="isActive('/issues') ? '#1A1100' : '#9A8F7A'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>이슈</span>
       </Link>
 
       <Link href="/profile" :class="['mob-nav-btn', { 'mob-active': isActive('/profile') }]">

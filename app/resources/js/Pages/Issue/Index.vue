@@ -74,8 +74,8 @@
             <div style="min-width:0;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                 <span style="font-size:13px;font-weight:700;color:#1A1100;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ issue.title }}</span>
-                <span v-if="issue.status === 'unclear'"
-                  style="font-size:10px;font-weight:700;background:#FEF3C7;color:#B45309;border:1px solid #FCD34D;border-radius:4px;padding:1px 6px;flex-shrink:0;">재작성 필요</span>
+                <span v-if="issue.status === 'impossible'"
+                  style="font-size:10px;font-weight:700;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:4px;padding:1px 6px;flex-shrink:0;">불가</span>
               </div>
               <div style="font-size:11px;color:#9A8F7A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ issue.content }}</div>
             </div>
@@ -133,10 +133,10 @@
                   <span style="font-size:12px;font-weight:700;color:#4A3F2A;">상태 변경:</span>
                   <select v-model="issue.status" @change="changeStatus(issue)"
                     style="border:2px solid #1A1100;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
-                    <option value="pending">⏳ 대기</option>
+                    <option value="registered">📋 등록</option>
+                    <option value="impossible">🚫 불가</option>
                     <option value="processing">🔄 처리 중</option>
-                    <option value="resolved">✅ 해결됨</option>
-                    <option value="unclear">⚠️ 재작성 요청</option>
+                    <option value="completed">✅ 적용 완료</option>
                   </select>
                 </div>
                 <div v-else style="flex:1;"></div>
@@ -296,24 +296,24 @@ const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b
 const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
 
 const statusLabel = (s) => ({
-  pending:    '⏳ 대기',
+  registered: '📋 등록',
+  impossible: '🚫 불가',
   processing: '🔄 처리 중',
-  resolved:   '✅ 해결됨',
-  unclear:    '⚠️ 재작성',
+  completed:  '✅ 적용 완료',
 })[s] ?? s
 
 const statusStyle = (s) => ({
-  pending:    { background:'#F3F4F6', color:'#6B7280', borderColor:'#D1D5DB' },
+  registered: { background:'#F3F4F6', color:'#6B7280', borderColor:'#D1D5DB' },
+  impossible: { background:'#FEE2E2', color:'#DC2626', borderColor:'#FCA5A5' },
   processing: { background:'#DBEAFE', color:'#1D4ED8', borderColor:'#93C5FD' },
-  resolved:   { background:'#DCFCE7', color:'#15803D', borderColor:'#86EFAC' },
-  unclear:    { background:'#FEF3C7', color:'#B45309', borderColor:'#FCD34D' },
+  completed:  { background:'#DCFCE7', color:'#15803D', borderColor:'#86EFAC' },
 })[s] ?? { background:'#F3F4F6', color:'#6B7280', borderColor:'#D1D5DB' }
 
 const aiBoxStyle = (s) => ({
-  pending:    { background:'#F9FAFB', color:'#374151', borderColor:'#E5E7EB' },
+  registered: { background:'#F9FAFB', color:'#374151', borderColor:'#E5E7EB' },
+  impossible: { background:'#FFF5F5', color:'#991B1B', borderColor:'#FECACA' },
   processing: { background:'#EFF6FF', color:'#1E40AF', borderColor:'#BFDBFE' },
-  resolved:   { background:'#F0FDF4', color:'#166534', borderColor:'#BBF7D0' },
-  unclear:    { background:'#FFFBEB', color:'#92400E', borderColor:'#FDE68A' },
+  completed:  { background:'#F0FDF4', color:'#166534', borderColor:'#BBF7D0' },
 })[s] ?? { background:'#F9FAFB', color:'#374151', borderColor:'#E5E7EB' }
 </script>
 

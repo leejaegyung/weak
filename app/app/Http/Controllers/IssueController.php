@@ -49,7 +49,7 @@ class IssueController extends Controller
             'user_id'         => Auth::id(),
             'title'           => $data['title'],
             'content'         => $data['content'],
-            'status'          => $result['status'],
+            'status'          => 'registered',
             'claude_response' => $result['response'],
         ]);
 
@@ -69,7 +69,7 @@ class IssueController extends Controller
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
-        $request->validate(['status' => ['required', 'in:pending,processing,resolved,unclear']]);
+        $request->validate(['status' => ['required', 'in:registered,impossible,processing,completed']]);
         $issue->update(['status' => $request->status]);
 
         return back()->with('success', '상태가 변경되었습니다.');
@@ -79,15 +79,15 @@ class IssueController extends Controller
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
-        $issues = Issue::with('user')->orderByDesc('created_at')->get();
+        $issues = Issue::with('user')->where('status', 'registered')->orderByDesc('created_at')->get();
 
         $statusLabel = [
-            'pending'    => '미검토 (대기)',
-            'processing' => '접수됨 (처리 중)',
-            'resolved'   => '처리 완료',
-            'unclear'    => '불명확 (재작성 필요)',
+            'registered' => '등록',
+            'impossible' => '불가',
+            'processing' => '처리 중',
+            'completed'  => '적용 완료',
         ];
-        $statusOrder = ['processing', 'pending', 'unclear', 'resolved'];
+        $statusOrder = ['registered'];
 
         $today   = now()->format('Y-m-d');
         $total   = $issues->count();

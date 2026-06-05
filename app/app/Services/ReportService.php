@@ -36,22 +36,23 @@ class ReportService
             if ($search)  $usersQuery->where('name', 'like', "%{$search}%");
 
             return $usersQuery->orderBy('sort_order')->orderBy('name')->get()->map(fn($u) => [
-                'id'           => null,
-                'week'         => null,
-                'status'       => 'not_submitted',
-                'status_label' => '미제출',
-                'curr_start'   => null,
-                'curr_end'     => null,
-                'curr_work'    => [],
-                'next_plan'    => [],
-                'todo_items'   => [],
-                'submitted_at' => null,
-                'user_id'      => $u->id,
-                'user'         => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
+                'id'            => null,
+                'week'          => null,
+                'status'        => 'not_submitted',
+                'status_label'  => '미제출',
+                'curr_start'    => null,
+                'curr_end'      => null,
+                'curr_work'     => [],
+                'next_plan'     => [],
+                'todo_items'    => [],
+                'submitted_at'  => null,
+                'comment_count' => 0,
+                'user_id'       => $u->id,
+                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
             ])->toArray();
         }
 
-        $query = WeeklyReport::with('user')->orderBy('week', 'desc');
+        $query = WeeklyReport::with('user')->withCount('comments')->orderBy('week', 'desc');
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -71,19 +72,22 @@ class ReportService
         }
 
         $reports = $query->get()->map(fn($r) => [
-            'id'           => $r->id,
-            'week'         => $r->week,
-            'week_label'   => $r->week_label,
-            'status'       => $r->status,
-            'status_label' => $r->status_label,
-            'curr_start'   => $r->curr_start?->format('Y-m-d'),
-            'curr_end'     => $r->curr_end?->format('Y-m-d'),
-            'curr_work'    => $r->curr_work,
-            'next_plan'    => $r->next_plan,
-            'todo_items'   => $r->todo_items,
-            'submitted_at' => $r->submitted_at?->format('Y-m-d H:i'),
-            'user_id'      => $r->user_id,
-            'user'         => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position] : null,
+            'id'            => $r->id,
+            'week'          => $r->week,
+            'week_label'    => $r->week_label,
+            'status'        => $r->status,
+            'status_label'  => $r->status_label,
+            'curr_start'    => $r->curr_start?->format('Y-m-d'),
+            'curr_end'      => $r->curr_end?->format('Y-m-d'),
+            'curr_work'     => $r->curr_work,
+            'next_plan'     => $r->next_plan,
+            'todo_items'    => $r->todo_items,
+            'notes'         => $r->notes,
+            'requests'      => $r->requests,
+            'submitted_at'  => $r->submitted_at?->format('Y-m-d H:i'),
+            'comment_count' => $r->comments_count ?? 0,
+            'user_id'       => $r->user_id,
+            'user'          => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position] : null,
         ]);
 
         // 특정 주차 조회 + 상태 필터 없음 → 미제출 사용자도 포함
@@ -96,18 +100,21 @@ class ReportService
             if ($search) $usersQuery->where('name', 'like', "%{$search}%");
 
             $notSubmitted = $usersQuery->get()->map(fn($u) => [
-                'id'           => null,
-                'week'         => null,
-                'status'       => 'not_submitted',
-                'status_label' => '미제출',
-                'curr_start'   => null,
-                'curr_end'     => null,
-                'curr_work'    => [],
-                'next_plan'    => [],
-                'todo_items'   => [],
-                'submitted_at' => null,
-                'user_id'      => $u->id,
-                'user'         => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
+                'id'            => null,
+                'week'          => null,
+                'status'        => 'not_submitted',
+                'status_label'  => '미제출',
+                'curr_start'    => null,
+                'curr_end'      => null,
+                'curr_work'     => [],
+                'next_plan'     => [],
+                'todo_items'    => [],
+                'notes'         => null,
+                'requests'      => null,
+                'submitted_at'  => null,
+                'comment_count' => 0,
+                'user_id'       => $u->id,
+                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
             ]);
 
             $merged = array_merge($reports->toArray(), $notSubmitted->toArray());

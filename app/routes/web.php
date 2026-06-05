@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->name('issues.status');
+    Route::get('/issues/export/md',       [IssueController::class, 'exportMd'])->name('issues.export.md');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {

@@ -14,13 +14,25 @@
         </div>
         <p style="color:#9A8F7A;font-size:13px;margin-left:42px;">시스템 요구사항 및 이슈를 등록하고 관리합니다</p>
       </div>
-      <button @click="openWriteModal"
-        style="background:#7C3AED;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;gap:6px;transition:all 0.1s;"
-        @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
-        @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        글쓰기
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <!-- MD 내보내기 (관리자만) -->
+        <a v-if="isAdmin" href="/issues/export/md"
+          class="btn-secondary btn-sm"
+          style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;"
+          title="이슈/요구사항을 LLM 하네스용 MD 파일로 내보내기">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          요구사항.md
+        </a>
+        <button @click="openWriteModal"
+          style="background:#7C3AED;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;gap:6px;transition:all 0.1s;"
+          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          글쓰기
+        </button>
+      </div>
     </div>
 
     <!-- 게시판 테이블 -->

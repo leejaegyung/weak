@@ -6,6 +6,7 @@ use App\Models\Issue;
 use App\Services\ClaudeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,5 +73,79 @@ class IssueController extends Controller
         $issue->update(['status' => $request->status]);
 
         return back()->with('success', '상태가 변경되었습니다.');
+    }
+
+    public function exportMd(): HttpResponse
+    {
+        if (!Auth::user()->isAdmin()) abort(403);
+
+        $issues = Issue::with('user')->orderByDesc('created_at')->get();
+
+        $statusLabel = [
+            'pending'    => '미검토 (대기)',
+            'processing' => '접수됨 (처리 중)',
+            'resolved'   => '처리 완료',
+            'unclear'    => '불명확 (재작성 필요)',
+        ];
+        $statusOrder = ['processing', 'pending', 'unclear', 'resolved'];
+
+        $today   = now()->format('Y-m-d');
+        $total   = $issues->count();
+        $counts  = $issues->groupBy('status')->map->count();
+
+        $md  = "# 요구사항 및 이슈 목록\n\n";
+        $md .= "> **생성일**: {$today}  \n";
+        $md .= "> **시스템**: 주간업무보고 시스템  \n";
+        $md .= "> **용도**: LLM 하네스 엔지니어링용 요구사항 관리 문서  \n\n";
+        $md .= "---\n\n";
+
+        // 요약 테이블
+        $md .= "## 개요\n\n";
+        $md .= "| 상태 | 건수 |\n|------|------|\n";
+        foreach ($statusOrder as $s) {
+            $md .= "| " . ($statusLabel[$s] ?? $s) . " | " . ($counts[$s] ?? 0) . " |\n";
+        }
+        $md .= "| **전체** | **{$total}** |\n\n";
+        $md .= "---\n\n";
+
+        // 상태별 섹션
+        foreach ($statusOrder as $status) {
+            $group = $issues->where('status', $status)->values();
+            if ($group->isEmpty()) continue;
+
+            $md .= "## " . ($statusLabel[$status] ?? $status) . "\n\n";
+
+            foreach ($group as $issue) {
+                $num = $issue->id;
+                $md .= "### #{$num} — {$issue->title}\n\n";
+                $md .= "| 항목 | 내용 |\n|------|------|\n";
+                $md .= "| **작성자** | " . ($issue->user?->name ?? '알 수 없음') . " |\n";
+                $md .= "| **상태** | " . ($statusLabel[$issue->status] ?? $issue->status) . " |\n";
+                $md .= "| **등록일** | " . $issue->created_at->format('Y-m-d H:i') . " |\n\n";
+
+                $md .= "**요구/이슈 내용:**\n\n";
+                foreach (explode("\n", $issue->content) as $line) {
+                    $md .= "> " . rtrim($line) . "  \n";
+                }
+                $md .= "\n";
+
+                if ($issue->claude_response) {
+                    $md .= "**AI 검토 결과:**\n\n";
+                    foreach (explode("\n", $issue->claude_response) as $line) {
+                        $md .= "> " . rtrim($line) . "  \n";
+                    }
+                    $md .= "\n";
+                }
+
+                $md .= "---\n\n";
+            }
+        }
+
+        $filename = '요구사항_' . $today . '.md';
+
+        return response($md, 200, [
+            'Content-Type'        => 'text/markdown; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename*=UTF-8\'\'' . rawurlencode($filename),
+        ]);
     }
 }

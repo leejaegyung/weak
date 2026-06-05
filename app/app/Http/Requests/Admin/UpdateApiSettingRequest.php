@@ -14,7 +14,7 @@ class UpdateApiSettingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service' => ['required', 'string', 'in:anthropic'],
+            'service' => ['required', 'string', 'in:anthropic,openai,ai_provider'],
             'api_key' => ['nullable', 'string', 'max:500'],
         ];
     }

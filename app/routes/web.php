@@ -103,9 +103,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/kakao/daily-settings',[KakaoController::class, 'updateDailySettings'])->name('admin.settings.kakao.daily-settings');
 
     // 설정 — API 키 관리
-    Route::get('/settings/api',              [ApiSettingController::class, 'index'])->name('admin.settings.api');
-    Route::post('/settings/api',             [ApiSettingController::class, 'update'])->name('admin.settings.api.update');
-    Route::post('/settings/api/test',        [ApiSettingController::class, 'test'])->name('admin.settings.api.test');
+    Route::get('/settings/api',                        [ApiSettingController::class, 'index'])->name('admin.settings.api');
+    Route::post('/settings/api',                       [ApiSettingController::class, 'update'])->name('admin.settings.api.update');
+    Route::post('/settings/api/test',                  [ApiSettingController::class, 'test'])->name('admin.settings.api.test');
+    Route::post('/settings/api/custom',                [ApiSettingController::class, 'storeCustom'])->name('admin.settings.api.custom.store');
+    Route::put('/settings/api/custom/{id}',            [ApiSettingController::class, 'updateCustom'])->name('admin.settings.api.custom.update');
+    Route::delete('/settings/api/custom/{id}',         [ApiSettingController::class, 'destroyCustom'])->name('admin.settings.api.custom.destroy');
+    Route::post('/settings/api/custom/{id}/test',      [ApiSettingController::class, 'testCustom'])->name('admin.settings.api.custom.test');
 
     // 설정 — SMTP 메일
     Route::get('/settings/smtp',              [SettingController::class, 'smtp'])->name('admin.settings.smtp');

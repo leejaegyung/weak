@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Issue;
-use App\Services\ClaudeService;
+use App\Services\AiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -13,7 +13,7 @@ use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function __construct(private ClaudeService $claudeService) {}
+    public function __construct(private AiService $aiService) {}
 
     public function index(): Response
     {
@@ -43,7 +43,7 @@ class IssueController extends Controller
             'content' => ['required', 'string', 'max:2000'],
         ]);
 
-        $result = $this->claudeService->analyzeIssue($data['title'], $data['content']);
+        $result = $this->aiService->analyzeIssue($data['title'], $data['content']);
 
         Issue::create([
             'user_id'         => Auth::id(),

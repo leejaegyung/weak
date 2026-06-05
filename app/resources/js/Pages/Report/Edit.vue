@@ -376,7 +376,7 @@
                 <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;margin-top:7px;">-</span>
                 <textarea :value="sub === null || sub === undefined ? '' : (typeof sub === 'string' ? sub : (sub?.content ?? ''))"
                   @input="e => { updateTodoSub(idx, sIdx, e.target.value); e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
-                  class="input-field"
+                  class="input-field auto-resize-ta"
                   rows="1"
                   placeholder="내용"
                   style="flex:1;resize:none;overflow:hidden;min-height:28px;font-size:12px;line-height:1.5;padding-top:4px;padding-bottom:4px;color:#4A3F2A;" />

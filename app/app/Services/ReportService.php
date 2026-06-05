@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -52,7 +53,9 @@ class ReportService
             ])->toArray();
         }
 
-        $query = WeeklyReport::with('user')->withCount('comments')->orderBy('week', 'desc');
+        $hasComments = Schema::hasTable('report_comments');
+        $query = WeeklyReport::with('user')->orderBy('week', 'desc');
+        if ($hasComments) $query->withCount('comments');
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -85,7 +88,7 @@ class ReportService
             'notes'         => $r->notes,
             'requests'      => $r->requests,
             'submitted_at'  => $r->submitted_at?->format('Y-m-d H:i'),
-            'comment_count' => $r->comments_count ?? 0,
+            'comment_count' => $hasComments ? ($r->comments_count ?? 0) : 0,
             'user_id'       => $r->user_id,
             'user'          => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position] : null,
         ]);

@@ -366,7 +366,8 @@ import { ref, computed, watch } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 
 // 알림 설정 서브메뉴 — /admin/settings 경로이면 자동 열림
-const settingsOpen = ref(window.location.pathname.startsWith('/admin/settings'))
+const SETTINGS_SUBMENU_PATHS = ['/admin/settings/webhook', '/admin/settings/kakao', '/admin/settings/smtp']
+const settingsOpen = ref(SETTINGS_SUBMENU_PATHS.some(p => window.location.pathname.startsWith(p)))
 
 defineProps({ pageTitle: { type: String, default: '' } })
 

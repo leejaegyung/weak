@@ -44,11 +44,11 @@
           @mouseenter="e=>{e.currentTarget.style.borderColor='#1A1100';e.currentTarget.style.background='#F5EDDB';}"
           @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.background='#fff';}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          전주
+          이전
         </Link>
         <span v-else style="display:inline-flex;align-items:center;gap:4px;background:#FAFAF8;color:#C5BAA8;border:2px solid #E8E0D0;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:default;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          전주
+          이전
         </span>
         <!-- 금주 -->
         <Link v-if="currentReportId && currentReportId !== report.id" :href="`/reports/${currentReportId}`"
@@ -66,11 +66,11 @@
           style="display:inline-flex;align-items:center;gap:4px;background:#fff;color:#4A3F2A;border:2px solid #D0C9BC;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.12s;"
           @mouseenter="e=>{e.currentTarget.style.borderColor='#1A1100';e.currentTarget.style.background='#F5EDDB';}"
           @mouseleave="e=>{e.currentTarget.style.borderColor='#D0C9BC';e.currentTarget.style.background='#fff';}">
-          다음주
+          다음
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </Link>
         <span v-else style="display:inline-flex;align-items:center;gap:4px;background:#FAFAF8;color:#C5BAA8;border:2px solid #E8E0D0;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:default;">
-          다음주
+          다음
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </span>
       </div>

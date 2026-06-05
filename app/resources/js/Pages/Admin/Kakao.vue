@@ -193,8 +193,8 @@
           </button>
         </div>
 
-        <!-- 발송 시간 -->
-        <div v-if="dailyEnabled" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <!-- 발송 시간 (항상 표시) -->
+        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <div>
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">발송 시간</label>
             <input type="time" v-model="dailyTime" @change="saveDailySettings"

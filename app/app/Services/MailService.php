@@ -30,14 +30,18 @@ class MailService
         Config::set('mail.from.address',            $fromAddr ?: 'noreply@example.com');
         Config::set('mail.from.name',               $fromName);
 
-        // OpenSSL 3.x + 구형 SMTP 서버(legacy renegotiation) 호환성 옵션
+        // OpenSSL 3.x + cafe24 SMTP 호환: TLS 1.3 미지원 서버를 위해 TLS 1.2 강제
         Config::set('mail.mailers.smtp.stream', [
             'ssl' => [
+                'crypto_method'     => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
                 'allow_self_signed' => true,
                 'verify_peer'       => false,
                 'verify_peer_name'  => false,
             ],
         ]);
+
+        // 설정 변경 후 transport 재생성 강제
+        Mail::purge('smtp');
 
         // 비밀번호는 로그에 남기지 않음 (전체 mail 설정 dump는 유출 위험)
         Log::info('SMTP configured from settings', [

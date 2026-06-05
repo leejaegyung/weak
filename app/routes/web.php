@@ -73,6 +73,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/settings/webhook',               [SettingController::class, 'webhook'])->name('admin.settings.webhook');
     Route::post('/settings/webhook',              [SettingController::class, 'updateWebhook'])->name('admin.settings.webhook.update');
     Route::post('/settings/webhook/test',         [SettingController::class, 'testWebhook'])->name('admin.settings.webhook.test');
+    Route::post('/settings/webhook/send-daily',   [SettingController::class, 'sendDailyNow'])->name('admin.settings.webhook.send-daily');
     Route::post('/settings/notify-not-submitted', [SettingController::class, 'sendNotSubmittedAlert'])->name('admin.settings.notify-not-submitted');
 
     // 설정 — 카카오 연동

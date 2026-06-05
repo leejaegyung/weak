@@ -57,6 +57,14 @@ class SettingController extends Controller
         return back()->with('success', 'Webhook 설정이 저장되었습니다.');
     }
 
+    /** 오늘 팀 일정 수동 즉시 발송 (테스트용) */
+    public function sendDailyNow(): JsonResponse
+    {
+        $date = Carbon::now()->timezone('Asia/Seoul')->toDateString();
+        $ok   = app(WebhookService::class)->sendDailySchedule($date);
+        return response()->json(['ok' => $ok, 'date' => $date]);
+    }
+
     /** Webhook 테스트 전송 */
     public function testWebhook(Request $request): JsonResponse
     {

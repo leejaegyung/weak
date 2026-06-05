@@ -149,6 +149,29 @@
         </button>
       </form>
 
+      <!-- 오늘 팀 일정 수동 즉시 발송 카드 -->
+      <div class="card" style="background:#EFF6FF;border-color:#3B82F6;">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/></svg>
+          오늘 팀 일정 지금 즉시 발송
+        </div>
+        <p style="font-size:12px;color:#6B7280;margin-bottom:14px;">
+          자동 발송이 동작하는지 확인하거나, 오늘 일정을 즉시 발송할 때 사용합니다.<br>
+          <strong style="color:#1E40AF;">⚠ 자동 발송이 안 된다면 서버 크론잡을 확인하세요.</strong>
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button @click="sendDailyNow" :disabled="dailySending"
+            style="background:#2563EB;color:#fff;border:2px solid #1A1100;border-radius:12px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            {{ dailySending ? '발송 중...' : '오늘 일정 지금 발송' }}
+          </button>
+          <p v-if="dailyResult" style="font-size:12px;font-weight:600;margin:0;"
+            :style="{ color: dailyOk ? '#16A34A' : '#DC2626' }">
+            {{ dailyResult }}
+          </p>
+        </div>
+      </div>
+
       <!-- 미제출 알림 수동 발송 카드 -->
       <div class="card">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
@@ -222,6 +245,28 @@ const toMonday = (dateStr) => {
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   return d.toISOString().slice(0, 10)
+}
+
+// ── 오늘 일정 즉시 발송 ──
+const dailySending = ref(false)
+const dailyResult  = ref('')
+const dailyOk      = ref(false)
+
+const sendDailyNow = async () => {
+  dailySending.value = true
+  dailyResult.value  = ''
+  try {
+    const res = await window.axios.post('/admin/settings/webhook/send-daily')
+    dailyOk.value     = res.data.ok
+    dailyResult.value = res.data.ok
+      ? `✓ ${res.data.date} 일정 발송 완료`
+      : `✗ 발송 실패 — 오늘(${res.data.date}) 등록된 일정이 없거나 Webhook이 비활성화 상태입니다`
+  } catch (e) {
+    dailyOk.value     = false
+    dailyResult.value = '✗ 오류가 발생했습니다: ' + (e.response?.data?.message ?? e.message)
+  } finally {
+    dailySending.value = false
+  }
 }
 
 // ── 미제출 알림 발송 ──

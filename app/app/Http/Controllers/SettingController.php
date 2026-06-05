@@ -95,6 +95,7 @@ class SettingController extends Controller
             ->pluck('user_id');
 
         $notSubmittedUsers = User::where('is_active', true)
+            ->where('is_hidden', false)  // 숨김 계정 제외
             ->whereNotIn('id', $submittedUserIds)
             ->orderBy('sort_order')
             ->orderBy('name')

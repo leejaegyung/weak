@@ -195,7 +195,8 @@ class KakaoService
 
     /**
      * 카카오 연동된 전체 팀원의 채널 UUID 일괄 동기화
-     * @return array ['synced' => n, 'not_subscribed' => n, 'failed' => n]
+     * 사용자 access_token으로 채널 조회 → 실패 시 어드민 키 방식 폴백
+     * @return array ['synced' => n, 'not_subscribed' => n, 'failed' => n, 'debug' => [...]]
      */
     public function syncAllChannelUuids(): array
     {
@@ -213,29 +214,46 @@ class KakaoService
         $synced        = 0;
         $notSubscribed = 0;
         $failed        = 0;
+        $debugLog      = [];
 
         foreach ($users as $user) {
             $kakaoId = User::where('id', $user->id)->value('kakao_id');
+            $token   = User::where('id', $user->id)->value('kakao_access_token');
+
             if (empty($kakaoId)) { $failed++; continue; }
 
-            $uuid = $this->getChannelUuidByKakaoId($kakaoId, $channelPublicId);
+            $uuid   = null;
+            $method = '';
+
+            // 1차: 사용자 access_token으로 채널 정보 조회
+            if (!empty($token)) {
+                $uuid   = $this->getUserChannelUuid($token, $channelPublicId);
+                $method = 'user_token';
+            }
+
+            // 2차: 어드민 키로 조회 시도 (1차 실패 시)
+            if (!$uuid) {
+                $uuid   = $this->getChannelUuidByKakaoId($kakaoId, $channelPublicId);
+                $method = 'admin_key';
+            }
+
+            $debugLog[] = ['kakao_id' => $kakaoId, 'uuid' => $uuid ? substr($uuid, 0, 8).'...' : null, 'method' => $method];
 
             if ($uuid) {
                 $user->updateQuietly(['kakao_channel_uuid' => $uuid]);
                 $synced++;
             } else {
-                // 채널 미구독이거나 API 오류 — UUID 초기화
                 $user->updateQuietly(['kakao_channel_uuid' => null]);
                 $notSubscribed++;
             }
         }
 
-        Log::info("[카카오 채널 동기화] 완료 — 채널구독:{$synced}, 미구독:{$notSubscribed}, 실패:{$failed}");
+        Log::info("[카카오 채널 동기화] 완료", ['synced' => $synced, 'not_subscribed' => $notSubscribed, 'failed' => $failed, 'debug' => $debugLog]);
         return ['synced' => $synced, 'not_subscribed' => $notSubscribed, 'failed' => $failed];
     }
 
     /**
-     * 사용자 OAuth 토큰으로 채널 UUID 조회 (talk_channel scope 필요 — 현재 미사용)
+     * 사용자 OAuth 토큰으로 채널 UUID 조회
      */
     public function getUserChannelUuid(string $accessToken, string $channelPublicId): ?string
     {
@@ -243,6 +261,12 @@ class KakaoService
             $response = $this->http()
                 ->withToken($accessToken)
                 ->get(self::USER_CHANNELS_URL);
+
+            Log::debug('[카카오] 사용자 토큰 채널 조회', [
+                'status'     => $response->status(),
+                'channel_id' => $channelPublicId,
+                'body'       => $response->body(),
+            ]);
 
             if ($response->successful()) {
                 foreach ($response->json('channels', []) as $channel) {

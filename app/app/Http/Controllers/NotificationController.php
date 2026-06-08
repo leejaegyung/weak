@@ -32,6 +32,12 @@ class NotificationController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /** 미읽음 카운트만 반환 (폴링용 경량 엔드포인트) */
+    public function count(): JsonResponse
+    {
+        return response()->json(['count' => $this->notificationService->unreadCount(Auth::id())]);
+    }
+
     /** 단일 알림 삭제 */
     public function destroy(int $id): JsonResponse
     {

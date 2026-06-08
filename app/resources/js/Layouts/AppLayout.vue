@@ -363,7 +363,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 
 // 알림 설정 서브메뉴 — /admin/settings 경로이면 자동 열림
@@ -391,6 +391,17 @@ const notifications     = ref([])
 // 로컬 미읽음 카운트 (page.props.unreadCount 기반, 즉시 UI 반영용)
 const localUnreadCount = ref(unreadCount.value)
 watch(unreadCount, v => { localUnreadCount.value = v })
+
+// 30초마다 미읽음 카운트 폴링 (AJAX 알림 실시간 반영)
+let pollTimer = null
+const pollUnreadCount = async () => {
+  try {
+    const res = await window.axios.get('/notifications/count')
+    localUnreadCount.value = res.data.count
+  } catch { /* 무시 */ }
+}
+onMounted(() => { pollTimer = setInterval(pollUnreadCount, 30000) })
+onUnmounted(() => { clearInterval(pollTimer) })
 
 const toggleNotifications = async () => {
   showNotifications.value = !showNotifications.value

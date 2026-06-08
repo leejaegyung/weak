@@ -400,7 +400,7 @@ const pollUnreadCount = async () => {
     localUnreadCount.value = res.data.count
   } catch { /* 무시 */ }
 }
-onMounted(() => { pollTimer = setInterval(pollUnreadCount, 30000) })
+onMounted(() => { pollUnreadCount(); pollTimer = setInterval(pollUnreadCount, 30000) })
 onUnmounted(() => { clearInterval(pollTimer) })
 
 const toggleNotifications = async () => {
@@ -418,6 +418,8 @@ const loadNotifications = async () => {
   try {
     const res = await window.axios.get('/notifications')
     notifications.value = res.data
+    // 목록 로드 시 미읽음 카운트 동기화 (페이지 이동 없이도 배지 반영)
+    localUnreadCount.value = res.data.filter(n => !n.is_read).length
   } catch (e) { console.error(e) }
   finally { notifLoading.value = false }
 }

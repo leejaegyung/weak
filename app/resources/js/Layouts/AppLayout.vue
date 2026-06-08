@@ -65,11 +65,12 @@
                       <!-- 타입 아이콘 -->
                       <div :style="{
                         width:'28px',height:'28px',borderRadius:'8px',flexShrink:0,
-                        background: n.type==='rejected' ? '#FEE2E2' : '#DBEAFE',
+                        background: n.type==='rejected' ? '#FEE2E2' : n.type==='comment' ? '#EDE9FE' : '#DBEAFE',
                         border:'1.5px solid #1A1100',
                         display:'flex',alignItems:'center',justifyContent:'center',
                       }">
                         <svg v-if="n.type==='rejected'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        <svg v-else-if="n.type==='comment'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                       </div>
                       <!-- 본문 (링크 있으면 클릭 가능) -->

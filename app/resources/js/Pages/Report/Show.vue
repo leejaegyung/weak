@@ -581,10 +581,10 @@
               </div>
             </div>
 
-            <!-- 입력 영역 (관리자만) -->
-            <div v-if="isAdmin" style="padding:14px 20px;border-top:2px solid #E8E0D0;flex-shrink:0;background:#fff;">
+            <!-- 입력 영역 (관리자 또는 보고서 소유자) -->
+            <div v-if="isAdmin || isOwn" style="padding:14px 20px;border-top:2px solid #E8E0D0;flex-shrink:0;background:#fff;">
               <div style="display:flex;gap:8px;align-items:flex-end;">
-                <textarea v-model="newComment" rows="3" placeholder="코멘트를 입력하세요..."
+                <textarea v-model="newComment" rows="3" :placeholder="isAdmin ? '코멘트를 입력하세요...' : '답변을 입력하세요...'"
                   style="flex:1;border:2px solid #1A1100;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;resize:none;transition:border-color 0.12s;"
                   @focus="e=>e.target.style.borderColor='#7C3AED'"
                   @blur="e=>e.target.style.borderColor='#1A1100'"

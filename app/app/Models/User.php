@@ -26,6 +26,7 @@ class User extends Authenticatable
         'kakao_id',
         'kakao_access_token',
         'kakao_refresh_token',
+        'kakao_channel_uuid',
         'last_login_at',
     ];
 
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'remember_token',
         'kakao_access_token',
         'kakao_refresh_token',
+        'kakao_channel_uuid',
     ];
 
     protected function casts(): array

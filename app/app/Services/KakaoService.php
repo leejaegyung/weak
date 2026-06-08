@@ -11,10 +11,12 @@ use Carbon\Carbon;
 
 class KakaoService
 {
-    const AUTH_URL    = 'https://kauth.kakao.com/oauth/authorize';
-    const TOKEN_URL   = 'https://kauth.kakao.com/oauth/token';
-    const MESSAGE_URL = 'https://kapi.kakao.com/v2/api/talk/memo/default/send';
-    const PROFILE_URL = 'https://kapi.kakao.com/v2/user/me';
+    const AUTH_URL             = 'https://kauth.kakao.com/oauth/authorize';
+    const TOKEN_URL            = 'https://kauth.kakao.com/oauth/token';
+    const MESSAGE_URL          = 'https://kapi.kakao.com/v2/api/talk/memo/default/send';
+    const PROFILE_URL          = 'https://kapi.kakao.com/v2/user/me';
+    const CHANNEL_MESSAGE_URL  = 'https://kapi.kakao.com/v1/api/talk/channels/message/send';
+    const USER_CHANNELS_URL    = 'https://kapi.kakao.com/v1/api/talk/channels';
 
     // ─── 앱 설정 (REST API 키) ────────────────────────────────────
 
@@ -25,7 +27,7 @@ class KakaoService
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
-            'scope'         => 'profile_nickname,talk_message',
+            'scope'         => 'profile_nickname,talk_message,talk_channel',
         ];
         // 회원가입 시 이전 카카오 세션 자동 사용 방지
         if ($reauthenticate) {
@@ -87,14 +89,18 @@ class KakaoService
     // ─── 사용자별 메시지 발송 ─────────────────────────────────────
 
     /**
-     * 특정 팀원에게 카카오 메시지 발송 (나에게 보내기 — 해당 사용자의 토큰 사용)
-     * 토큰 만료(401) 시 자동 갱신 후 재시도
+     * 특정 팀원에게 카카오 메시지 발송
+     * 채널 UUID가 있으면 채널 메시지 API 우선 사용, 없으면 나에게 보내기 폴백
      */
     public function sendToUser(User $user, string $text): bool
     {
-        if (empty($user->kakao_access_token)) return false;
+        // 채널 UUID 있으면 채널 메시지 API 사용
+        $channelUuid = User::where('id', $user->id)->value('kakao_channel_uuid');
+        if (!empty($channelUuid)) {
+            return $this->sendToUserViaChannel($channelUuid, $text);
+        }
 
-        // $hidden 필드는 직접 쿼리로 가져와야 함
+        // 나에게 보내기 폴백
         $token = User::where('id', $user->id)->value('kakao_access_token');
         if (empty($token)) return false;
 
@@ -108,6 +114,67 @@ class KakaoService
         }
 
         return $status === 200;
+    }
+
+    /**
+     * 채널 메시지 API로 특정 사용자에게 발송 (앱 어드민 키 + 채널 UUID 사용)
+     */
+    public function sendToUserViaChannel(string $channelUuid, string $text): bool
+    {
+        $adminKey = Setting::get('kakao_app_admin_key', '');
+        if (empty($adminKey)) return false;
+
+        try {
+            $templateObject = json_encode([
+                'object_type' => 'text',
+                'text'        => mb_substr($text, 0, 200),
+                'link'        => [
+                    'web_url'        => config('app.url'),
+                    'mobile_web_url' => config('app.url'),
+                ],
+            ], JSON_UNESCAPED_UNICODE);
+
+            $response = $this->http()
+                ->withHeaders(['Authorization' => 'KakaoAK ' . $adminKey])
+                ->asForm()
+                ->post(self::CHANNEL_MESSAGE_URL, [
+                    'receiver_uuids'  => json_encode([$channelUuid]),
+                    'template_object' => $templateObject,
+                ]);
+
+            if (!$response->successful()) {
+                Log::warning('[카카오 채널] 발송 실패', ['status' => $response->status(), 'body' => $response->body()]);
+            }
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::error('카카오 채널 메시지 발송 예외: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 사용자 OAuth 토큰으로 채널 UUID 조회
+     * 사용자가 해당 채널을 친구 추가한 경우 UUID 반환, 아니면 null
+     */
+    public function getUserChannelUuid(string $accessToken, string $channelPublicId): ?string
+    {
+        try {
+            $response = $this->http()
+                ->withToken($accessToken)
+                ->get(self::USER_CHANNELS_URL);
+
+            if ($response->successful()) {
+                foreach ($response->json('channels', []) as $channel) {
+                    if (($channel['channel_public_id'] ?? '') === $channelPublicId) {
+                        return $channel['channel_uuid'] ?? null;
+                    }
+                }
+            }
+            Log::debug('[카카오] 채널 UUID 조회', ['status' => $response->status(), 'channel_id' => $channelPublicId]);
+        } catch (\Throwable $e) {
+            Log::error('카카오 채널 UUID 조회 예외: ' . $e->getMessage());
+        }
+        return null;
     }
 
     /** 사용자 Access Token 갱신 */
@@ -154,9 +221,9 @@ class KakaoService
         $message = app(WebhookService::class)->buildDailyMessage($date);
         if (!$message) return ['sent' => 0, 'failed' => 0];
 
-        // 카카오 연동된 활성 팀원 조회
+        // 카카오 연동된 활성 팀원 조회 (채널 UUID 또는 나에게 보내기 토큰)
         $users = User::where('is_active', true)
-            ->whereNotNull('kakao_access_token')
+            ->where(fn($q) => $q->whereNotNull('kakao_access_token')->orWhereNotNull('kakao_channel_uuid'))
             ->get();
 
         $sent   = 0;
@@ -183,6 +250,7 @@ class KakaoService
             'kakao_id'            => null,
             'kakao_access_token'  => null,
             'kakao_refresh_token' => null,
+            'kakao_channel_uuid'  => null,
         ]);
     }
 

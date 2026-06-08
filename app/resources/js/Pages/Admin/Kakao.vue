@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <!-- REST API 키 -->
+      <!-- REST API 키 + 채널 설정 -->
       <form @submit.prevent="saveKey" class="card">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
@@ -56,7 +56,7 @@
           <div>
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">카카오 REST API 키 <span style="color:#FD4401;">*</span></label>
             <input v-model="keyForm.rest_api_key" type="text" class="input-field"
-              placeholder="카카오 개발자 콘솔 → 플랫폼 키 → REST API 키"
+              placeholder="카카오 개발자 콘솔 → 앱 키 → REST API 키"
               style="width:100%;font-family:monospace;" />
           </div>
           <div>
@@ -68,6 +68,39 @@
               placeholder="클라이언트 시크릿 비활성화 시 비워두세요"
               style="width:100%;font-family:monospace;" />
           </div>
+
+          <!-- ── 채널 메시지 API 설정 ── -->
+          <div style="border-top:1.5px solid #E8E0D0;padding-top:14px;margin-top:4px;">
+            <div style="font-size:12px;font-weight:700;color:#1A1100;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 512 512" fill="#1A1100"><path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/></svg>
+              채널 메시지 API <span style="font-size:10px;font-weight:500;color:#9A8F7A;margin-left:4px;">(나에게 보내기 대신 채널로 발송)</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">
+                  채널 공개 ID
+                  <span style="font-weight:400;color:#C5BAA8;">(예: _xABCDE — 카카오 채널 관리자센터 → 채널 공개 ID)</span>
+                </label>
+                <input v-model="keyForm.channel_public_id" type="text" class="input-field"
+                  placeholder="_xABCDE (미설정 시 나에게 보내기 방식 사용)"
+                  style="width:100%;font-family:monospace;" />
+              </div>
+              <div>
+                <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;">
+                  앱 어드민 키
+                  <span style="font-weight:400;color:#C5BAA8;">(카카오 개발자 콘솔 → 앱 키 → Admin 키)</span>
+                </label>
+                <input v-model="keyForm.app_admin_key" type="password" class="input-field"
+                  placeholder="채널 메시지 발송 시 필요 — 미설정 시 나에게 보내기 방식 사용"
+                  style="width:100%;font-family:monospace;" />
+              </div>
+            </div>
+            <div style="margin-top:10px;padding:10px 14px;background:#FFF8EE;border-radius:10px;border:1.5px solid #E8E0D0;font-size:11px;color:#6B4F1A;line-height:1.7;">
+              💡 채널 설정 시 팀원이 카카오 계정 연결 또는 로그인할 때 채널 친구 여부를 자동 감지합니다.<br>
+              채널을 친구 추가한 팀원에게는 채널 메시지로, 미추가 팀원은 나에게 보내기로 폴백 발송합니다.
+            </div>
+          </div>
+
           <div style="display:flex;justify-content:flex-end;">
             <button type="submit" :disabled="keyForm.processing" class="btn-primary" style="white-space:nowrap;">
               {{ keyForm.processing ? '저장 중...' : '저장' }}
@@ -109,14 +142,21 @@
                   <div style="font-size:13px;font-weight:700;color:#1A1100;">{{ user.name }}</div>
                   <div v-if="user.position" style="font-size:11px;color:#9A8F7A;">{{ user.position }}</div>
                 </div>
-                <div v-if="user.connected"
-                  style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#16A34A;border:1.5px solid #86EFAC;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                  연동됨
-                </div>
-                <div v-else
-                  style="display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
-                  미연동
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                  <div v-if="user.connected"
+                    style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#16A34A;border:1.5px solid #86EFAC;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    카카오 연동
+                  </div>
+                  <div v-else
+                    style="display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;">
+                    미연동
+                  </div>
+                  <div v-if="user.channel_uuid"
+                    style="display:inline-flex;align-items:center;gap:4px;background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">
+                    <svg width="9" height="9" viewBox="0 0 512 512" fill="currentColor"><path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/></svg>
+                    채널 구독
+                  </div>
                 </div>
               </div>
 
@@ -227,49 +267,63 @@ import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  rest_api_key:        { type: String,  default: '' },
-  client_secret:       { type: String,  default: '' },
-  redirect_uri:        { type: String,  default: '' },
-  users:               { type: Array,   default: () => [] },
-  kakao_daily_enabled: { type: Boolean, default: false },
-  kakao_daily_time:    { type: String,  default: '09:00' },
+  rest_api_key:             { type: String,  default: '' },
+  client_secret:            { type: String,  default: '' },
+  redirect_uri:             { type: String,  default: '' },
+  users:                    { type: Array,   default: () => [] },
+  kakao_daily_enabled:      { type: Boolean, default: false },
+  kakao_daily_time:         { type: String,  default: '09:00' },
+  kakao_channel_public_id:  { type: String,  default: '' },
+  kakao_app_admin_key:      { type: String,  default: '' },
 })
 
 const redirectUri    = ref(props.redirect_uri)
 const connectedCount = computed(() => props.users.filter(u => u.connected).length)
 const teamOpen       = ref(true)
 
+const channelConfigured = computed(() => !!props.kakao_channel_public_id && !!props.kakao_app_admin_key)
+
 // 순서도 단계
-const steps = [
+const steps = computed(() => [
   {
-    title: '카카오 개발자 앱 생성 및 REST API 키 발급',
-    desc:  '<a href="https://developers.kakao.com" target="_blank" style="color:#1D4ED8;font-weight:700;">developers.kakao.com</a> → 내 애플리케이션 → 앱 추가 → <strong>앱 키 탭에서 REST API 키 복사</strong>',
+    title: '카카오 개발자 앱 생성 및 키 발급',
+    desc:  '<a href="https://developers.kakao.com" target="_blank" style="color:#1D4ED8;font-weight:700;">developers.kakao.com</a> → 내 애플리케이션 → 앱 추가 → <strong>앱 키 탭에서 REST API 키·Admin 키 복사</strong>',
     done:  !!props.rest_api_key,
   },
   {
     title: '리다이렉트 URI 및 동의항목 설정',
-    desc:  '앱 설정 → <strong>카카오 로그인 활성화 ON</strong> → Redirect URI에 아래 주소 등록<br>앱 설정 → <strong>동의항목 → 카카오톡 메시지 전송(talk_message) 선택 동의</strong>',
+    desc:  '앱 설정 → <strong>카카오 로그인 활성화 ON</strong> → Redirect URI에 아래 주소 등록<br>동의항목 → <strong>카카오톡 메시지 전송(talk_message) · 카카오톡 채널 관계 조회(talk_channel) 선택 동의</strong>',
     done:  false,
   },
   {
-    title: '관리자 페이지에 REST API 키 저장',
-    desc:  '아래 입력란에 REST API 키 붙여넣기 후 저장',
+    title: '관리자 페이지에 키 저장',
+    desc:  '아래 앱 설정에 REST API 키·Admin 키 입력 후 저장<br><strong>채널 메시지 발송 시</strong>: 카카오 채널 관리자센터에서 채널 공개 ID도 함께 입력',
     done:  !!props.rest_api_key,
   },
   {
-    title: '팀원 개인설정에서 카카오 연결',
+    title: '(채널 사용 시) 팀원 채널 친구 추가',
+    desc:  '팀원이 카카오톡에서 채널을 친구 추가 후 <strong>개인설정 → 카카오 계정 연결하기</strong> 클릭 → 채널 구독이 자동 감지됨<br>채널 미사용 시 이 단계 생략 (나에게 보내기로 발송)',
+    done:  props.users.some(u => u.channel_uuid),
+  },
+  {
+    title: '팀원 카카오 계정 연결',
     desc:  '각 팀원이 로그인 후 <strong>개인설정 → 카카오 계정 연결하기</strong> 클릭 → 카카오 로그인 완료',
     done:  props.users.some(u => u.connected),
   },
   {
     title: '미제출 알림 발송!',
-    desc:  '아래 발송 버튼 클릭 → 카카오 연동된 팀원에게 각자의 카카오톡으로 직접 알림 발송',
+    desc:  '아래 발송 버튼 클릭 → 채널 구독 팀원은 채널 메시지로, 미구독 팀원은 나에게 보내기로 발송',
     done:  false,
   },
-]
+])
 
-// REST API 키 저장
-const keyForm = useForm({ rest_api_key: props.rest_api_key, client_secret: props.client_secret })
+// REST API 키 + 채널 설정 저장
+const keyForm = useForm({
+  rest_api_key:       props.rest_api_key,
+  client_secret:      props.client_secret,
+  channel_public_id:  props.kakao_channel_public_id,
+  app_admin_key:      props.kakao_app_admin_key,
+})
 const saveKey = () => keyForm.post('/admin/settings/kakao')
 
 // 날짜 → 해당 주 월요일로 보정

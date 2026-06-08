@@ -23,30 +23,35 @@ class KakaoController extends Controller
         $users = User::where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'position', 'kakao_id'])
+            ->get(['id', 'name', 'position', 'kakao_id', 'kakao_channel_uuid'])
             ->map(fn($u) => [
-                'id'        => $u->id,
-                'name'      => $u->name,
-                'position'  => $u->position,
-                'connected' => !empty($u->kakao_id),
+                'id'           => $u->id,
+                'name'         => $u->name,
+                'position'     => $u->position,
+                'connected'    => !empty($u->getRawOriginal('kakao_id')),
+                'channel_uuid' => !empty($u->getRawOriginal('kakao_channel_uuid')),
             ]);
 
         return Inertia::render('Admin/Kakao', [
-            'rest_api_key'        => Setting::get('kakao_rest_api_key', ''),
-            'client_secret'       => Setting::get('kakao_client_secret', ''),
-            'redirect_uri'        => route('auth.kakao.callback'),
-            'users'               => $users,
-            'kakao_daily_enabled' => Setting::get('kakao_daily_enabled', '0') === '1',
-            'kakao_daily_time'    => Setting::get('kakao_daily_time', '09:00'),
+            'rest_api_key'            => Setting::get('kakao_rest_api_key', ''),
+            'client_secret'           => Setting::get('kakao_client_secret', ''),
+            'redirect_uri'            => route('auth.kakao.callback'),
+            'users'                   => $users,
+            'kakao_daily_enabled'     => Setting::get('kakao_daily_enabled', '0') === '1',
+            'kakao_daily_time'        => Setting::get('kakao_daily_time', '09:00'),
+            'kakao_channel_public_id' => Setting::get('kakao_channel_public_id', ''),
+            'kakao_app_admin_key'     => Setting::get('kakao_app_admin_key', ''),
         ]);
     }
 
-    /** REST API 키 + 클라이언트 시크릿 저장 */
+    /** REST API 키 + 클라이언트 시크릿 + 채널 설정 저장 */
     public function update(Request $request): RedirectResponse
     {
         $request->validate(['rest_api_key' => ['required', 'string', 'max:255']]);
         Setting::set('kakao_rest_api_key', trim($request->input('rest_api_key')));
         Setting::set('kakao_client_secret', trim($request->input('client_secret', '')));
+        Setting::set('kakao_channel_public_id', trim($request->input('channel_public_id', '')));
+        Setting::set('kakao_app_admin_key', trim($request->input('app_admin_key', '')));
         return back()->with('success', '설정이 저장되었습니다.');
     }
 

@@ -70,6 +70,13 @@ class KakaoAuthController extends Controller
         $profile = $this->kakao->getUserProfile($tokenData['access_token']);
         $kakaoId = $profile ? (string) ($profile['id'] ?? '') : '';
 
+        // 채널 UUID 조회 (채널 공개 ID 설정 시 자동 수집)
+        $channelUuid     = null;
+        $channelPublicId = Setting::get('kakao_channel_public_id', '');
+        if (!empty($channelPublicId)) {
+            $channelUuid = $this->kakao->getUserChannelUuid($tokenData['access_token'], $channelPublicId);
+        }
+
         // ── 카카오 연결 (기존 계정에 연동) ──────────────────────────
         if ($intent === 'connect') {
             $userId = session()->pull('kakao_connect_user_id');
@@ -88,9 +95,13 @@ class KakaoAuthController extends Controller
                 'kakao_id'            => $kakaoId ?: null,
                 'kakao_access_token'  => $tokenData['access_token'],
                 'kakao_refresh_token' => $tokenData['refresh_token'] ?? '',
+                'kakao_channel_uuid'  => $channelUuid,
             ]);
 
-            return redirect('/profile')->with('success', '✅ 카카오 계정이 연결되었습니다! 이제 카카오로 로그인할 수 있습니다.');
+            $msg = $channelUuid
+                ? '✅ 카카오 계정이 연결되었습니다! 채널 알림도 수신됩니다.'
+                : '✅ 카카오 계정이 연결되었습니다! 이제 카카오로 로그인할 수 있습니다.';
+            return redirect('/profile')->with('success', $msg);
         }
 
         // ── 카카오 로그인 ────────────────────────────────────────────
@@ -119,6 +130,7 @@ class KakaoAuthController extends Controller
                 'kakao_id'            => $kakaoId,
                 'kakao_access_token'  => $tokenData['access_token'],
                 'kakao_refresh_token' => $tokenData['refresh_token'] ?? '',
+                'kakao_channel_uuid'  => $channelUuid,
             ]);
 
             return redirect('/login')->with('success',
@@ -138,10 +150,11 @@ class KakaoAuthController extends Controller
             return redirect('/login')->with('error', '가입이 거절된 계정입니다. 관리자에게 문의하세요.');
         }
 
-        // 토큰 갱신 저장
+        // 토큰 및 채널 UUID 갱신 저장
         $user->updateQuietly([
             'kakao_access_token'  => $tokenData['access_token'],
             'kakao_refresh_token' => $tokenData['refresh_token'] ?? $user->getRawOriginal('kakao_refresh_token'),
+            'kakao_channel_uuid'  => $channelUuid ?? $user->getRawOriginal('kakao_channel_uuid'),
             'last_login_at'       => now(),
         ]);
 

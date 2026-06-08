@@ -42,7 +42,7 @@ class ReportCommentController extends Controller
 
         $data = $request->validate([
             'section' => ['nullable', 'string', 'max:50'],
-            'content' => ['required', 'string', 'max:1000'],
+            'content' => ['required', 'string', 'max:10000'],
         ]);
 
         $comment = ReportComment::create([
@@ -100,7 +100,7 @@ class ReportCommentController extends Controller
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
-        $data = $request->validate(['content' => ['required', 'string', 'max:1000']]);
+        $data = $request->validate(['content' => ['required', 'string', 'max:10000']]);
         $comment->update($data);
 
         return response()->json(['content' => $comment->content]);

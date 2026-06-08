@@ -98,7 +98,8 @@ class ReportCommentController extends Controller
 
     public function update(Request $request, ReportComment $comment): JsonResponse
     {
-        if (!Auth::user()->isAdmin()) abort(403);
+        $user = Auth::user();
+        if (!$user->isAdmin() && $comment->user_id !== $user->id) abort(403);
 
         $data = $request->validate(['content' => ['required', 'string', 'max:10000']]);
         $comment->update($data);
@@ -108,7 +109,9 @@ class ReportCommentController extends Controller
 
     public function destroy(ReportComment $comment): JsonResponse
     {
-        if (!Auth::user()->isAdmin()) abort(403);
+        $user = Auth::user();
+        if (!$user->isAdmin() && $comment->user_id !== $user->id) abort(403);
+
         $comment->delete();
         return response()->json(['ok' => true]);
     }

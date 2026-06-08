@@ -546,7 +546,7 @@
                       <span :style="sectionBadgeStyle(c.section)" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;border:1.5px solid;white-space:nowrap;">{{ sectionLabel(c.section) }}</span>
                       <span style="font-size:11px;color:#9A8F7A;">{{ c.user_name }} · {{ c.created_at }}</span>
                     </div>
-                    <div v-if="isAdmin" style="display:flex;gap:4px;flex-shrink:0;">
+                    <div v-if="isAdmin || c.user_id === page.props.auth?.user?.id" style="display:flex;gap:4px;flex-shrink:0;">
                       <button @click="startEdit(c)"
                         style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:4px;border-radius:5px;display:flex;align-items:center;"
                         @mouseenter="e=>e.currentTarget.style.color='#7C3AED'"
@@ -561,7 +561,7 @@
                       </button>
                     </div>
                   </div>
-                  <div v-if="isAdmin && editingId === c.id">
+                  <div v-if="editingId === c.id">
                     <textarea v-model="editingText" rows="3"
                       style="width:100%;border:2px solid #7C3AED;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
                     <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">

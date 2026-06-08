@@ -110,6 +110,72 @@ class KakaoController extends Controller
         return response()->json(['ok' => $ok, 'message' => $msg, 'date' => $date]);
     }
 
+    /** 채널 API 진단 — 실제 카카오 API 응답 반환 */
+    public function debugChannel(): JsonResponse
+    {
+        $channelPublicId = Setting::get('kakao_channel_public_id', '');
+        $adminKey        = Setting::get('kakao_app_admin_key', '');
+
+        // 현재 로그인 유저의 raw 토큰
+        $me    = auth()->user();
+        $token = $me ? \App\Models\User::where('id', $me->id)->value('kakao_access_token') : null;
+        $kakaoId = $me ? \App\Models\User::where('id', $me->id)->value('kakao_id') : null;
+
+        $result = [
+            'channel_public_id' => $channelPublicId,
+            'admin_key_set'     => !empty($adminKey),
+            'kakao_id'          => $kakaoId,
+            'has_token'         => !empty($token),
+        ];
+
+        // 1) 사용자 토큰으로 /v1/api/talk/channels 호출
+        if ($token) {
+            try {
+                $http = \Illuminate\Support\Facades\Http::timeout(10);
+                if (app()->environment('local')) $http = $http->withoutVerifying();
+                $r = $http->withToken($token)->get('https://kapi.kakao.com/v1/api/talk/channels');
+                $result['user_token_test'] = ['status' => $r->status(), 'body' => $r->json()];
+            } catch (\Throwable $e) {
+                $result['user_token_test'] = ['error' => $e->getMessage()];
+            }
+        }
+
+        // 2) 어드민 키로 /v1/api/talk/channels 호출 (target_id_type=user_id)
+        if ($adminKey && $kakaoId) {
+            try {
+                $http = \Illuminate\Support\Facades\Http::timeout(10);
+                if (app()->environment('local')) $http = $http->withoutVerifying();
+                $r = $http->withHeaders(['Authorization' => 'KakaoAK ' . $adminKey])
+                    ->get('https://kapi.kakao.com/v1/api/talk/channels', [
+                        'target_id_type'    => 'user_id',
+                        'target_id'         => $kakaoId,
+                        'channel_public_id' => $channelPublicId,
+                    ]);
+                $result['admin_key_test'] = ['status' => $r->status(), 'body' => $r->json()];
+            } catch (\Throwable $e) {
+                $result['admin_key_test'] = ['error' => $e->getMessage()];
+            }
+        }
+
+        // 3) 어드민 키로 채널 팔로워 목록 조회
+        if ($adminKey && $channelPublicId) {
+            try {
+                $http = \Illuminate\Support\Facades\Http::timeout(10);
+                if (app()->environment('local')) $http = $http->withoutVerifying();
+                $r = $http->withHeaders(['Authorization' => 'KakaoAK ' . $adminKey])
+                    ->get('https://kapi.kakao.com/v1/api/talk/channels/followers', [
+                        'channel_public_id' => $channelPublicId,
+                        'count'             => 10,
+                    ]);
+                $result['followers_test'] = ['status' => $r->status(), 'body' => $r->json()];
+            } catch (\Throwable $e) {
+                $result['followers_test'] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json($result);
+    }
+
     /** 채널 구독자 UUID 일괄 동기화 (어드민 키 사용 — 팀원 재인증 불필요) */
     public function syncChannelUuids(): JsonResponse
     {

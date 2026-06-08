@@ -27,7 +27,7 @@ class KakaoService
             'client_id'     => Setting::get('kakao_rest_api_key', ''),
             'redirect_uri'  => $redirectUri,
             'response_type' => 'code',
-            'scope'         => 'profile_nickname,talk_message,talk_channel',
+            'scope'         => 'profile_nickname,talk_message',
         ];
         // 회원가입 시 이전 카카오 세션 자동 사용 방지
         if ($reauthenticate) {

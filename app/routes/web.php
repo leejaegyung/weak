@@ -101,7 +101,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/kakao',            [KakaoController::class, 'update'])->name('admin.settings.kakao.update');
     Route::post('/settings/kakao/send',          [KakaoController::class, 'sendAlert'])->name('admin.settings.kakao.send');
     Route::post('/settings/kakao/send-daily',    [KakaoController::class, 'sendDailyNow'])->name('admin.settings.kakao.send-daily');
-    Route::post('/settings/kakao/daily-settings',[KakaoController::class, 'updateDailySettings'])->name('admin.settings.kakao.daily-settings');
+    Route::post('/settings/kakao/daily-settings',  [KakaoController::class, 'updateDailySettings'])->name('admin.settings.kakao.daily-settings');
+    Route::post('/settings/kakao/sync-channel',    [KakaoController::class, 'syncChannelUuids'])->name('admin.settings.kakao.sync-channel');
 
     // 설정 — API 키 관리
     Route::get('/settings/api',                        [ApiSettingController::class, 'index'])->name('admin.settings.api');

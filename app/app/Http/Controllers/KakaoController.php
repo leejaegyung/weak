@@ -110,6 +110,22 @@ class KakaoController extends Controller
         return response()->json(['ok' => $ok, 'message' => $msg, 'date' => $date]);
     }
 
+    /** 채널 구독자 UUID 일괄 동기화 (어드민 키 사용 — 팀원 재인증 불필요) */
+    public function syncChannelUuids(): JsonResponse
+    {
+        $result = $this->kakaoService->syncAllChannelUuids();
+
+        if (isset($result['error'])) {
+            return response()->json(['ok' => false, 'message' => $result['error']]);
+        }
+
+        $msg = "채널 구독 팀원 {$result['synced']}명 동기화 완료";
+        if ($result['not_subscribed'] > 0) $msg .= " / 미구독 {$result['not_subscribed']}명";
+        if ($result['failed'] > 0)         $msg .= " / 오류 {$result['failed']}명";
+
+        return response()->json(['ok' => true, 'message' => $msg, 'result' => $result]);
+    }
+
     /** 카카오 자동발송 설정 저장 */
     public function updateDailySettings(Request $request): JsonResponse
     {

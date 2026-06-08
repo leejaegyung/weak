@@ -165,8 +165,25 @@
               </div>
             </div>
 
-            <div style="margin-bottom:16px;padding:10px 14px;background:#FFF8EE;border-radius:10px;border:1.5px solid #E8E0D0;font-size:12px;color:#6B4F1A;line-height:1.7;">
+            <div style="margin-bottom:12px;padding:10px 14px;background:#FFF8EE;border-radius:10px;border:1.5px solid #E8E0D0;font-size:12px;color:#6B4F1A;line-height:1.7;">
               💡 팀원은 <strong>개인설정 → 카카오 연결하기</strong>를 클릭하여 직접 연동할 수 있습니다
+            </div>
+
+            <!-- 채널 UUID 동기화 -->
+            <div v-if="channelConfigured" style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <button @click="syncChannel" :disabled="syncLoading"
+                style="background:#fff;color:#1A1100;border:2px solid #1A1100;border-radius:12px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;"
+                :style="{ opacity: syncLoading ? 0.5 : 1 }">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                {{ syncLoading ? '동기화 중...' : '채널 구독 동기화' }}
+              </button>
+              <span v-if="syncMessage" style="font-size:12px;font-weight:600;"
+                :style="{ color: syncOk ? '#16A34A' : '#D97706' }">
+                {{ syncMessage }}
+              </span>
+              <span v-else style="font-size:11px;color:#9A8F7A;">채널 친구 추가한 팀원의 UUID를 자동으로 수집합니다</span>
             </div>
           </div>
         </Transition>
@@ -371,6 +388,27 @@ const sendKakaoDaily = async () => {
     dailyResult.value = '✗ 오류: ' + (e.response?.data?.message ?? e.message)
   } finally {
     dailySending.value = false
+  }
+}
+
+// 채널 UUID 동기화
+const syncLoading = ref(false)
+const syncMessage = ref('')
+const syncOk      = ref(false)
+
+const syncChannel = async () => {
+  syncLoading.value = true
+  syncMessage.value = ''
+  try {
+    const res = await window.axios.post('/admin/settings/kakao/sync-channel')
+    syncOk.value      = res.data.ok
+    syncMessage.value = res.data.ok ? `✓ ${res.data.message}` : `✗ ${res.data.message}`
+    if (res.data.ok) setTimeout(() => window.location.reload(), 1200)
+  } catch (e) {
+    syncOk.value      = false
+    syncMessage.value = '✗ 동기화 실패: ' + (e.response?.data?.message ?? e.message)
+  } finally {
+    syncLoading.value = false
   }
 }
 

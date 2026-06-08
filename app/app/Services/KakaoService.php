@@ -153,8 +153,89 @@ class KakaoService
     }
 
     /**
-     * 사용자 OAuth 토큰으로 채널 UUID 조회
-     * 사용자가 해당 채널을 친구 추가한 경우 UUID 반환, 아니면 null
+     * 어드민 키로 특정 사용자의 채널 UUID 조회
+     * talk_channel 동의항목 없이도 admin key + kakao_id로 조회 가능
+     */
+    public function getChannelUuidByKakaoId(string $kakaoUserId, string $channelPublicId): ?string
+    {
+        $adminKey = Setting::get('kakao_app_admin_key', '');
+        if (empty($adminKey)) return null;
+
+        try {
+            $response = $this->http()
+                ->withHeaders(['Authorization' => 'KakaoAK ' . $adminKey])
+                ->get(self::USER_CHANNELS_URL, [
+                    'target_id_type'    => 'user_id',
+                    'target_id'         => $kakaoUserId,
+                    'channel_public_id' => $channelPublicId,
+                ]);
+
+            if ($response->successful()) {
+                foreach ($response->json('channels', []) as $channel) {
+                    if (($channel['channel_public_id'] ?? '') === $channelPublicId) {
+                        $relation = $channel['relation'] ?? '';
+                        // ADDED = 채널 친구 추가 상태
+                        if ($relation === 'ADDED') {
+                            return $channel['channel_uuid'] ?? null;
+                        }
+                    }
+                }
+            }
+            Log::debug('[카카오] 어드민 채널 UUID 조회', [
+                'status'     => $response->status(),
+                'kakao_id'   => $kakaoUserId,
+                'channel_id' => $channelPublicId,
+                'body'       => $response->body(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('카카오 어드민 채널 UUID 조회 예외: ' . $e->getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 카카오 연동된 전체 팀원의 채널 UUID 일괄 동기화
+     * @return array ['synced' => n, 'not_subscribed' => n, 'failed' => n]
+     */
+    public function syncAllChannelUuids(): array
+    {
+        $channelPublicId = Setting::get('kakao_channel_public_id', '');
+        $adminKey        = Setting::get('kakao_app_admin_key', '');
+
+        if (empty($channelPublicId) || empty($adminKey)) {
+            return ['synced' => 0, 'not_subscribed' => 0, 'failed' => 0, 'error' => '채널 공개 ID 또는 어드민 키가 설정되지 않았습니다.'];
+        }
+
+        $users = User::where('is_active', true)
+            ->whereNotNull('kakao_id')
+            ->get(['id', 'kakao_id']);
+
+        $synced        = 0;
+        $notSubscribed = 0;
+        $failed        = 0;
+
+        foreach ($users as $user) {
+            $kakaoId = User::where('id', $user->id)->value('kakao_id');
+            if (empty($kakaoId)) { $failed++; continue; }
+
+            $uuid = $this->getChannelUuidByKakaoId($kakaoId, $channelPublicId);
+
+            if ($uuid) {
+                $user->updateQuietly(['kakao_channel_uuid' => $uuid]);
+                $synced++;
+            } else {
+                // 채널 미구독이거나 API 오류 — UUID 초기화
+                $user->updateQuietly(['kakao_channel_uuid' => null]);
+                $notSubscribed++;
+            }
+        }
+
+        Log::info("[카카오 채널 동기화] 완료 — 채널구독:{$synced}, 미구독:{$notSubscribed}, 실패:{$failed}");
+        return ['synced' => $synced, 'not_subscribed' => $notSubscribed, 'failed' => $failed];
+    }
+
+    /**
+     * 사용자 OAuth 토큰으로 채널 UUID 조회 (talk_channel scope 필요 — 현재 미사용)
      */
     public function getUserChannelUuid(string $accessToken, string $channelPublicId): ?string
     {
@@ -170,7 +251,6 @@ class KakaoService
                     }
                 }
             }
-            Log::debug('[카카오] 채널 UUID 조회', ['status' => $response->status(), 'channel_id' => $channelPublicId]);
         } catch (\Throwable $e) {
             Log::error('카카오 채널 UUID 조회 예외: ' . $e->getMessage());
         }

@@ -238,7 +238,7 @@
                   :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
                   <div :style="{
                     width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id),
-                    border: weekReportMap[user.id] ? '2.5px solid #FDCB40' : '2px solid #1A1100',
+                    border: weekReportMap[user.id] ? '2.5px solid #FD4401' : '2px solid #1A1100',
                     boxShadow: weekReportMap[user.id] ? '0 0 0 1.5px #1A1100' : 'none',
                     display:'flex', alignItems:'center', justifyContent:'center',
                     color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0,

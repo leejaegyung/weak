@@ -109,8 +109,16 @@
           title="개인설정"
           @mouseenter="e=>e.currentTarget.style.background='rgba(255,255,255,0.25)'"
           @mouseleave="e=>e.currentTarget.style.background='rgba(255,255,255,0.15)'">
-          <div style="width:24px;height:24px;border-radius:50%;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1A1100;flex-shrink:0;">
-            {{ auth?.user?.name?.charAt(0) }}
+          <div :style="{
+            width:'24px', height:'24px', borderRadius:'50%',
+            background: auth?.user?.avatar_image_url ? 'transparent' : (auth?.user?.avatar_color || '#FDCB40'),
+            border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:'11px', fontWeight:'700',
+            color: auth?.user?.avatar_color ? '#fff' : '#1A1100',
+            flexShrink:0, overflow:'hidden',
+          }">
+            <img v-if="auth?.user?.avatar_image_url" :src="auth.user.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+            <template v-else>{{ auth?.user?.name?.charAt(0) }}</template>
           </div>
           <span style="font-size:13px;font-weight:700;color:#fff;">{{ auth?.user?.name }}</span>
           <span style="font-size:11px;color:rgba(255,255,255,0.7);">{{ auth?.user?.role === 'admin' ? '관리자' : '일반 사용자' }}</span>

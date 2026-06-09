@@ -1070,7 +1070,7 @@ const toggleSchedSite = (site) => {
 
 // title 우선, 구버전 데이터는 content를 title로 마이그레이션
 const splitByCat = (arr, cat) =>
-  (arr || []).filter(i => i.category === cat)
+  (arr || []).filter(i => i.category === cat && (i.title || i.content || '').trim())
              .map(i => ({ title: i.title || i.content || '', sub_items: i.sub_items || [] }))
 
 const form = useForm({
@@ -1406,8 +1406,9 @@ const selectPrev = async (r) => {
   } catch (e) {
     console.error('이전 보고서 로드 실패:', e)
     previewError.value = true
+  } finally {
+    previewLoading.value = false
   }
-  previewLoading.value = false
 }
 
 // 미리보기 테이블용 카테고리 grouping
@@ -1442,7 +1443,9 @@ const applyPrev = async () => {
   form.gongyu     = splitByCat(r.curr_work, '공유')
   form.gita       = splitByCat(r.curr_work, '기타')
   // 미완료 Todo만 이어받기
-  if (r.todo_items) form.todo_items = r.todo_items.filter(t => !t.done).map(t => ({ ...t, done: false }))
+  if (r.todo_items) form.todo_items = r.todo_items
+    .filter(t => !t.done && (t.content || '').trim())
+    .map(t => ({ ...t, done: false }))
   showPrevModal.value = false
   previewReport.value = null
   previewData.value   = null

@@ -236,17 +236,20 @@
                   @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
                   :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
                   :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
-                  <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
+                  <div :style="{
+                    width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id),
+                    border: weekReportMap[user.id] ? '2.5px solid #FDCB40' : '2px solid #1A1100',
+                    boxShadow: weekReportMap[user.id] ? '0 0 0 1.5px #1A1100' : 'none',
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0,
+                    fontFamily:'\'Space Grotesk\',sans-serif',
+                  }">
                     {{ user.name.charAt(0) }}
                   </div>
                   <div>
-                    <div :style="{ fontSize:'12px', fontWeight:'700', textDecoration: weekReportMap[user.id] ? 'underline' : 'none', textDecorationColor:'#9A8F7A', textUnderlineOffset:'2px' }">{{ user.name }}</div>
+                    <div style="font-size:12px;font-weight:700;">{{ user.name }}</div>
                     <div v-if="user.position" style="font-size:10px;color:#9A8F7A;">{{ user.position }}</div>
                   </div>
-                  <span v-if="weekReportMap[user.id]"
-                    style="font-size:9px;background:#DBEAFE;color:#1D6FE9;border:1px solid #1D6FE9;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">
-                    보고서
-                  </span>
                 </div>
               </div>
             </td>

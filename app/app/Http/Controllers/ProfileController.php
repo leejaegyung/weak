@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,12 +23,14 @@ class ProfileController extends Controller
 
         return Inertia::render('Profile/Index', [
             'profileUser' => [
-                'id'            => $user->id,
-                'name'          => $user->name,
-                'username'      => $user->username,
-                'position'      => $user->position ?? '',
-                'role'          => $user->role,
-                'kakao_connected' => !empty($user->kakao_id),
+                'id'               => $user->id,
+                'name'             => $user->name,
+                'username'         => $user->username,
+                'position'         => $user->position ?? '',
+                'role'             => $user->role,
+                'kakao_connected'  => !empty($user->kakao_id),
+                'avatar_color'     => $user->avatar_color,
+                'avatar_image_url' => $user->avatar_image_url,
             ],
             'sites' => $sites,
         ]);
@@ -69,6 +72,54 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile')->with('success', '개인정보가 저장되었습니다.');
+    }
+
+    /** 아바타 설정 (색상 또는 사진) */
+    public function updateAvatar(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $type = $request->input('type', 'color');
+
+        if ($type === 'image') {
+            $request->validate(['image' => ['required', 'image', 'max:2048']]);
+
+            if ($user->avatar_image) {
+                Storage::disk('public')->delete($user->avatar_image);
+            }
+
+            $path = $request->file('image')->store('avatars', 'public');
+            $user->avatar_image = $path;
+            $user->avatar_color = null;
+            $user->save();
+
+            return response()->json([
+                'avatar_color'     => null,
+                'avatar_image_url' => Storage::url($path),
+            ]);
+        }
+
+        if ($type === 'remove') {
+            if ($user->avatar_image) {
+                Storage::disk('public')->delete($user->avatar_image);
+                $user->avatar_image = null;
+            }
+            $user->save();
+
+            return response()->json([
+                'avatar_color'     => $user->avatar_color,
+                'avatar_image_url' => null,
+            ]);
+        }
+
+        // type === 'color'
+        $request->validate(['color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/']]);
+        $user->avatar_color = $request->input('color');
+        $user->save();
+
+        return response()->json([
+            'avatar_color'     => $user->avatar_color,
+            'avatar_image_url' => $user->avatar_image_url,
+        ]);
     }
 
     /** 점검 사이트 추가 */

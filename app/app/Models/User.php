@@ -28,7 +28,11 @@ class User extends Authenticatable
         'kakao_refresh_token',
         'kakao_channel_uuid',
         'last_login_at',
+        'avatar_color',
+        'avatar_image',
     ];
+
+    protected $appends = ['avatar_image_url'];
 
     protected $hidden = [
         'password',
@@ -62,6 +66,13 @@ class User extends Authenticatable
     public function sites()
     {
         return $this->hasMany(UserSite::class)->orderBy('created_at');
+    }
+
+    public function getAvatarImageUrlAttribute(): ?string
+    {
+        return $this->avatar_image
+            ? \Illuminate\Support\Facades\Storage::url($this->avatar_image)
+            : null;
     }
 
     public function isAdmin(): bool

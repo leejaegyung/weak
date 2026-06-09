@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
     // 개인설정
     Route::get('/profile',                        [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile',                        [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar',                [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::post('/profile/sites',                 [ProfileController::class, 'storeSite'])->name('profile.sites.store');
     Route::delete('/profile/sites/{site}',        [ProfileController::class, 'destroySite'])->name('profile.sites.destroy');
     Route::post('/profile/kakao/disconnect',      [ProfileController::class, 'kakaoDisconnect'])->name('profile.kakao.disconnect');

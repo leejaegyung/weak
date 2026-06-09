@@ -137,8 +137,9 @@
         @mouseleave="e=>e.currentTarget.style.background='transparent'">
 
         <div style="display:flex;align-items:center;gap:10px;">
-          <div :style="{ background: avatarColor(r.user?.id ?? r.user_id), width:'30px', height:'30px', borderRadius:'50%', border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'12px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
-            {{ r.user?.name?.charAt(0) ?? '?' }}
+          <div :style="{ background: r.user?.avatar_image_url ? 'transparent' : avatarColor(r.user?.id ?? r.user_id), width:'30px', height:'30px', borderRadius:'50%', border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'12px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif', overflow:'hidden' }">
+            <img v-if="r.user?.avatar_image_url" :src="r.user.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+            <template v-else>{{ r.user?.name?.charAt(0) ?? '?' }}</template>
           </div>
           <div>
             <div style="font-size:13px;font-weight:700;">{{ r.user?.name ?? '-' }}</div>
@@ -293,8 +294,9 @@
               <div v-for="r in submittedReports" :key="r.id"
                 style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #E8E0D0;border-radius:8px;padding:8px 12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <div :style="{ width:'24px', height:'24px', borderRadius:'50%', background: avatarColor(r.user?.id), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:'700', color:'#fff', flexShrink:0 }">
-                    {{ r.user?.name?.charAt(0) }}
+                  <div :style="{ width:'24px', height:'24px', borderRadius:'50%', background: r.user?.avatar_image_url ? 'transparent' : avatarColor(r.user?.id), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:'700', color:'#fff', flexShrink:0, overflow:'hidden' }">
+                    <img v-if="r.user?.avatar_image_url" :src="r.user.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+                    <template v-else>{{ r.user?.name?.charAt(0) }}</template>
                   </div>
                   <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ r.user?.name }}</span>
                   <span style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
@@ -541,7 +543,10 @@ const searchInput  = ref(props.filters?.search ?? '')
 const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2']
-const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
+const avatarColor = (id) => {
+  const u = props.reports?.find(r => (r.user?.id ?? r.user_id) === id)?.user
+  return u?.avatar_color || AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
+}
 
 const statsCards = computed(() => [
   { label:'전체 보고서', val: props.counts.all          ?? 0, bg:'#FDCB40', filter:'all' },

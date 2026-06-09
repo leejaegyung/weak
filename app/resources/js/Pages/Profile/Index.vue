@@ -86,6 +86,87 @@
         </form>
       </div>
 
+      <!-- ── 아바타 설정 ── -->
+      <div class="card">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
+          <span>🎨</span> 아바타 설정
+        </div>
+
+        <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+
+          <!-- 미리보기 -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
+            <div style="font-size:11px;font-weight:700;color:#9A8F7A;">미리보기</div>
+            <div :style="{
+              width:'64px', height:'64px', borderRadius:'50%',
+              background: avatarImagePreview ? 'transparent' : (selectedColor || fallbackColor),
+              border:'3px solid #1A1100', overflow:'hidden',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              color:'#fff', fontSize:'22px', fontWeight:'700',
+              fontFamily:'\'Space Grotesk\',sans-serif',
+            }">
+              <img v-if="avatarImagePreview" :src="avatarImagePreview" style="width:100%;height:100%;object-fit:cover;" />
+              <span v-else>{{ profileUser.name.charAt(0) }}</span>
+            </div>
+          </div>
+
+          <div style="flex:1;min-width:260px;">
+            <!-- 색상 팔레트 -->
+            <div style="margin-bottom:18px;">
+              <label style="font-size:11px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;">색상 선택</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <button v-for="c in PALETTE_COLORS" :key="c" type="button"
+                  @click="selectColor(c)"
+                  :style="{
+                    width:'30px', height:'30px', borderRadius:'50%', background:c,
+                    border: selectedColor === c ? '3px solid #1A1100' : '2.5px solid transparent',
+                    boxShadow: selectedColor === c ? '0 0 0 1.5px #1A1100' : '0 1px 3px rgba(0,0,0,0.25)',
+                    cursor:'pointer', padding:0, transition:'all 0.1s', flexShrink:0,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                  }">
+                  <svg v-if="selectedColor === c" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 사진 업로드 -->
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;">프로필 사진</label>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;" @change="handleImageSelect" />
+                <button type="button" @click="fileInput.click()"
+                  style="display:inline-flex;align-items:center;gap:5px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
+                  @mouseenter="e=>{e.currentTarget.style.background='#FDCB40';}"
+                  @mouseleave="e=>{e.currentTarget.style.background='#F5EDDB';}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                  사진 선택
+                </button>
+                <button v-if="avatarImagePreview" type="button" @click="removeImage"
+                  style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
+                  @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
+                  @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  사진 제거
+                </button>
+                <span v-if="imageFile" style="font-size:11px;color:#16a34a;font-weight:600;">{{ imageFile.name }}</span>
+              </div>
+              <p style="font-size:11px;color:#C5BAA8;margin-top:6px;">JPG, PNG, GIF, WebP · 최대 2MB</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+          <button type="button" @click="saveAvatar" :disabled="avatarSaving"
+            style="display:inline-flex;align-items:center;gap:6px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
+            :style="{ opacity: avatarSaving ? 0.6 : 1 }"
+            @mouseenter="e=>{ if(!avatarSaving){ e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; }}"
+            @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            {{ avatarSaving ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </div>
+
       <!-- ── 카카오 연동 ── -->
       <div class="card">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
@@ -202,7 +283,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useForm, usePage, router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
@@ -284,6 +365,84 @@ const deleteSite = async (site) => {
     localSites.value = localSites.value.filter(s => s.id !== site.id)
   } catch (e) {
     console.error(e)
+  }
+}
+
+// ── 아바타 설정 ───────────────────────────────────────
+const PALETTE_COLORS = [
+  '#FD4401', '#dc2626', '#be185d', '#9333ea',
+  '#4f46e5', '#2563eb', '#0891b2', '#0f766e',
+  '#16a34a', '#65a30d', '#d97706', '#b45309',
+  '#6b7280', '#1A1100',
+]
+const FALLBACK_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
+const fallbackColor = FALLBACK_COLORS[props.profileUser.id % FALLBACK_COLORS.length]
+
+const selectedColor      = ref(props.profileUser.avatar_color || null)
+const avatarImagePreview = ref(props.profileUser.avatar_image_url || null)
+const imageFile          = ref(null)
+const fileInput          = ref(null)
+const avatarSaving       = ref(false)
+const pendingRemove      = ref(false)
+
+const selectColor = (color) => {
+  selectedColor.value = color
+  if (imageFile.value) {
+    imageFile.value = null
+    avatarImagePreview.value = props.profileUser.avatar_image_url || null
+    pendingRemove.value = false
+  }
+}
+
+const handleImageSelect = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  imageFile.value = file
+  selectedColor.value = null
+  pendingRemove.value = false
+  const reader = new FileReader()
+  reader.onload = (ev) => { avatarImagePreview.value = ev.target.result }
+  reader.readAsDataURL(file)
+  e.target.value = ''
+}
+
+const removeImage = () => {
+  imageFile.value = null
+  avatarImagePreview.value = null
+  pendingRemove.value = true
+}
+
+const saveAvatar = async () => {
+  if (avatarSaving.value) return
+  avatarSaving.value = true
+  try {
+    if (imageFile.value) {
+      const formData = new FormData()
+      formData.append('type', 'image')
+      formData.append('image', imageFile.value)
+      const res = await window.axios.post('/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      avatarImagePreview.value = res.data.avatar_image_url
+      imageFile.value = null
+      pendingRemove.value = false
+    } else if (pendingRemove.value) {
+      await window.axios.post('/profile/avatar', { type: 'remove' })
+      avatarImagePreview.value = null
+      pendingRemove.value = false
+    } else {
+      const res = await window.axios.post('/profile/avatar', {
+        type: 'color',
+        color: selectedColor.value,
+      })
+      selectedColor.value = res.data.avatar_color
+    }
+    showToast('아바타가 저장되었습니다.')
+  } catch (e) {
+    console.error(e)
+    showToast('저장에 실패했습니다.')
+  } finally {
+    avatarSaving.value = false
   }
 }
 

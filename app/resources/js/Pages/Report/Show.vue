@@ -22,8 +22,9 @@
         @mouseenter="e=>{ if(u.report_id && u.id !== report.user_id) { e.currentTarget.style.background='#FFF8EE'; e.currentTarget.style.borderColor='#1A1100'; } }"
         @mouseleave="e=>{ if(u.report_id && u.id !== report.user_id) { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#D0C9BC'; } }">
         <!-- 아바타 -->
-        <div :style="{ width:'20px', height:'20px', borderRadius:'50%', background: avatarColor(u.id), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
-          {{ u.name.charAt(0) }}
+        <div :style="{ width:'20px', height:'20px', borderRadius:'50%', background: u.avatar_image_url ? 'transparent' : avatarColor(u.id, u), border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+          <img v-if="u.avatar_image_url" :src="u.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+          <template v-else>{{ u.name.charAt(0) }}</template>
         </div>
         {{ u.name }}
         <!-- 미제출 표시 -->
@@ -619,7 +620,11 @@ const isOwn   = computed(() => page.props.auth?.user?.id === props.report.user_i
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin')
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
-const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
+const avatarColor = (id, user) => {
+  if (user?.avatar_color) return user.avatar_color
+  const u = props.teamUsers?.find(tu => tu.id === id)
+  return u?.avatar_color || AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
+}
 
 const fmt      = (d) => d ? String(d).substring(0, 10) : ''
 const fmtShort = (d) => d ? String(d).substring(5, 10).replace('-', '/') : '-'

@@ -237,14 +237,16 @@
                   :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
                   :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
                   <div :style="{
-                    width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(user.id),
+                    width:'28px', height:'28px', borderRadius:'50%',
+                    background: avatarImg(user.id) ? 'transparent' : avatarColor(user.id),
                     border: weekReportMap[user.id] ? '2.5px solid #FD4401' : '2px solid #1A1100',
                     boxShadow: weekReportMap[user.id] ? '0 0 0 1.5px #1A1100' : 'none',
-                    display:'flex', alignItems:'center', justifyContent:'center',
+                    display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
                     color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0,
                     fontFamily:'\'Space Grotesk\',sans-serif',
                   }">
-                    {{ user.name.charAt(0) }}
+                    <img v-if="avatarImg(user.id)" :src="avatarImg(user.id)" style="width:100%;height:100%;object-fit:cover;" />
+                    <template v-else>{{ user.name.charAt(0) }}</template>
                   </div>
                   <div>
                     <div style="font-size:12px;font-weight:700;">{{ user.name }}</div>
@@ -634,8 +636,9 @@
                   <div v-for="(entry, ei) in dayModalGroups[tag.label]" :key="ei"
                     style="display:flex;align-items:center;gap:8px;">
                     <!-- 아바타 -->
-                    <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
-                      {{ entry.userName.charAt(0) }}
+                    <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(entry.userId) ? 'transparent' : avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+                      <img v-if="avatarImg(entry.userId)" :src="avatarImg(entry.userId)" style="width:100%;height:100%;object-fit:cover;" />
+                      <template v-else>{{ entry.userName.charAt(0) }}</template>
                     </div>
                     <!-- 이름 -->
                     <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ entry.userName }}</span>
@@ -669,8 +672,9 @@
               </div>
               <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
                 <div v-for="(entry, ei) in dayModalGroups['__etc']" :key="ei" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
-                    {{ entry.userName.charAt(0) }}
+                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(entry.userId) ? 'transparent' : avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+                    <img v-if="avatarImg(entry.userId)" :src="avatarImg(entry.userId)" style="width:100%;height:100%;object-fit:cover;" />
+                    <template v-else>{{ entry.userName.charAt(0) }}</template>
                   </div>
                   <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ entry.userName }}</span>
                   <span v-if="entry.time && entry.time !== '종일'" style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">{{ entry.time }}</span>
@@ -719,7 +723,18 @@ const props = defineProps({
 const DAY_KR = ['월', '화', '수', '목', '금']
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
-const avatarColor = (id) => AVATAR_COLORS[id % AVATAR_COLORS.length]
+
+const userAvatarMap = computed(() => {
+  const map = {}
+  const allUsers = [...orderedUsers.value, ...monthlyUsers.value]
+  for (const u of allUsers) {
+    if (!map[u.id]) map[u.id] = { color: u.avatar_color, image: u.avatar_image_url }
+  }
+  return map
+})
+
+const avatarColor = (id) => userAvatarMap.value[id]?.color || AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
+const avatarImg   = (id) => userAvatarMap.value[id]?.image || null
 
 const today    = new Date().toISOString().slice(0, 10)
 const isToday  = (d) => d === today

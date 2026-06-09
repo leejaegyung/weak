@@ -194,9 +194,11 @@ class ReportController extends Controller
             ->orderBy('sort_order')->orderBy('name')
             ->get()
             ->map(fn($u) => [
-                'id'        => $u->id,
-                'name'      => $u->name,
-                'report_id' => $weekReports->get($u->id),
+                'id'               => $u->id,
+                'name'             => $u->name,
+                'report_id'        => $weekReports->get($u->id),
+                'avatar_color'     => $u->avatar_color,
+                'avatar_image_url' => $u->avatar_image_url,
             ])->values()->toArray();
 
         // 같은 사용자의 이전/다음/금주 보고서

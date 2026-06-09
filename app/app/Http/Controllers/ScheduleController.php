@@ -39,7 +39,13 @@ class ScheduleController extends Controller
 
         // 전체 사용자 목록 (관리자가 지정한 순서 → 이름 순, 숨김 제외)
         $users = User::where('is_active', true)->where('is_hidden', false)->orderBy('sort_order')->orderBy('name')->get()
-            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position])
+            ->map(fn($u) => [
+                'id'               => $u->id,
+                'name'             => $u->name,
+                'position'         => $u->position,
+                'avatar_color'     => $u->avatar_color,
+                'avatar_image_url' => $u->avatar_image_url,
+            ])
             ->toArray();
 
         // 팀 전체 스케줄 [user_id => [date => content]]
@@ -86,7 +92,13 @@ class ScheduleController extends Controller
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
-            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position])
+            ->map(fn($u) => [
+                'id'               => $u->id,
+                'name'             => $u->name,
+                'position'         => $u->position,
+                'avatar_color'     => $u->avatar_color,
+                'avatar_image_url' => $u->avatar_image_url,
+            ])
             ->toArray();
 
         $teamSchedules = $this->scheduleService->getTeamSchedules($startDate, $endDate);

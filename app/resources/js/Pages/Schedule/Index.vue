@@ -173,7 +173,7 @@
     <!-- 팀 일정 그리드 (주간) -->
     <div v-if="viewMode === 'week'" class="card" style="padding:0;overflow:hidden;">
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-      <table style="border-collapse:collapse;min-width:1050px;width:100%;">
+      <table style="border-collapse:collapse;min-width:1050px;width:100%;table-layout:fixed;">
         <!-- 주차 헤더 -->
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
@@ -196,7 +196,7 @@
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
-                minWidth: '90px',
+                width: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
               <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
@@ -259,7 +259,7 @@
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
                 padding:'6px',
                 verticalAlign:'top',
-                minWidth:'80px',
+                overflow:'hidden',
                 cursor: user.id === currentUserId ? 'pointer' : 'default',
                 transition:'background 0.1s',
                 position:'relative',
@@ -267,10 +267,10 @@
               @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
-              <!-- 내용 표시 (시간대별 슬롯 칩 — 네모, 좌측정렬) -->
-              <div style="min-height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
+              <!-- 내용 표시 (시간대별 슬롯 칩 — 고정 높이, 최대 2개 표시) -->
+              <div style="height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;overflow:hidden;flex-shrink:0;">
                 <template v-if="localSchedules[user.id]?.[date]">
-                  <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots" :key="slot.time + slot.status">
+                  <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots.slice(0, 2)" :key="slot.time + slot.status">
                     <!-- 슬롯 1개 = 1 칩 (상태 + 사이트 한 줄 통합) -->
                     <div :style="{
                       display:'flex', alignItems:'center', gap:'3px',
@@ -288,6 +288,11 @@
                       </span>
                     </div>
                   </template>
+                  <!-- 3개 이상 슬롯은 +N으로 축약 표시 -->
+                  <div v-if="parsedCell(localSchedules[user.id][date]).slots.length > 2"
+                    style="font-size:9px;color:#9A8F7A;font-weight:700;padding:0 2px;line-height:1;">
+                    +{{ parsedCell(localSchedules[user.id][date]).slots.length - 2 }}
+                  </div>
                 </template>
               </div>
 

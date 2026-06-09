@@ -272,7 +272,9 @@
                 <template v-if="localSchedules[user.id]?.[date]">
                   <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots.slice(0, 2)" :key="slot.time + slot.status">
                     <!-- 슬롯 1개 = 1 칩 (상태 + 사이트 한 줄 통합) -->
-                    <div :style="{
+                    <div
+                      :title="`(${slot.time}) ${[slot.status, [...slot.sites, slot.content ?? ''].filter(Boolean).join(', ')].filter(Boolean).join(': ')}`"
+                      :style="{
                       display:'flex', alignItems:'center', gap:'3px',
                       padding:'2px 6px', borderRadius:'2px', fontSize:'10.5px', fontWeight:'800',
                       background: slot.status && STATUS_STYLE_MAP[slot.status] ? STATUS_STYLE_MAP[slot.status].bg : '#FFEDD5',

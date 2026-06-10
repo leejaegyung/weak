@@ -49,7 +49,7 @@ class ReportService
                 'submitted_at'  => null,
                 'comment_count' => 0,
                 'user_id'       => $u->id,
-                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
+                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? '', 'avatar_color' => $u->avatar_color, 'avatar_image_url' => $u->avatar_image_url],
             ])->toArray();
         }
 
@@ -90,7 +90,7 @@ class ReportService
             'submitted_at'  => $r->submitted_at?->format('Y-m-d H:i'),
             'comment_count' => $hasComments ? ($r->comments_count ?? 0) : 0,
             'user_id'       => $r->user_id,
-            'user'          => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position] : null,
+            'user'          => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position, 'avatar_color' => $r->user->avatar_color, 'avatar_image_url' => $r->user->avatar_image_url] : null,
         ]);
 
         // 특정 주차 조회 + 상태 필터 없음 → 미제출 사용자도 포함
@@ -117,7 +117,7 @@ class ReportService
                 'submitted_at'  => null,
                 'comment_count' => 0,
                 'user_id'       => $u->id,
-                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? ''],
+                'user'          => ['id' => $u->id, 'name' => $u->name, 'position' => $u->position ?? '', 'avatar_color' => $u->avatar_color, 'avatar_image_url' => $u->avatar_image_url],
             ]);
 
             $merged = array_merge($reports->toArray(), $notSubmitted->toArray());

@@ -501,6 +501,12 @@ class ReportService
             $content = $todo['content'] ?? '';
             if (trim($content) !== '') {
                 $lines[] = $mark . ' ' . $content;
+                foreach ($todo['sub_items'] ?? [] as $sub) {
+                    $subText = is_string($sub) ? $sub : ($sub['content'] ?? '');
+                    if (trim($subText) !== '') {
+                        $lines[] = '  - ' . $subText;
+                    }
+                }
             }
         }
         return implode("\n", $lines);

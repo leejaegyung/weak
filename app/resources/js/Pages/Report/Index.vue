@@ -553,7 +553,6 @@ const statsCards = computed(() => [
   { label:'미제출',      val: props.counts.notSubmitted ?? 0, bg:'#FFF0A0', filter:'not_submitted' },
   { label:'작성중',      val: props.counts.draft        ?? 0, bg:'#F0FDF4', filter:'draft' },
   { label:'제출됨',      val: props.counts.submitted    ?? 0, bg:'#DBEAFE', filter:'submitted' },
-  { label:'반려됨',      val: props.counts.rejected     ?? 0, bg:'#FEE2E2', filter:'rejected' },
 ])
 
 const filterBtns = [
@@ -561,7 +560,6 @@ const filterBtns = [
   { val:'not_submitted', label:'미제출' },
   { val:'draft',         label:'작성중' },
   { val:'submitted',     label:'제출됨' },
-  { val:'rejected',      label:'반려됨' },
 ]
 
 const fmt = (d) => d ? String(d).substring(0, 10) : '-'

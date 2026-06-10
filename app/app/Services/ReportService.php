@@ -147,7 +147,6 @@ class ReportService
 
         $draft     = (clone $query)->where('status', 'draft')->count();
         $submitted = (clone $query)->where('status', 'submitted')->count();
-        $rejected  = (clone $query)->where('status', 'rejected')->count();
 
         // 미제출: 활성 사용자 중 해당 주차에 보고서가 없는 수
         if ($weekStart) {
@@ -162,10 +161,10 @@ class ReportService
             $notSubmitted = 0;
         }
 
-        // 전체 = 미제출 + 작성중(draft) + 제출됨 + 반려됨 합산
-        $all = $notSubmitted + $draft + $submitted + $rejected;
+        // 전체 = 미제출 + 작성중(draft) + 제출됨 합산
+        $all = $notSubmitted + $draft + $submitted;
 
-        return compact('all', 'draft', 'notSubmitted', 'submitted', 'rejected');
+        return compact('all', 'draft', 'notSubmitted', 'submitted');
     }
 
     public function create(array $data, int $userId, bool $submitNow = false): WeeklyReport

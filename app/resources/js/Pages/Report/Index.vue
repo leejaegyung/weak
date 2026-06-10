@@ -75,7 +75,7 @@
     </div>
 
     <!-- 통계 카드 -->
-    <div class="stats-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
+    <div class="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
       <div v-for="stat in statsCards" :key="stat.label"
         class="card"
         :style="{ background: stat.bg, padding:'18px 20px', display:'flex', alignItems:'center', gap:'14px', cursor:'pointer', transition:'transform 0.1s,box-shadow 0.1s' }"

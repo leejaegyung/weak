@@ -69,40 +69,65 @@ class WebhookService
 
         if ($schedules->isEmpty()) return null;
 
+        // status → [['name' => '김선호', 'time' => '오전'], ...]
         $statusGroups = [];
+        // site → [['name' => '김선호', 'time' => '종일'], ...]
         $siteGroups   = [];
-        $otherGroups  = [];
 
         foreach ($schedules as $sched) {
-            $name   = $sched->user->name ?? '?';
-            $parsed = $this->parseContent($sched->content ?? '');
+            $name    = $sched->user->name ?? '?';
+            $parsed  = $this->parseContent($sched->content ?? '');
+            $seen    = []; // 같은 (status, name, time) 중복 방지
 
-            foreach ($parsed['statuses'] as $status) {
-                $statusGroups[$status][] = $name;
-            }
-            foreach ($parsed['sites'] as $site) {
-                $siteGroups[$site][] = $name;
-            }
-            foreach (array_filter(array_map('trim', explode("\n", $parsed['detail']))) as $item) {
-                $otherGroups[$item][] = $name;
+            foreach ($parsed['entries'] as $entry) {
+                $time   = $entry['time']   ?? '종일';
+                $status = $entry['status'] ?? '';
+                $sites  = $entry['sites']  ?? [];
+
+                // 상태 미설정 항목은 외근으로 표시
+                $effectiveStatus = ($status !== '' && in_array($status, self::STATUS_LABELS))
+                    ? $status
+                    : '외근';
+
+                $statusKey = "{$effectiveStatus}|{$name}|{$time}";
+                if (!isset($seen[$statusKey])) {
+                    $seen[$statusKey] = true;
+                    $statusGroups[$effectiveStatus][] = ['name' => $name, 'time' => $time];
+                }
+
+                foreach ($sites as $site) {
+                    $siteKey = "{$site}|{$name}";
+                    if (!isset($seen[$siteKey])) {
+                        $seen[$siteKey] = true;
+                        $siteGroups[$site][] = ['name' => $name, 'time' => $time];
+                    }
+                }
             }
         }
 
-        if (empty($statusGroups) && empty($siteGroups) && empty($otherGroups)) return null;
+        if (empty($statusGroups) && empty($siteGroups)) return null;
 
         $carbon = Carbon::parse($date)->locale('ko');
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
         $lines  = ["📅 **{$carbon->format('Y년 m월 d일')}({$dayKr}) 팀 일정**"];
 
+        $statusIcons = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'];
+
         foreach ($statusGroups as $status => $people) {
-            $icon    = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'][$status] ?? '•';
-            $lines[] = "{$icon} {$status}: " . implode(', ', $people);
+            $icon      = $statusIcons[$status] ?? '•';
+            $peopleStr = implode(', ', array_map(
+                fn($p) => $p['time'] !== '종일' ? "{$p['name']}({$p['time']})" : $p['name'],
+                $people
+            ));
+            $lines[] = "{$icon} {$status}: {$peopleStr}";
         }
+
         foreach ($siteGroups as $site => $people) {
-            $lines[] = "🌐 {$site}: " . implode(', ', $people);
-        }
-        foreach ($otherGroups as $item => $people) {
-            $lines[] = "✏ {$item}: " . implode(', ', $people);
+            $peopleStr = implode(', ', array_map(
+                fn($p) => $p['time'] !== '종일' ? "{$p['name']}({$p['time']})" : $p['name'],
+                $people
+            ));
+            $lines[] = "🌐 {$site}: {$peopleStr}";
         }
 
         return implode("\n", $lines);
@@ -117,52 +142,56 @@ class WebhookService
         return $this->send($message);
     }
 
-    /** 일정 내용 파싱 — 신형식 [시간대]상태:사이트 및 구형식 모두 지원 */
+    /**
+     * 일정 내용 파싱 — 신형식 [시간대]상태:사이트|메모 및 구형식 모두 지원
+     * 반환: entries[] = [{time, status, sites[]}]
+     */
     private function parseContent(string $content): array
     {
         $raw = trim($content);
-        if (!$raw) return ['statuses' => [], 'sites' => [], 'detail' => ''];
+        if (!$raw) return ['entries' => []];
 
-        $lines    = array_filter(array_map('trim', explode("\n", $raw)));
-        $statuses = [];
-        $sites    = [];
-        $details  = [];
+        $lines   = array_filter(array_map('trim', explode("\n", $raw)));
+        $entries = [];
 
         foreach ($lines as $line) {
             if (!$line) continue;
 
-            // ── 신형식: [종일]외근:KBS 원주  /  [오전]휴가  /  [오후]외근:MBC,KBS ──
+            // ── 신형식: [시간대]상태:사이트1,사이트2|메모 ──
             if (preg_match('/^\[([^\]]+)\](.*)$/', $line, $m)) {
-                $rest     = trim($m[2]);             // "외근:KBS 원주" or "휴가"
-                $colonPos = strpos($rest, ':');
+                $time = $m[1];
+                $rest = $m[2];
 
+                // | 뒤는 슬롯 내용(메모) — 사이트/상태 파싱 전에 제거
+                $pipePos = strpos($rest, '|');
+                if ($pipePos !== false) {
+                    $rest = substr($rest, 0, $pipePos);
+                }
+                $rest = trim($rest);
+
+                $status = '';
+                $sites  = [];
+
+                $colonPos = strpos($rest, ':');
                 if ($colonPos !== false) {
                     $status  = trim(substr($rest, 0, $colonPos));
                     $siteStr = trim(substr($rest, $colonPos + 1));
+                    if ($siteStr) {
+                        $sites = array_values(array_filter(array_map('trim', explode(',', $siteStr))));
+                    }
                 } else {
-                    $status  = $rest;
-                    $siteStr = '';
+                    $status = $rest;
                 }
 
-                if ($status) {
-                    if (in_array($status, self::STATUS_LABELS)) {
-                        $statuses[] = $status;
-                    } else {
-                        $details[] = $status; // 상태가 아닌 텍스트
-                    }
-                }
-                if ($siteStr) {
-                    foreach (array_filter(array_map('trim', explode(',', $siteStr))) as $s) {
-                        $sites[] = $s;
-                    }
-                }
+                $entries[] = ['time' => $time, 'status' => $status, 'sites' => $sites];
                 continue;
             }
 
             // ── 구형식: ":사이트들" ──
             if (str_starts_with($line, ':')) {
-                foreach (array_filter(array_map('trim', explode(',', substr($line, 1)))) as $s) {
-                    $sites[] = $s;
+                $sites = array_values(array_filter(array_map('trim', explode(',', substr($line, 1)))));
+                if ($sites) {
+                    $entries[] = ['time' => '종일', 'status' => '', 'sites' => $sites];
                 }
                 continue;
             }
@@ -172,29 +201,25 @@ class WebhookService
             if ($colonPos !== false) {
                 $before   = trim(substr($line, 0, $colonPos));
                 $after    = trim(substr($line, $colonPos + 1));
-                $potStats = array_filter(array_map('trim', explode(',', $before)));
-                if ($potStats && !array_diff(array_values($potStats), self::STATUS_LABELS)) {
-                    foreach ($potStats as $s) $statuses[] = $s;
-                    foreach (array_filter(array_map('trim', explode(',', $after))) as $s) $sites[] = $s;
+                $potStats = array_values(array_filter(array_map('trim', explode(',', $before))));
+                if ($potStats && !array_diff($potStats, self::STATUS_LABELS)) {
+                    $sites = array_values(array_filter(array_map('trim', explode(',', $after))));
+                    foreach ($potStats as $s) {
+                        $entries[] = ['time' => '종일', 'status' => $s, 'sites' => $sites];
+                    }
                     continue;
                 }
             }
 
             // ── 구형식: "상태1,상태2" (사이트 없음) ──
-            $parts = array_filter(array_map('trim', explode(',', $line)));
-            if ($parts && !array_diff(array_values($parts), self::STATUS_LABELS)) {
-                foreach ($parts as $s) $statuses[] = $s;
-                continue;
+            $parts = array_values(array_filter(array_map('trim', explode(',', $line))));
+            if ($parts && !array_diff($parts, self::STATUS_LABELS)) {
+                foreach ($parts as $s) {
+                    $entries[] = ['time' => '종일', 'status' => $s, 'sites' => []];
+                }
             }
-
-            // 그 외 기타 텍스트
-            $details[] = $line;
         }
 
-        return [
-            'statuses' => array_values(array_unique($statuses)),
-            'sites'    => array_values(array_unique($sites)),
-            'detail'   => implode("\n", $details),
-        ];
+        return ['entries' => $entries];
     }
 }

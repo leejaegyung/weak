@@ -10,15 +10,17 @@ class UserService
     public function list(): array
     {
         return User::orderBy('sort_order')->orderBy('name')->get()->map(fn($u) => [
-            'id'            => $u->id,
-            'name'          => $u->name,
-            'username'      => $u->username,
-            'email'         => $u->email,
-            'position'      => $u->position,
-            'role'          => $u->role,
-            'is_active'     => (bool) $u->is_active,
-            'is_hidden'     => (bool) $u->is_hidden,
-            'last_login_at' => $u->last_login_at?->format('Y-m-d H:i'),
+            'id'                => $u->id,
+            'name'              => $u->name,
+            'username'          => $u->username,
+            'email'             => $u->email,
+            'position'          => $u->position,
+            'role'              => $u->role,
+            'is_active'         => (bool) $u->is_active,
+            'is_hidden'         => (bool) $u->is_hidden,
+            'last_login_at'     => $u->last_login_at?->format('Y-m-d H:i'),
+            'avatar_color'      => $u->avatar_color,
+            'avatar_image_url'  => $u->avatar_image_url,
         ])->toArray();
     }
 

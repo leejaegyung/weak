@@ -70,8 +70,9 @@
           @mouseenter="e=>{e.currentTarget.style.transform='translate(-2px,-2px)';e.currentTarget.style.boxShadow='6px 6px 0 #1A1100';}"
           @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='4px 4px 0 #1A1100';}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-            <div :style="{ width:'44px', height:'44px', borderRadius:'50%', background: avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'18px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
-              {{ u.name.charAt(0) }}
+            <div :style="{ width:'44px', height:'44px', borderRadius:'50%', background: u.avatar_image_url ? 'transparent' : avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'18px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif', overflow:'hidden' }">
+              <img v-if="u.avatar_image_url" :src="u.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+              <template v-else>{{ u.name.charAt(0) }}</template>
             </div>
             <span :style="u.is_active ? 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;' : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'"
               style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;">
@@ -107,8 +108,9 @@
           @mouseleave="e=>e.currentTarget.style.background='transparent'">
           <!-- 이름 -->
           <div style="display:flex;align-items:center;gap:9px;min-width:0;">
-            <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif' }">
-              {{ u.name.charAt(0) }}
+            <div :style="{ width:'28px', height:'28px', borderRadius:'50%', background: u.avatar_image_url ? 'transparent' : avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:'700', flexShrink:0, fontFamily:'\'Space Grotesk\',sans-serif', overflow:'hidden' }">
+              <img v-if="u.avatar_image_url" :src="u.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+              <template v-else>{{ u.name.charAt(0) }}</template>
             </div>
             <span style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ u.name }}</span>
           </div>
@@ -324,7 +326,7 @@ const activeTab = ref('users')
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 const cardColors    = ['#FFF0A0','#EEF2FF','#F0FDF4','#FFF0F3','#F5F3FF','#FFF8EE']
 
-const avatarColor        = (u) => AVATAR_COLORS[u.id % AVATAR_COLORS.length]
+const avatarColor        = (u) => u.avatar_color || AVATAR_COLORS[u.id % AVATAR_COLORS.length]
 const pendingAvatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
 
 const showModal  = ref(false)

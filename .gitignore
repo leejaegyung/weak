@@ -1,0 +1,3 @@
+# Nginx 로그
+nginx/logs/*.log
+nginx/logs/nginx.pid

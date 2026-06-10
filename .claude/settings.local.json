@@ -98,7 +98,32 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\leejk\\\\playwright-test\")",
       "Read(//c/Users/leejk/**)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\" -Force)",
-      "Bash(Select-Object Name, Mode)"
+      "Bash(Select-Object Name, Mode)",
+      "Skill(claude-api)",
+      "Bash(Get-Content *)",
+      "Bash(grep -v \".php:$\")",
+      "Bash(php -l app/Http/Controllers/KakaoController.php)",
+      "Bash(npx skills *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\" -Filter \"*.md\" -File)",
+      "Bash(Select-Object Name, Length)",
+      "Skill(update-config)",
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\\\\.claude\\\\settings.local.json\" -Raw; try { $j = $content | ConvertFrom-Json; $hook = $j.hooks.PostToolUse | Where-Object { $_.matcher -eq 'Bash' }; $hook.hooks | Where-Object { $_.type -eq 'command' } | Select-Object command, if, statusMessage } catch { \"JSON 오류: $_\" })"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git push origin main",
+            "if": "Bash(git commit*)",
+            "timeout": 30,
+            "statusMessage": "GitHub에 자동 푸시 중..."
+          }
+        ]
+      }
     ]
   }
 }

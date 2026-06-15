@@ -96,7 +96,7 @@
 
       <!-- 요일 헤더 -->
       <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F5EDDB;border-bottom:2px solid #1A1100;">
-        <div v-for="d in ['월','화','수','목','금','토','일']" :key="d"
+        <div v-for="d in ['일','월','화','수','목','금','토']" :key="d"
           :style="{ padding:'6px 0', textAlign:'center', fontSize:'12px', fontWeight:'700', color: d==='토' ? '#2563EB' : d==='일' ? '#DC2626' : '#1A1100' }">
           {{ d }}
         </div>
@@ -832,10 +832,10 @@ const monthCalendarDays = computed(() => {
   return days
 })
 
-// 달력 첫 번째 칸의 오프셋 (월요일 시작: 월=0 ... 일=6)
+// 달력 첫 번째 칸의 오프셋 (일요일 시작: 일=0 ... 토=6)
 const monthCalendarOffset = computed(() => {
   const firstDay = new Date(monthlyYear.value, monthlyMonth.value - 1, 1).getDay()
-  return firstDay === 0 ? 6 : firstDay - 1  // 일=0 → 6칸, 월=1 → 0칸
+  return firstDay  // 일=0 → 0칸, 월=1 → 1칸 ... 토=6 → 6칸
 })
 
 // 월간 데이터 로드

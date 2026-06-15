@@ -134,6 +134,7 @@
                   <select v-model="issue.status" @change="changeStatus(issue)"
                     style="border:2px solid #1A1100;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
                     <option value="registered">📋 등록</option>
+                    <option value="on_hold">⏸️ 보류</option>
                     <option value="impossible">🚫 불가</option>
                     <option value="processing">🔄 처리 중</option>
                     <option value="completed">✅ 적용 완료</option>
@@ -297,6 +298,7 @@ const avatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
 
 const statusLabel = (s) => ({
   registered: '📋 등록',
+  on_hold:    '⏸️ 보류',
   impossible: '🚫 불가',
   processing: '🔄 처리 중',
   completed:  '✅ 적용 완료',
@@ -304,6 +306,7 @@ const statusLabel = (s) => ({
 
 const statusStyle = (s) => ({
   registered: { background:'#F3F4F6', color:'#6B7280', borderColor:'#D1D5DB' },
+  on_hold:    { background:'#FEF3C7', color:'#B45309', borderColor:'#FCD34D' },
   impossible: { background:'#FEE2E2', color:'#DC2626', borderColor:'#FCA5A5' },
   processing: { background:'#DBEAFE', color:'#1D4ED8', borderColor:'#93C5FD' },
   completed:  { background:'#DCFCE7', color:'#15803D', borderColor:'#86EFAC' },
@@ -311,6 +314,7 @@ const statusStyle = (s) => ({
 
 const aiBoxStyle = (s) => ({
   registered: { background:'#F9FAFB', color:'#374151', borderColor:'#E5E7EB' },
+  on_hold:    { background:'#FFFBEB', color:'#92400E', borderColor:'#FDE68A' },
   impossible: { background:'#FFF5F5', color:'#991B1B', borderColor:'#FECACA' },
   processing: { background:'#EFF6FF', color:'#1E40AF', borderColor:'#BFDBFE' },
   completed:  { background:'#F0FDF4', color:'#166534', borderColor:'#BBF7D0' },

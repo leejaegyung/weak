@@ -69,7 +69,7 @@ class IssueController extends Controller
     {
         if (!Auth::user()->isAdmin()) abort(403);
 
-        $request->validate(['status' => ['required', 'in:registered,impossible,processing,completed']]);
+        $request->validate(['status' => ['required', 'in:registered,on_hold,impossible,processing,completed']]);
         $issue->update(['status' => $request->status]);
 
         return back()->with('success', '상태가 변경되었습니다.');
@@ -83,6 +83,7 @@ class IssueController extends Controller
 
         $statusLabel = [
             'registered' => '등록',
+            'on_hold'    => '보류',
             'impossible' => '불가',
             'processing' => '처리 중',
             'completed'  => '적용 완료',

@@ -162,9 +162,11 @@ class WebhookService
                 $time = $m[1];
                 $rest = $m[2];
 
-                // | 뒤는 슬롯 내용(메모) — 사이트/상태 파싱 전에 제거
+                // | 뒤는 슬롯 자유 입력(메모) — 목적지로 입력하는 경우가 많아 사이트로 함께 집계
+                $memo    = '';
                 $pipePos = strpos($rest, '|');
                 if ($pipePos !== false) {
+                    $memo = trim(substr($rest, $pipePos + 1));
                     $rest = substr($rest, 0, $pipePos);
                 }
                 $rest = trim($rest);
@@ -181,6 +183,11 @@ class WebhookService
                     }
                 } else {
                     $status = $rest;
+                }
+
+                // 등록 사이트(콜론)뿐 아니라 자유 입력 메모(파이프)도 목적지로 표시
+                if ($memo !== '') {
+                    $sites[] = $memo;
                 }
 
                 $entries[] = ['time' => $time, 'status' => $status, 'sites' => $sites];

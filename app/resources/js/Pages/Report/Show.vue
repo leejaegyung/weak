@@ -76,6 +76,39 @@
         </span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <!-- 글자 크기 개인화 (기기별 저장) -->
+        <div style="display:inline-flex;align-items:center;gap:2px;background:#fff;border:2px solid #1A1100;border-radius:10px;padding:2px;"
+          title="보고서 글자 크기 조절 (이 브라우저에 저장됩니다)">
+          <button @click="changeFontScale(-FONT_SCALE_STEP)" :disabled="fontScale <= FONT_SCALE_MIN"
+            :style="{
+              display:'inline-flex', alignItems:'center', justifyContent:'center',
+              width:'26px', height:'24px', border:'none', borderRadius:'7px', background:'transparent',
+              cursor: fontScale <= FONT_SCALE_MIN ? 'not-allowed' : 'pointer',
+              color: fontScale <= FONT_SCALE_MIN ? '#D0C9BC' : '#1A1100', fontFamily:'inherit',
+            }"
+            @mouseenter="e=>{ if(fontScale > FONT_SCALE_MIN) e.currentTarget.style.background='#F5EDDB' }"
+            @mouseleave="e=>e.currentTarget.style.background='transparent'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+          </button>
+          <button @click="resetFontScale" title="기본값(100%)으로"
+            style="min-width:42px;height:24px;border:none;background:transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:#9A8F7A;padding:0 4px;border-radius:7px;"
+            @mouseenter="e=>{e.currentTarget.style.background='#F5EDDB';e.currentTarget.style.color='#1A1100';}"
+            @mouseleave="e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='#9A8F7A';}">
+            {{ fontScalePercent }}%
+          </button>
+          <button @click="changeFontScale(FONT_SCALE_STEP)" :disabled="fontScale >= FONT_SCALE_MAX"
+            :style="{
+              display:'inline-flex', alignItems:'center', justifyContent:'center',
+              width:'26px', height:'24px', border:'none', borderRadius:'7px', background:'transparent',
+              cursor: fontScale >= FONT_SCALE_MAX ? 'not-allowed' : 'pointer',
+              color: fontScale >= FONT_SCALE_MAX ? '#D0C9BC' : '#1A1100', fontFamily:'inherit',
+            }"
+            @mouseenter="e=>{ if(fontScale < FONT_SCALE_MAX) e.currentTarget.style.background='#F5EDDB' }"
+            @mouseleave="e=>e.currentTarget.style.background='transparent'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+
         <span :class="statusBadge(report.status)" style="font-size:13px;padding:5px 14px;">{{ report.status_label }}</span>
 
         <!-- 반려됨 안내 + 사유 -->
@@ -137,7 +170,7 @@
 
     <!-- 보고서 본문 (Excel 스타일) -->
     <div class="report-scroll-wrap">
-    <div class="card report-card" style="overflow:hidden;padding:0;">
+    <div class="card report-card" :style="{ overflow:'hidden', padding:0, zoom: fontScale }">
 
       <!-- 보고서 헤더 (데스크탑) -->
       <div class="report-header-desktop" style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #1A1100;background:#fff;">
@@ -602,7 +635,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { autoLink } from '@/utils/autoLink.js'
@@ -618,6 +651,28 @@ const props = defineProps({
 const page    = usePage()
 const isOwn   = computed(() => page.props.auth?.user?.id === props.report.user_id)
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin')
+
+// ── 보고서 본문 글자 크기 개인화 (기기별, localStorage 저장) ──────────
+const FONT_SCALE_KEY = 'report_font_scale'
+const FONT_SCALE_MIN = 0.9
+const FONT_SCALE_MAX = 1.6
+const FONT_SCALE_STEP = 0.1
+
+const loadFontScale = () => {
+  const v = parseFloat(localStorage.getItem(FONT_SCALE_KEY))
+  if (Number.isNaN(v)) return 1
+  return Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, v))
+}
+const fontScale = ref(loadFontScale())
+
+watch(fontScale, (v) => localStorage.setItem(FONT_SCALE_KEY, String(v)))
+
+const changeFontScale = (delta) => {
+  const next = Math.round((fontScale.value + delta) * 10) / 10
+  fontScale.value = Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, next))
+}
+const resetFontScale = () => { fontScale.value = 1 }
+const fontScalePercent = computed(() => Math.round(fontScale.value * 100))
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 const avatarColor = (id, user) => {

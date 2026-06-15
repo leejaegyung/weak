@@ -126,6 +126,34 @@
             </button>
           </div>
 
+          <!-- 항목 순서 이동 버튼 (위/아래) -->
+          <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+            <button type="button" @click="moveItem(idx, -1)" :disabled="idx === 0"
+              title="위로 이동"
+              :style="{
+                background:'none', border:'none', padding:'1px 4px', borderRadius:'5px',
+                cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                color: idx === 0 ? '#E8E0D0' : '#9A8F7A',
+                display:'flex', alignItems:'center', transition:'color 0.1s',
+              }"
+              @mouseenter="e=>{ if(idx !== 0) e.currentTarget.style.color='#FD4401' }"
+              @mouseleave="e=>{ if(idx !== 0) e.currentTarget.style.color='#9A8F7A' }">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button type="button" @click="moveItem(idx, 1)" :disabled="idx === modelValue.length - 1"
+              title="아래로 이동"
+              :style="{
+                background:'none', border:'none', padding:'1px 4px', borderRadius:'5px',
+                cursor: idx === modelValue.length - 1 ? 'not-allowed' : 'pointer',
+                color: idx === modelValue.length - 1 ? '#E8E0D0' : '#9A8F7A',
+                display:'flex', alignItems:'center', transition:'color 0.1s',
+              }"
+              @mouseenter="e=>{ if(idx !== modelValue.length - 1) e.currentTarget.style.color='#FD4401' }"
+              @mouseleave="e=>{ if(idx !== modelValue.length - 1) e.currentTarget.style.color='#9A8F7A' }">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+
           <!-- 항목 삭제 버튼 -->
           <button type="button" @click="removeItem(idx)"
             style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
@@ -481,6 +509,16 @@ const addItem = async () => {
 const removeItem = (idx) => {
   const arr = [...props.modelValue]
   arr.splice(idx, 1)
+  emit('update:modelValue', arr)
+}
+
+// 항목 순서 위/아래 이동 (dir: -1 위, +1 아래)
+const moveItem = (idx, dir) => {
+  const target = idx + dir
+  if (target < 0 || target >= props.modelValue.length) return
+  const arr = [...props.modelValue]
+  const [moved] = arr.splice(idx, 1)
+  arr.splice(target, 0, moved)
   emit('update:modelValue', arr)
 }
 

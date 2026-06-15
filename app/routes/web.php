@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
     // 요구/이슈
     Route::get('/issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('/issues', [IssueController::class, 'store'])->name('issues.store');
+    Route::put('/issues/{issue}', [IssueController::class, 'update'])->name('issues.update');
     Route::delete('/issues/{issue}', [IssueController::class, 'destroy'])->name('issues.destroy');
 
     // 보고서 코멘트

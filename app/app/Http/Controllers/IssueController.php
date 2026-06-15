@@ -56,6 +56,30 @@ class IssueController extends Controller
         return back()->with('success', '이슈/요구가 등록되었습니다.');
     }
 
+    public function update(Request $request, Issue $issue): RedirectResponse
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $issue->user_id !== $user->id) abort(403);
+
+        $data = $request->validate([
+            'title'   => ['required', 'string', 'max:200'],
+            'content' => ['required', 'string', 'max:2000'],
+        ]);
+
+        // 제목/내용이 바뀐 경우에만 AI 재분석
+        $changed = $data['title'] !== $issue->title || $data['content'] !== $issue->content;
+        $update  = ['title' => $data['title'], 'content' => $data['content']];
+
+        if ($changed) {
+            $result = $this->aiService->analyzeIssue($data['title'], $data['content']);
+            $update['claude_response'] = $result['response'];
+        }
+
+        $issue->update($update);
+
+        return back()->with('success', '이슈/요구가 수정되었습니다.');
+    }
+
     public function destroy(Issue $issue): RedirectResponse
     {
         $user = Auth::user();

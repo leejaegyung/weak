@@ -141,15 +141,27 @@
                   </select>
                 </div>
                 <div v-else style="flex:1;"></div>
-                <button v-if="isAdmin || issue.user_id === currentUserId" @click.stop="doDelete(issue)"
-                  style="background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:9px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:all 0.1s;"
-                  @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
-                  @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  </svg>
-                  삭제
-                </button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <!-- 수정 버튼 (작성자 또는 관리자) -->
+                  <button v-if="isAdmin || issue.user_id === currentUserId" @click.stop="openEditModal(issue)"
+                    style="background:#EDE9FE;color:#7C3AED;border:2px solid #7C3AED;border-radius:9px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:all 0.1s;"
+                    @mouseenter="e=>{e.currentTarget.style.background='#7C3AED';e.currentTarget.style.color='#fff';}"
+                    @mouseleave="e=>{e.currentTarget.style.background='#EDE9FE';e.currentTarget.style.color='#7C3AED';}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    수정
+                  </button>
+                  <button v-if="isAdmin || issue.user_id === currentUserId" @click.stop="doDelete(issue)"
+                    style="background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:9px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:all 0.1s;"
+                    @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
+                    @mouseleave="e=>{e.currentTarget.style.background='#FEE2E2';e.currentTarget.style.color='#DC2626';}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    </svg>
+                    삭제
+                  </button>
+                </div>
               </div>
             </div>
           </Transition>
@@ -168,7 +180,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </div>
           <div style="flex:1;">
-            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">이슈/요구사항 등록</div>
+            <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">{{ isEditing ? '이슈/요구사항 수정' : '이슈/요구사항 등록' }}</div>
             <div style="font-size:11px;color:#9A8F7A;margin-top:1px;">AI가 내용을 검토하고 명확성을 자동 평가합니다</div>
           </div>
           <button @click="closeWriteModal" style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;display:flex;align-items:center;">
@@ -203,7 +215,7 @@
                 :style="{ opacity: submitting || !newTitle.trim() || !newContent.trim() ? 0.55 : 1 }">
                 <svg v-if="submitting" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity=".25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
                 <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                {{ submitting ? 'AI 검토 중...' : '등록하기' }}
+                {{ submitting ? 'AI 검토 중...' : (isEditing ? '수정하기' : '등록하기') }}
               </button>
             </div>
           </form>
@@ -255,15 +267,30 @@ const toggleExpand = (id) => {
   expandedId.value = expandedId.value === id ? null : id
 }
 
-// 글쓰기 모달
+// 글쓰기/수정 모달
 const showWriteModal = ref(false)
+const editingId      = ref(null)   // null = 신규 등록, 값 있으면 수정
 const newTitle       = ref('')
 const newContent     = ref('')
 const submitting     = ref(false)
 
-const openWriteModal  = () => { showWriteModal.value = true }
+const isEditing = computed(() => editingId.value !== null)
+
+const openWriteModal  = () => {
+  editingId.value = null
+  newTitle.value   = ''
+  newContent.value = ''
+  showWriteModal.value = true
+}
+const openEditModal = (issue) => {
+  editingId.value  = issue.id
+  newTitle.value   = issue.title
+  newContent.value = issue.content
+  showWriteModal.value = true
+}
 const closeWriteModal = () => {
   showWriteModal.value = false
+  editingId.value  = null
   newTitle.value   = ''
   newContent.value = ''
 }
@@ -271,10 +298,16 @@ const closeWriteModal = () => {
 const submitIssue = () => {
   if (submitting.value) return
   submitting.value = true
-  router.post('/issues', { title: newTitle.value, content: newContent.value }, {
+  const payload = { title: newTitle.value, content: newContent.value }
+  const opts = {
     onSuccess: () => { closeWriteModal() },
     onFinish:  () => { submitting.value = false },
-  })
+  }
+  if (isEditing.value) {
+    router.put(`/issues/${editingId.value}`, payload, opts)
+  } else {
+    router.post('/issues', payload, opts)
+  }
 }
 
 // 삭제

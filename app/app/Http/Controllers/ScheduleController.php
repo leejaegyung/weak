@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\WeeklyReport;
+use App\Services\HolidayService;
 use App\Services\ScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -15,8 +16,10 @@ use Inertia\Response;
 
 class ScheduleController extends Controller
 {
-    public function __construct(private ScheduleService $scheduleService)
-    {
+    public function __construct(
+        private ScheduleService $scheduleService,
+        private HolidayService $holidayService,
+    ) {
     }
 
     public function index(Request $request): Response
@@ -62,11 +65,15 @@ class ScheduleController extends Controller
 
         $mySites = $user->sites->pluck('name')->toArray();
 
+        // 공휴일(대체공휴일 포함) 맵 — 표시 주차 범위
+        $holidays = $this->holidayService->between($startDate, $endDate);
+
         return Inertia::render('Schedule/Index', [
             'users'          => $users,
             'teamSchedules'  => $teamSchedules,
             'currDates'      => $currDates,
             'nextDates'      => $nextDates,
+            'holidays'       => $holidays,
             'weekStart'      => $startDate,
             'currentUserId'  => $user->id,
             'isAdmin'        => $user->isAdmin(),
@@ -103,11 +110,15 @@ class ScheduleController extends Controller
 
         $teamSchedules = $this->scheduleService->getTeamSchedules($startDate, $endDate);
 
+        // 공휴일(대체공휴일 포함) 맵 — 해당 월 범위
+        $holidays = $this->holidayService->between($startDate, $endDate);
+
         return response()->json([
             'users'         => $users,
             'teamSchedules' => $teamSchedules,
             'startDate'     => $startDate,
             'endDate'       => $endDate,
+            'holidays'      => $holidays,
         ]);
     }
 

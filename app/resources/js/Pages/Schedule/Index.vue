@@ -117,15 +117,19 @@
             background: day.isToday ? '#FFFBEB' : '#fff',
             position: 'relative',
           }">
-          <!-- 날짜 숫자 -->
-          <div style="padding:5px 8px;display:flex;align-items:center;justify-content:space-between;">
+          <!-- 날짜 숫자 + 공휴일명 -->
+          <div style="padding:5px 8px;display:flex;align-items:center;justify-content:space-between;gap:4px;">
             <span :style="{
               fontSize: '12px', fontWeight: '700',
-              color: day.isSat ? '#2563EB' : day.isSun ? '#DC2626' : '#1A1100',
+              color: monthHolidayName(day.date) ? '#DC2626' : (day.isSat ? '#2563EB' : day.isSun ? '#DC2626' : '#1A1100'),
               background: day.isToday ? '#FDCB40' : 'transparent',
               borderRadius: '50%', width: '22px', height: '22px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }">{{ day.dayNum }}</span>
+            <span v-if="monthHolidayName(day.date)" :title="monthHolidayName(day.date)"
+              style="font-size:9px;font-weight:700;color:#DC2626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">
+              {{ monthHolidayName(day.date) }}
+            </span>
           </div>
 
           <!-- 팀원 일정 칩 (월간 — 이름 인라인 통합, 최대 MONTH_MAX_ITEMS개 표시 후 +N 더보기) -->
@@ -198,8 +202,15 @@
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
                 width: '90px',
               }">
-              <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ DAY_KR[i % 5] }}</div>
-              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ date.substring(5).replace('-','/') }}</div>
+              <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
+                :style="{ color: weekHolidayName(date) ? '#DC2626' : '#1A1100' }">{{ DAY_KR[i % 5] }}</div>
+              <div style="font-size:11px;margin-top:2px;"
+                :style="{ color: weekHolidayName(date) ? '#DC2626' : '#9A8F7A' }">{{ date.substring(5).replace('-','/') }}</div>
+              <div v-if="weekHolidayName(date)"
+                :title="weekHolidayName(date)"
+                style="font-size:9px;font-weight:700;color:#DC2626;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                {{ weekHolidayName(date) }}
+              </div>
             </th>
           </tr>
         </thead>
@@ -718,9 +729,16 @@ const props = defineProps({
   isCurrentWeek:  { type: Boolean, default: true },
   weekReportMap:  { type: Object,  default: () => ({}) },
   mySites:        { type: Array,   default: () => [] },
+  holidays:       { type: Object,  default: () => ({}) },
 })
 
 const DAY_KR = ['월', '화', '수', '목', '금']
+
+// ── 공휴일(대체공휴일 포함) ────────────────────────────
+// 주간 뷰는 서버에서 받은 props.holidays, 월간 뷰는 월별로 별도 로드
+const weekHolidayName  = (date) => props.holidays?.[date] ?? null
+const monthlyHolidays  = ref({})
+const monthHolidayName = (date) => monthlyHolidays.value?.[date] ?? null
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 
@@ -845,6 +863,7 @@ const loadMonthlyData = async () => {
     const month = `${monthlyYear.value}-${String(monthlyMonth.value).padStart(2,'0')}`
     const res = await window.axios.get('/schedules/monthly', { params: { month } })
     monthlyUsers.value = res.data.users
+    monthlyHolidays.value = res.data.holidays ?? {}
 
     // monthlySchedules 초기화
     for (const key in monthlySchedules) delete monthlySchedules[key]

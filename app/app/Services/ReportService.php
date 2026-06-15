@@ -17,11 +17,15 @@ class ReportService
     /**
      * weekStart(Monday 날짜 문자열)로부터 ISO 주차 문자열(e.g. "2026-W20")을 계산.
      * curr_start 날짜 범위 대신 week 컬럼으로 조회해야 날짜 오차 없이 정확히 조회됨.
+     *
+     * ISO 주차('W')는 ISO 연도('o')와 짝을 이뤄야 한다. 달력 연도('Y')를 쓰면
+     * 한 주가 연말·연초 경계를 걸칠 때 같은 주인데도 연도가 달라져
+     * (예: 월 12/30 → "2024-W01", 수 1/1 → "2025-W01") 주차 문자열이 어긋난다.
      */
-    private function weekString(string $weekStart): string
+    public function weekString(string $weekStart): string
     {
         $monday = Carbon::parse($weekStart);
-        return $monday->format('Y') . '-W' . $monday->format('W');
+        return $monday->format('o') . '-W' . $monday->format('W');
     }
 
     public function list(?int $userId = null, ?string $status = null, ?string $search = null, ?string $weekStart = null): array
@@ -197,7 +201,7 @@ class ReportService
         $friday  = $monday->copy()->addDays(4);
         $nextMon = $monday->copy()->addDays(7);
         $nextFri = $monday->copy()->addDays(11);
-        $week    = $monday->format('Y') . '-W' . $monday->format('W');
+        $week    = $this->weekString($monday->format('Y-m-d'));
 
         $reports = WeeklyReport::with('user')->where('week', $week)->get()
             ->sortBy(fn($r) => $r->user?->sort_order ?? 999)->values();

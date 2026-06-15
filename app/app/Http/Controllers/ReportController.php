@@ -362,7 +362,8 @@ class ReportController extends Controller
         $weekOfMonth = (int) ceil($monday->day / 7);
 
         return [
-            'week'       => $now->format('Y') . '-W' . $now->format('W'),
+            // ISO 주차('W')는 ISO 연도('o')와 짝지어야 연말·연초 경계에서 주차가 어긋나지 않음
+            'week'       => $now->format('o') . '-W' . $now->format('W'),
             'label'      => $month . '월 ' . $weekOfMonth . '주차',
             'curr_start' => $monday->format('Y-m-d'),
             'curr_end'   => $friday->format('Y-m-d'),

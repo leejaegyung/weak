@@ -1112,19 +1112,24 @@ const clearLocal = () => {
 
 // 임시저장 존재 여부 확인 (주차 만료 체크 포함)
 const hasDraft = ref(false)
+// 마운트 시 발견됐지만 아직 불러오기/삭제하지 않은 임시저장본이 있는지.
+// true인 동안에는 자동저장이 localStorage를 덮어쓰지 않게 막아
+// 사용자가 불러오기 전에 폼을 건드려도 저장본이 유실되지 않도록 한다.
+const unloadedDraft = ref(false)
 
 const checkLocalDraft = () => {
-  if (props.existingReport) { hasDraft.value = false; return }
+  if (props.existingReport) { hasDraft.value = false; unloadedDraft.value = false; return }
   try {
     const raw = localStorage.getItem(LS_KEY)
-    if (!raw) { hasDraft.value = false; return }
+    if (!raw) { hasDraft.value = false; unloadedDraft.value = false; return }
     const saved = JSON.parse(raw)
     // 주차가 다르면 만료 처리
     if (saved.week && form.week && saved.week !== form.week) {
-      clearLocal(); return
+      clearLocal(); unloadedDraft.value = false; return
     }
     hasDraft.value = !!(saved.__draftId || saved.week)
-  } catch { hasDraft.value = false }
+    unloadedDraft.value = hasDraft.value
+  } catch { hasDraft.value = false; unloadedDraft.value = false }
 }
 
 // 임시저장 불러오기 (수동)
@@ -1150,12 +1155,14 @@ const restoreFromLocal = () => {
 const loadDraft = () => {
   restoreFromLocal()
   hasDraft.value = false
+  unloadedDraft.value = false   // 불러왔으니 이후 자동저장 재개
   showDraftToast('임시저장 내용을 불러왔습니다.', true)
 }
 
 const discardDraft = () => {
   clearLocal()
   draftId.value = null
+  unloadedDraft.value = false   // 삭제했으니 이후 자동저장 재개
 }
 
 // ── Todo 항목별 ▼ 드롭다운 ────────────────────────────
@@ -1208,6 +1215,9 @@ let localSaveTimer = null
 watch(
   () => formFields.map(k => form[k]),
   () => {
+    // 아직 불러오지 않은 임시저장본이 배너에 떠 있는 동안에는 자동저장으로
+    // 덮어쓰지 않는다 (불러오기 전 폼 편집으로 저장본이 유실되는 것 방지)
+    if (unloadedDraft.value) return
     clearTimeout(localSaveTimer)
     localSaveTimer = setTimeout(saveToLocal, 500)
   },
@@ -1310,6 +1320,7 @@ const saveDraft = async () => {
       res = await window.axios.post('/reports/draft', payload)
       draftId.value = res.data.id
     }
+    unloadedDraft.value = false   // 명시적 저장이 현재 폼 내용으로 갱신했으므로 가드 해제
     saveToLocal()   // draftId 포함해서 즉시 저장
     hasDraft.value = true
     showDraftToast('임시 저장되었습니다.', true)

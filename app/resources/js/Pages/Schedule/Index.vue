@@ -95,10 +95,9 @@
       </div>
 
       <!-- 요일 헤더 -->
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F5EDDB;"
-        :style="{ borderBottom: '2px solid ' + gridStrong }">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F5EDDB;border-bottom:2px solid #1A1100;">
         <div v-for="d in ['일','월','화','수','목','금','토']" :key="d"
-          :style="{ padding:'6px 0', textAlign:'center', fontSize:'12px', fontWeight:'700', color: d==='토' ? '#2563EB' : d==='일' ? '#DC2626' : inkText }">
+          :style="{ padding:'6px 0', textAlign:'center', fontSize:'12px', fontWeight:'700', color: d==='토' ? '#2563EB' : d==='일' ? '#DC2626' : '#1A1100' }">
           {{ d }}
         </div>
       </div>
@@ -107,23 +106,22 @@
       <div style="display:grid;grid-template-columns:repeat(7,1fr);">
         <!-- 빈 칸 (첫 주 시작 전) -->
         <div v-for="n in monthCalendarOffset" :key="'empty-'+n"
-          style="min-height:100px;"
-          :style="{ borderRight: '1px solid ' + gridThin, borderBottom: '1px solid ' + gridThin, background: emptyCellBg }"></div>
+          style="min-height:100px;border-right:1px solid #E8E0D0;border-bottom:1px solid #E8E0D0;background:#FAFAF8;"></div>
 
         <!-- 날짜 셀 -->
         <div v-for="day in monthCalendarDays" :key="day.date"
           :style="{
             minHeight: '100px',
-            borderRight: '1px solid ' + gridThin,
-            borderBottom: '1px solid ' + gridThin,
-            background: day.isToday ? monthTodayBg : cellSurface,
+            borderRight: '1px solid #E8E0D0',
+            borderBottom: '1px solid #E8E0D0',
+            background: day.isToday ? '#FFFBEB' : '#fff',
             position: 'relative',
           }">
           <!-- 날짜 숫자 + 공휴일명 -->
           <div style="padding:5px 8px;display:flex;align-items:center;justify-content:space-between;gap:4px;">
             <span :style="{
               fontSize: '12px', fontWeight: '700',
-              color: monthHolidayName(day.date) ? '#DC2626' : (day.isSat ? '#2563EB' : day.isSun ? '#DC2626' : (day.isToday ? '#1A1100' : inkText)),
+              color: monthHolidayName(day.date) ? '#DC2626' : (day.isSat ? '#2563EB' : day.isSun ? '#DC2626' : '#1A1100'),
               background: day.isToday ? '#FDCB40' : 'transparent',
               borderRadius: '50%', width: '22px', height: '22px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -182,10 +180,9 @@
       <table style="border-collapse:collapse;min-width:1050px;width:100%;table-layout:fixed;">
         <!-- 주차 헤더 -->
         <thead>
-          <tr style="background:#F5EDDB;" :style="{ borderBottom: '2px solid ' + gridStrong }">
+          <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
             <th :style="nameColStyle">이름</th>
-            <th colspan="5" style="padding:8px 14px;text-align:center;font-size:12px;font-weight:700;color:#1A1100;font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
-              :style="{ borderRight: '2px solid ' + gridStrong }">
+            <th colspan="5" style="padding:8px 14px;text-align:center;font-size:12px;font-weight:700;color:#1A1100;border-right:2px solid #1A1100;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
               금 주
             </th>
             <th colspan="5" style="padding:8px 14px;text-align:center;font-size:12px;font-weight:700;color:#1A1100;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
@@ -193,7 +190,7 @@
             </th>
           </tr>
           <!-- 날짜 헤더 -->
-          <tr style="background:#F5EDDB;" :style="{ borderBottom: '2px solid ' + gridStrong }">
+          <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
             <th :style="nameColStyle" style="padding:8px 14px;"></th>
             <th v-for="(date, i) in [...currDates, ...nextDates]" :key="date"
               :style="{
@@ -201,12 +198,12 @@
                 textAlign:'center',
                 fontSize:'12px',
                 fontWeight:'700',
-                borderRight: i < 9 ? (i===4 ? '2px solid ' + gridStrong : '1.5px solid ' + gridThin) : 'none',
-                background: isToday(date) ? todayBg : 'transparent',
+                borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
+                background: isToday(date) ? '#FFF0A0' : 'transparent',
                 width: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
-                :style="{ color: weekHolidayName(date) ? '#DC2626' : inkText }">{{ DAY_KR[i % 5] }}</div>
+                :style="{ color: weekHolidayName(date) ? '#DC2626' : '#1A1100' }">{{ DAY_KR[i % 5] }}</div>
               <div style="font-size:11px;margin-top:2px;"
                 :style="{ color: weekHolidayName(date) ? '#DC2626' : '#9A8F7A' }">{{ date.substring(5).replace('-','/') }}</div>
               <div v-if="weekHolidayName(date)"
@@ -223,7 +220,7 @@
           <tr v-for="(user, ui) in orderedUsers" :key="user.id"
             :draggable="isAdmin"
             :style="{
-              borderBottom: ui < orderedUsers.length-1 ? '2px solid ' + gridStrong : 'none',
+              borderBottom: ui < orderedUsers.length-1 ? '2px solid #1A1100' : 'none',
               transition: 'opacity 0.15s',
               opacity: dragSrcIdx === ui ? '0.4' : '1',
               background: dragOverIdx === ui && dragSrcIdx !== ui ? '#FFF0A0' : 'transparent',
@@ -235,8 +232,7 @@
             @dragend="onDragEnd">
 
             <!-- 이름 열 -->
-            <td style="padding:10px 14px;background:#F5EDDB;vertical-align:middle;white-space:nowrap;"
-              :style="{ borderRight: '2px solid ' + gridStrong }">
+            <td style="padding:10px 14px;border-right:2px solid #1A1100;background:#F5EDDB;vertical-align:middle;white-space:nowrap;">
               <div style="display:flex;align-items:center;gap:8px;">
                 <div v-if="isAdmin"
                   style="cursor:grab;color:#C5BAA8;flex-shrink:0;padding:2px;display:flex;align-items:center;user-select:none;"
@@ -275,8 +271,8 @@
             <td v-for="(date, di) in [...currDates, ...nextDates]" :key="date"
               @click="user.id === currentUserId ? openModal(date, localSchedules[user.id][date]) : null"
               :style="{
-                borderRight: di < 9 ? (di===4 ? '2px solid ' + gridStrong : '1.5px solid ' + gridThin) : 'none',
-                background: isToday(date) ? todayBg : 'transparent',
+                borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
+                background: isToday(date) ? '#FFF0A0' : 'transparent',
                 padding:'6px',
                 verticalAlign:'top',
                 overflow:'hidden',
@@ -284,8 +280,8 @@
                 transition:'background 0.1s',
                 position:'relative',
               }"
-              @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? todayBg : cellHoverBg; }"
-              @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? todayBg : 'transparent'; }">
+              @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
+              @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
               <!-- 내용 표시 (시간대별 슬롯 칩 — 고정 높이, 최대 2개 표시) -->
               <div style="height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;overflow:hidden;flex-shrink:0;">
@@ -690,18 +686,6 @@
 import { ref, reactive, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { currentTheme } from '@/utils/theme'
-
-// ── 테마 인식 색상 (다크 모드에서 달력 격자선은 흰색, 오늘 강조는 은은하게) ──
-const isDark      = computed(() => currentTheme.value === 'dark')
-const gridThin    = computed(() => isDark.value ? 'rgba(255,255,255,0.22)' : 'rgba(26,17,0,0.1)')
-const gridStrong  = computed(() => isDark.value ? 'rgba(255,255,255,0.55)' : '#1A1100')
-const todayBg     = computed(() => isDark.value ? 'rgba(253,203,64,0.12)' : '#FFF0A0')
-const cellHoverBg = computed(() => isDark.value ? 'rgba(255,255,255,0.05)' : '#FFFBF0')
-const inkText     = computed(() => isDark.value ? '#ECE4D6' : '#1A1100')
-const cellSurface = computed(() => isDark.value ? '#211C15' : '#fff')          // 월간 날짜 칸 배경
-const emptyCellBg = computed(() => isDark.value ? '#1B1712' : '#FAFAF8')        // 월간 빈 칸 배경
-const monthTodayBg = computed(() => isDark.value ? 'rgba(253,203,64,0.10)' : '#FFFBEB')
 
 const props = defineProps({
   users:          { type: Array,   default: () => [] },
@@ -745,7 +729,7 @@ const today    = new Date().toISOString().slice(0, 10)
 const isToday  = (d) => d === today
 const allDates = computed(() => [...props.currDates, ...props.nextDates])
 
-const nameColStyle = computed(() => ({
+const nameColStyle = {
   width: props.isAdmin ? '130px' : '100px',
   padding: '10px 14px',
   textAlign: 'left',
@@ -754,10 +738,10 @@ const nameColStyle = computed(() => ({
   color: '#9A8F7A',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
-  borderRight: '2px solid ' + gridStrong.value,
+  borderRight: '2px solid #1A1100',
   fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif',
   verticalAlign: 'middle',
-}))
+}
 
 // ── 순서 관리 ──────────────────────────────────────────
 const orderedUsers = ref([...props.users])

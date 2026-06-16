@@ -14,7 +14,7 @@
         </div>
         <p style="color:#9A8F7A;font-size:13px;margin-left:42px;">시스템 요구사항 및 이슈를 등록하고 관리합니다</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <!-- MD 내보내기 (관리자만) -->
         <a v-if="isAdmin" href="/issues/export/md"
           class="btn-secondary btn-sm"
@@ -38,12 +38,12 @@
     <!-- 게시판 테이블 -->
     <div class="card" style="overflow:hidden;padding:0;">
       <!-- 테이블 헤더 -->
-      <div style="display:grid;grid-template-columns:60px 1fr 100px 120px 90px 44px;padding:10px 20px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
-        <span style="text-align:center;">번호</span>
+      <div class="issue-grid" style="display:grid;grid-template-columns:60px 1fr 100px 120px 90px 44px;padding:10px 20px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
+        <span class="issue-col-num" style="text-align:center;">번호</span>
         <span>제목</span>
-        <span>작성자</span>
+        <span class="issue-col-author">작성자</span>
         <span>상태</span>
-        <span>등록일</span>
+        <span class="issue-col-date">등록일</span>
         <span></span>
       </div>
 
@@ -59,6 +59,7 @@
         <div v-for="(issue, i) in issues.data" :key="issue.id">
           <!-- 목록 행 -->
           <div
+            class="issue-grid"
             style="display:grid;grid-template-columns:60px 1fr 100px 120px 90px 44px;padding:14px 20px;align-items:center;cursor:pointer;transition:background 0.12s;"
             :style="{ borderBottom: expandedId !== issue.id && i < issues.data.length-1 ? '1.5px solid #F5EDDB' : 'none' }"
             @click="toggleExpand(issue.id)"
@@ -66,7 +67,7 @@
             @mouseleave="e=>e.currentTarget.style.background='transparent'">
 
             <!-- 번호 -->
-            <div style="text-align:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#9A8F7A;">
+            <div class="issue-col-num" style="text-align:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#9A8F7A;">
               {{ rowNumber(i) }}
             </div>
 
@@ -81,7 +82,7 @@
             </div>
 
             <!-- 작성자 -->
-            <div style="display:flex;align-items:center;gap:7px;">
+            <div class="issue-col-author" style="display:flex;align-items:center;gap:7px;">
               <div :style="{ background: avatarColor(issue.user_id), width:'22px', height:'22px', borderRadius:'50%', border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0 }">
                 {{ issue.user_name?.charAt(0) ?? '?' }}
               </div>
@@ -448,4 +449,16 @@ const aiBoxStyle = (s) => ({
 .expand-enter-active, .expand-leave-active { transition: all 0.2s ease; overflow: hidden; }
 .expand-enter-from, .expand-leave-to { opacity: 0; transform: translateY(-6px); }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* 모바일: 고정폭 6열 그리드가 화면을 넘어가므로 번호·작성자 열을 숨기고 4열로 축소 */
+@media (max-width: 768px) {
+  .issue-grid {
+    grid-template-columns: 1fr auto auto 28px !important;
+    gap: 8px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  .issue-col-num,
+  .issue-col-author { display: none !important; }
+}
 </style>

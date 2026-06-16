@@ -210,3 +210,25 @@
     font-weight: 700;
   }
 }
+
+/* ===========================================================
+   모바일 공통 반응형 보정 (≤768px)
+   - 인라인 스타일을 덮어쓰기 위해 !important 사용
+   - @layer 밖에 두어 우선순위 확보
+   =========================================================== */
+@media (max-width: 768px) {
+  /* 페이지 제목 축소 (인라인 26px → 20px) */
+  .app-main h1 { font-size: 20px !important; }
+
+  /* 2~3열 폼 그리드를 1열로 접기 (7열 달력/고정폭 그리드는 제외) */
+  .app-main [style*="grid-template-columns:1fr 1fr"],
+  .app-main [style*="grid-template-columns:2fr 1fr 1fr"],
+  .app-main [style*="grid-template-columns:2fr 2fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 본문 내 가로 넘침 최종 방어 — 콘텐츠가 화면 밖으로 잘리지 않도록 */
+  .app-main img,
+  .app-main video,
+  .app-main pre { max-width: 100% !important; }
+}

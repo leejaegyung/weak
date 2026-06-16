@@ -126,7 +126,7 @@
               borderRadius: '50%', width: '22px', height: '22px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }">{{ day.dayNum }}</span>
-            <span v-if="monthHolidayName(day.date)" :title="monthHolidayName(day.date)"
+            <span v-if="monthHolidayName(day.date)" v-tooltip="monthHolidayName(day.date)"
               style="font-size:9px;font-weight:700;color:#DC2626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">
               {{ monthHolidayName(day.date) }}
             </span>
@@ -207,7 +207,7 @@
               <div style="font-size:11px;margin-top:2px;"
                 :style="{ color: weekHolidayName(date) ? '#DC2626' : '#9A8F7A' }">{{ date.substring(5).replace('-','/') }}</div>
               <div v-if="weekHolidayName(date)"
-                :title="weekHolidayName(date)"
+                v-tooltip="weekHolidayName(date)"
                 style="font-size:9px;font-weight:700;color:#DC2626;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 {{ weekHolidayName(date) }}
               </div>
@@ -236,7 +236,7 @@
               <div style="display:flex;align-items:center;gap:8px;">
                 <div v-if="isAdmin"
                   style="cursor:grab;color:#C5BAA8;flex-shrink:0;padding:2px;display:flex;align-items:center;user-select:none;"
-                  title="드래그하여 순서 변경">
+                  v-tooltip="'드래그하여 순서 변경'">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="4" y="4" width="16" height="2" rx="1"/>
                     <rect x="4" y="11" width="16" height="2" rx="1"/>
@@ -246,7 +246,7 @@
                 <div
                   @click.stop="weekReportMap[user.id] && router.get(`/reports/${weekReportMap[user.id]}`)"
                   :style="{ display:'flex', alignItems:'center', gap:'6px', cursor: weekReportMap[user.id] ? 'pointer' : 'default' }"
-                  :title="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
+                  v-tooltip="weekReportMap[user.id] ? '주간보고 보기' : '이번 주 보고서 없음'">
                   <div :style="{
                     width:'28px', height:'28px', borderRadius:'50%',
                     background: avatarImg(user.id) ? 'transparent' : avatarColor(user.id),
@@ -289,7 +289,7 @@
                   <template v-for="slot in parsedCell(localSchedules[user.id][date]).slots.slice(0, 2)" :key="slot.time + slot.status">
                     <!-- 슬롯 1개 = 1 칩 (상태 + 사이트 한 줄 통합) -->
                     <div
-                      :title="`(${slot.time}) ${[slot.status, [...slot.sites, slot.content ?? ''].filter(Boolean).join(', ')].filter(Boolean).join(': ')}`"
+                      v-tooltip="`(${slot.time}) ${[slot.status, [...slot.sites, slot.content ?? ''].filter(Boolean).join(', ')].filter(Boolean).join(': ')}`"
                       :style="{
                       display:'flex', alignItems:'center', gap:'3px',
                       padding:'2px 6px', borderRadius:'2px', fontSize:'10.5px', fontWeight:'800',

@@ -6,7 +6,7 @@
       style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;">
       <div v-for="u in teamUsers" :key="u.id"
         @click="u.report_id && router.get(`/reports/${u.report_id}`)"
-        :title="u.report_id ? u.name + ' 보고서 보기' : u.name + ' — 미제출'"
+        v-tooltip="u.report_id ? u.name + ' 보고서 보기' : u.name + ' — 미제출'"
         :style="{
           display:'flex', alignItems:'center', gap:'6px',
           padding:'5px 12px', borderRadius:'10px', flexShrink:0,
@@ -78,7 +78,7 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <!-- 글자 크기 개인화 (기기별 저장) -->
         <div style="display:inline-flex;align-items:center;gap:2px;background:#fff;border:2px solid #1A1100;border-radius:10px;padding:2px;"
-          title="보고서 글자 크기 조절 (이 브라우저에 저장됩니다)">
+          v-tooltip="'보고서 글자 크기 조절 (이 브라우저에 저장됩니다)'">
           <button @click="changeFontScale(-FONT_SCALE_STEP)" :disabled="fontScale <= FONT_SCALE_MIN"
             :style="{
               display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -90,7 +90,7 @@
             @mouseleave="e=>e.currentTarget.style.background='transparent'">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
           </button>
-          <button @click="resetFontScale" title="기본값(100%)으로"
+          <button @click="resetFontScale" v-tooltip="'기본값(100%)으로'"
             style="min-width:42px;height:24px;border:none;background:transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:#9A8F7A;padding:0 4px;border-radius:7px;"
             @mouseenter="e=>{e.currentTarget.style.background='#F5EDDB';e.currentTarget.style.color='#1A1100';}"
             @mouseleave="e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='#9A8F7A';}">
@@ -584,13 +584,13 @@
                       <button @click="startEdit(c)"
                         style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:4px;border-radius:5px;display:flex;align-items:center;"
                         @mouseenter="e=>e.currentTarget.style.color='#7C3AED'"
-                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="수정">
+                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" v-tooltip="'수정'">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
                       <button @click="removeComment(c)"
                         style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:4px;border-radius:5px;display:flex;align-items:center;"
                         @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
-                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="삭제">
+                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" v-tooltip="'삭제'">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                       </button>
                     </div>

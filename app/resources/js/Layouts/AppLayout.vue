@@ -91,7 +91,7 @@
                         style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;color:#C8BFA8;padding:3px;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:color 0.1s,background 0.1s;line-height:1;"
                         @mouseenter="e=>{e.currentTarget.style.color='#DC2626';e.currentTarget.style.background='#FEE2E2';}"
                         @mouseleave="e=>{e.currentTarget.style.color='#C8BFA8';e.currentTarget.style.background='none';}"
-                        title="알림 삭제">
+                        v-tooltip="'알림 삭제'">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M18 6L6 18M6 6l12 12"/>
                         </svg>
@@ -106,7 +106,7 @@
         <Link href="/profile"
           class="header-user-info"
           style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:5px 10px;text-decoration:none;transition:background 0.1s;"
-          title="개인설정"
+          v-tooltip="'개인설정'"
           @mouseenter="e=>e.currentTarget.style.background='rgba(255,255,255,0.25)'"
           @mouseleave="e=>e.currentTarget.style.background='rgba(255,255,255,0.15)'">
           <div :style="{

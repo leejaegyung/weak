@@ -5,7 +5,7 @@
       <div style="display:flex;gap:3px;align-items:center;">
         <!-- 복사 버튼 -->
         <button type="button" @click="handleCopy"
-          :title="copied ? '복사됨!' : '항목 전체 복사'"
+          v-tooltip="copied ? '복사됨!' : '항목 전체 복사'"
           :style="{
             background: copied ? '#FDCB40' : 'transparent',
             border: copied ? '1.5px solid #1A1100' : '1.5px solid transparent',
@@ -29,7 +29,7 @@
 
         <!-- 붙여넣기 버튼 -->
         <button type="button" @click="handlePaste"
-          title="복사한 항목 붙여넣기"
+          v-tooltip="'복사한 항목 붙여넣기'"
           :disabled="!canPaste"
           :style="{
             border: '1.5px solid transparent',
@@ -56,7 +56,7 @@
 
         <!-- 취소(비우기) 버튼 -->
         <button type="button" @click="handleCancel"
-          title="항목 전체 비우기"
+          v-tooltip="'항목 전체 비우기'"
           :disabled="!modelValue.length"
           :style="{
             border: '1.5px solid transparent',
@@ -115,7 +115,7 @@
             <!-- 드롭다운 토글 버튼 (▼) -->
             <button v-if="suggestions.length" type="button"
               @mousedown.prevent="toggleDropdown(idx)"
-              title="저장된 항목 목록 보기"
+              v-tooltip="'저장된 항목 목록 보기'"
               style="flex-shrink:0;background:#F0EBE0;border:1.5px solid #C5BAA8;border-radius:7px;width:28px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;"
               @mouseenter="e=>{e.currentTarget.style.background='#E8E0D0';e.currentTarget.style.borderColor='#9A8F7A';}"
               @mouseleave="e=>{e.currentTarget.style.background='#F0EBE0';e.currentTarget.style.borderColor='#C5BAA8';}">
@@ -129,7 +129,7 @@
           <!-- 항목 순서 이동 버튼 (위/아래) -->
           <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
             <button type="button" @click="moveItem(idx, -1)" :disabled="idx === 0"
-              title="위로 이동"
+              v-tooltip="'위로 이동'"
               :style="{
                 background:'none', border:'none', padding:'1px 4px', borderRadius:'5px',
                 cursor: idx === 0 ? 'not-allowed' : 'pointer',
@@ -141,7 +141,7 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
             </button>
             <button type="button" @click="moveItem(idx, 1)" :disabled="idx === modelValue.length - 1"
-              title="아래로 이동"
+              v-tooltip="'아래로 이동'"
               :style="{
                 background:'none', border:'none', padding:'1px 4px', borderRadius:'5px',
                 cursor: idx === modelValue.length - 1 ? 'not-allowed' : 'pointer',

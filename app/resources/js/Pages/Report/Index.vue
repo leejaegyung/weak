@@ -47,7 +47,7 @@
         <!-- 팀장 메일 전송 (관리자만) -->
         <button v-if="isAdmin" @click="openMailModal"
           :disabled="!canSendMail"
-          :title="!canSendMail ? '전원 제출 완료 후 전송 가능합니다' : '주간보고 메일 전송'"
+          v-tooltip="!canSendMail ? '전원 제출 완료 후 전송 가능합니다' : '주간보고 메일 전송'"
           class="btn-secondary btn-sm"
           style="display:inline-flex;align-items:center;gap:5px;"
           :style="{ opacity: canSendMail ? 1 : 0.45, cursor: canSendMail ? 'pointer' : 'not-allowed' }">
@@ -170,7 +170,7 @@
             :style="{ color: commentCountFor(r) > 0 ? '#7C3AED' : '#D0C9BC' }"
             @mouseenter="e=>e.currentTarget.style.color='#7C3AED'"
             @mouseleave="e=>{ e.currentTarget.style.color = commentCountFor(r) > 0 ? '#7C3AED' : '#D0C9BC' }"
-            title="코멘트">
+            v-tooltip="'코멘트'">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
@@ -182,7 +182,7 @@
             style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:5px;border-radius:6px;transition:color 0.1s;display:flex;align-items:center;"
             @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
             @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'"
-            title="삭제">
+            v-tooltip="'삭제'">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
             </svg>
@@ -457,13 +457,13 @@
                       <button @click="startEditComment(c)"
                         style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:4px;border-radius:5px;display:flex;align-items:center;"
                         @mouseenter="e=>e.currentTarget.style.color='#7C3AED'"
-                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="수정">
+                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" v-tooltip="'수정'">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
                       <button @click="deleteComment(c)"
                         style="background:none;border:none;cursor:pointer;color:#C8BFA8;padding:4px;border-radius:5px;display:flex;align-items:center;"
                         @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
-                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" title="삭제">
+                        @mouseleave="e=>e.currentTarget.style.color='#C8BFA8'" v-tooltip="'삭제'">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                       </button>
                     </div>

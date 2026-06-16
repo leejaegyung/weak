@@ -130,7 +130,7 @@
           <!-- 숨김 토글 -->
           <div @click.stop>
             <button @click="toggleHidden(u)"
-              :title="u.is_hidden ? '클릭하면 표시됩니다' : '클릭하면 숨겨집니다'"
+              v-tooltip="u.is_hidden ? '클릭하면 표시됩니다' : '클릭하면 숨겨집니다'"
               style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;cursor:pointer;font-weight:700;transition:all 0.1s;white-space:nowrap;"
               :style="u.is_hidden
                 ? 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'
@@ -159,7 +159,7 @@
           <!-- 삭제 버튼 -->
           <div @click.stop style="display:flex;justify-content:center;">
             <button @click="confirmDelete(u)"
-              title="사용자 삭제"
+              v-tooltip="'사용자 삭제'"
               style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:5px;border-radius:6px;transition:color 0.1s;display:flex;align-items:center;"
               @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
               @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">

@@ -46,7 +46,7 @@
                 flexShrink:0,
                 boxShadow: aiEnabled ? '2px 2px 0 #1A1100' : '2px 2px 0 #1A1100',
               }"
-              :title="aiEnabled ? 'AI 분석 비활성화' : 'AI 분석 활성화'">
+              v-tooltip="aiEnabled ? 'AI 분석 비활성화' : 'AI 분석 활성화'">
               <div :style="{
                 position:'absolute',
                 top:'3px',

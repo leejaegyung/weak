@@ -83,7 +83,7 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <!-- 이전 보고서 미리보기 아이콘 -->
         <button v-if="prevReports?.length" type="button" @click="showPrevModal = true"
-          title="이전 보고서 불러오기"
+          v-tooltip="'이전 보고서 불러오기'"
           style="background:#FFF0A0;border:2px solid #1A1100;border-radius:10px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;color:#1A1100;font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
           @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
           @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
@@ -509,7 +509,7 @@
                 <!-- ▼ 드롭다운 버튼 (mySites 있을 때만) -->
                 <button v-if="mySites.length" type="button"
                   @mousedown.prevent="toggleTodoItemDrop(idx)"
-                  title="저장된 사이트 목록"
+                  v-tooltip="'저장된 사이트 목록'"
                   style="flex-shrink:0;background:#F0EBE0;border:1.5px solid #C5BAA8;border-radius:7px;width:28px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;"
                   @mouseenter="e=>{e.currentTarget.style.background='#E8E0D0';e.currentTarget.style.borderColor='#9A8F7A';}"
                   @mouseleave="e=>{e.currentTarget.style.background='#F0EBE0';e.currentTarget.style.borderColor='#C5BAA8';}">
@@ -647,7 +647,7 @@
           <div style="display:flex;gap:4px;align-items:center;">
             <!-- 전체화면 토글 -->
             <button type="button" @click="isFullscreen=!isFullscreen"
-              :title="isFullscreen ? '작게 보기' : '전체 화면'"
+              v-tooltip="isFullscreen ? '작게 보기' : '전체 화면'"
               style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;"
               @mouseenter="e=>e.currentTarget.style.color='#1A1100'"
               @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">

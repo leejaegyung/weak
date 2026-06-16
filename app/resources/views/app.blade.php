@@ -8,6 +8,16 @@
     <link rel="alternate icon" href="/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{-- 테마 깜빡임(FOUC) 방지: 앱 렌더 전에 저장된 테마 클래스를 미리 적용 --}}
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('app-theme') === 'dark') {
+                    document.documentElement.classList.add('theme-dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     @vite('resources/js/app.js')
     @inertiaHead
 </head>

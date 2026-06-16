@@ -15,6 +15,56 @@
         </div>
       </div>
 
+      <!-- ── 화면 모드 (테마) ── -->
+      <div class="card">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+          <span>🌗</span> 화면 모드
+        </div>
+        <p style="font-size:12px;color:#9A8F7A;margin-bottom:16px;">이 브라우저에만 저장됩니다. 기기마다 따로 설정할 수 있어요.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <!-- 기본 테마 -->
+          <button type="button" @click="setTheme('default')"
+            :style="{
+              display:'flex', alignItems:'center', gap:'12px', textAlign:'left',
+              padding:'14px 16px', borderRadius:'12px', cursor:'pointer', fontFamily:'inherit',
+              background: currentTheme === 'default' ? '#FFF0A0' : '#fff',
+              border: currentTheme === 'default' ? '2px solid #1A1100' : '2px solid #E8E0D0',
+              boxShadow: currentTheme === 'default' ? '3px 3px 0 #1A1100' : 'none',
+              transition:'all 0.12s',
+            }">
+            <div class="theme-swatch" style="width:40px;height:40px;border-radius:9px;border:2px solid #1A1100;flex-shrink:0;background:linear-gradient(135deg,#FFF8EE 50%,#FDCB40 50%);"></div>
+            <div>
+              <div style="font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;">
+                기본
+                <svg v-if="currentTheme === 'default'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">따뜻한 크림 테마</div>
+            </div>
+          </button>
+
+          <!-- 다크 모드 -->
+          <button type="button" @click="setTheme('dark')"
+            :style="{
+              display:'flex', alignItems:'center', gap:'12px', textAlign:'left',
+              padding:'14px 16px', borderRadius:'12px', cursor:'pointer', fontFamily:'inherit',
+              background: currentTheme === 'dark' ? '#FFF0A0' : '#fff',
+              border: currentTheme === 'dark' ? '2px solid #1A1100' : '2px solid #E8E0D0',
+              boxShadow: currentTheme === 'dark' ? '3px 3px 0 #1A1100' : 'none',
+              transition:'all 0.12s',
+            }">
+            <div class="theme-swatch" style="width:40px;height:40px;border-radius:9px;border:2px solid #1A1100;flex-shrink:0;background:linear-gradient(135deg,#14100A 50%,#FD4401 50%);"></div>
+            <div>
+              <div style="font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;">
+                다크
+                <svg v-if="currentTheme === 'dark'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:2px;">어두운 화면</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- ── 기본 정보 ── -->
       <div class="card">
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:14px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
@@ -285,6 +335,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { currentTheme, setTheme } from '@/utils/theme'
 
 const props = defineProps({
   profileUser: { type: Object, required: true },

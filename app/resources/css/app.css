@@ -232,3 +232,28 @@
   .app-main video,
   .app-main pre { max-width: 100% !important; }
 }
+
+/* ===========================================================
+   다크 모드 (개인설정 → 화면 모드)
+   - 앱 전체가 인라인 스타일이라, 색조 보존 인버트 필터로 한 번에 전환
+   - invert + hue-rotate(180deg): 명도는 뒤집되 색상(주황·노랑 등)은 유지
+   - 이미지/업로드 아바타는 다시 한번 인버트해 원래 색으로 복원
+   =========================================================== */
+html.theme-dark {
+  background: #0E0B07;
+}
+html.theme-dark .app-root {
+  /* 크림색 배경(#FFF8EE)이 필터로 자동으로 어두워짐 — 배경을 직접 덮어쓰면
+     필터가 다시 반전시켜 밝아지므로 건드리지 않는다 */
+  filter: invert(1) hue-rotate(180deg);
+}
+/* 실제 이미지/사진/업로드 아바타는 색 반전 복원 */
+html.theme-dark .app-root img,
+html.theme-dark .app-root .theme-swatch {
+  filter: invert(1) hue-rotate(180deg);
+}
+/* 인쇄 시에는 필터 해제 (다크 모드로 출력 방지) */
+@media print {
+  html.theme-dark .app-root { filter: none !important; }
+  html.theme-dark .app-root img { filter: none !important; }
+}

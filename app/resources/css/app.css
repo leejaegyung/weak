@@ -235,25 +235,94 @@
 
 /* ===========================================================
    다크 모드 (개인설정 → 화면 모드)
-   - 앱 전체가 인라인 스타일이라, 색조 보존 인버트 필터로 한 번에 전환
-   - invert + hue-rotate(180deg): 명도는 뒤집되 색상(주황·노랑 등)은 유지
-   - 이미지/업로드 아바타는 다시 한번 인버트해 원래 색으로 복원
+   필터가 아닌 실제 다크 팔레트로 설계:
+   - 큰 면(배경·사이드바·헤더·카드·입력창)을 어둡게
+   - 본문 글자색(#1A1100 등)을 밝게 반전
+   - 컬러 칩/배지(파스텔)는 어두운 배경 위에서 잘 보이므로 유지
+   - 단, 밝은 강조 배경(노랑·파스텔) 위의 글자는 어둡게 유지(대비 확보)
+   인라인 스타일을 덮어써야 하므로 !important + 속성 선택자 사용.
    =========================================================== */
-html.theme-dark {
-  background: #0E0B07;
+html.theme-dark,
+html.theme-dark body { background: #100D09; color: #ECE4D6; }
+
+/* ── 큰 구조 면 ── */
+html.theme-dark .app-root,
+html.theme-dark .app-main { background: #14110C !important; }
+html.theme-dark .app-sidebar { background: #1C1813 !important; border-right-color: #3A3329 !important; }
+html.theme-dark .app-root > header { background: #1C140C !important; border-bottom-color: #3A3329 !important; }
+html.theme-dark .mobile-bottom-nav { background: #1C1813 !important; border-top-color: #3A3329 !important; }
+
+/* ── 카드 / 입력창 ── */
+html.theme-dark .card {
+  background: #211C15 !important;
+  border-color: #3A3329 !important;
+  box-shadow: 4px 4px 0 #0A0805 !important;
 }
-html.theme-dark .app-root {
-  /* 크림색 배경(#FFF8EE)이 필터로 자동으로 어두워짐 — 배경을 직접 덮어쓰면
-     필터가 다시 반전시켜 밝아지므로 건드리지 않는다 */
-  filter: invert(1) hue-rotate(180deg);
+html.theme-dark .input-field {
+  background: #14110C !important;
+  color: #ECE4D6 !important;
+  border-color: #3A3329 !important;
 }
-/* 실제 이미지/사진/업로드 아바타는 색 반전 복원 */
-html.theme-dark .app-root img,
-html.theme-dark .app-root .theme-swatch {
-  filter: invert(1) hue-rotate(180deg);
+html.theme-dark .input-field::placeholder { color: #7C7261 !important; }
+html.theme-dark .nav-item { color: #ECE4D6 !important; }
+
+/* 흰색 보조 버튼(클래스 기반)을 다크로 — 인라인이 아니라 별도 처리 필요 */
+html.theme-dark .btn-secondary {
+  background: #2A241C !important;
+  color: #ECE4D6 !important;
+  border-color: #4A4136 !important;
+  box-shadow: 2px 2px 0 #0A0805 !important;
 }
-/* 인쇄 시에는 필터 해제 (다크 모드로 출력 방지) */
+html.theme-dark .btn-secondary:hover:not(:disabled) { background: #353027 !important; }
+
+/* 스크롤바를 어두운 배경에서 보이도록 */
+html.theme-dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); }
+
+/* 커스텀 툴팁(body에 부착, app-root 밖)이 어두운 배경에 묻히지 않도록 테두리 강조 */
+html.theme-dark [role="tooltip"] { border-color: #5A5043 !important; }
+
+/* ── 본문 글자색 반전 (인라인 color) ── */
+html.theme-dark [style*="color:#1A1100"] { color: #ECE4D6 !important; }
+html.theme-dark [style*="color:#4A3F2A"] { color: #CDC2AF !important; }
+html.theme-dark [style*="color:#9A8F7A"] { color: #A99E89 !important; }
+html.theme-dark [style*="color:#6B5E4A"] { color: #B6AB95 !important; }
+
+/* ── 두꺼운 검정 테두리 → 보이는 어두운 선 ── */
+html.theme-dark [style*="solid #1A1100"] { border-color: #4A4136 !important; }
+html.theme-dark [style*="solid #E8E0D0"],
+html.theme-dark [style*="solid #F5EDDB"] { border-color: #332D24 !important; }
+
+/* ── 밝은 표면 → 어두운 표면 ── */
+html.theme-dark [style*="background:#fff;"],
+html.theme-dark [style*="background:#FFFFFF"],
+html.theme-dark [style*="background:#ffffff"],
+html.theme-dark [style*="background:#FFFDF7"],
+html.theme-dark [style*="background:#FDFAF5"],
+html.theme-dark [style*="background:#FDFAF7"],
+html.theme-dark [style*="background:#FAFAF8"],
+html.theme-dark [style*="background:#FAFAF5"],
+html.theme-dark [style*="background:#F9F7F4"],
+html.theme-dark [style*="background:#FFF8EE"] { background: #211C15 !important; }
+html.theme-dark [style*="background:#F5EDDB"],
+html.theme-dark [style*="background:#F0EBE0"] { background: #262019 !important; }
+html.theme-dark [style*="background:#FFFBEB"],
+html.theme-dark [style*="background:#FFF0A0"] { background: #2E2A12 !important; }
+
+/* ── 밝은 강조 배경 위의 글자는 어둡게 유지 (노랑·파스텔: 버튼/활성메뉴/위젯/칩) ── */
+html.theme-dark [style*="background:#FDCB40"],   html.theme-dark [style*="background:#FDCB40"] *,
+html.theme-dark [style*="background:#DBEAFE"],   html.theme-dark [style*="background:#DBEAFE"] *,
+html.theme-dark [style*="background:#EDE9FE"],   html.theme-dark [style*="background:#EDE9FE"] *,
+html.theme-dark [style*="background:#F0FDF4"],   html.theme-dark [style*="background:#F0FDF4"] *,
+html.theme-dark [style*="background:#FFF0F0"],   html.theme-dark [style*="background:#FFF0F0"] *,
+html.theme-dark [style*="background:#FFF0F3"],   html.theme-dark [style*="background:#FFF0F3"] *,
+html.theme-dark [style*="background:#F5F3FF"],   html.theme-dark [style*="background:#F5F3FF"] *,
+html.theme-dark [style*="background:#FEF9C3"],   html.theme-dark [style*="background:#FEF9C3"] *,
+html.theme-dark [style*="background:#DCFCE7"],   html.theme-dark [style*="background:#DCFCE7"] *,
+html.theme-dark [style*="background:#FEE2E2"],   html.theme-dark [style*="background:#FEE2E2"] * { color: #1A1100 !important; }
+
+/* 인쇄 시 다크 해제 */
 @media print {
-  html.theme-dark .app-root { filter: none !important; }
-  html.theme-dark .app-root img { filter: none !important; }
+  html.theme-dark .app-root,
+  html.theme-dark .app-main,
+  html.theme-dark .card { background: #fff !important; color: #1A1100 !important; }
 }

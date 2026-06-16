@@ -436,7 +436,7 @@
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">시간</span>
-                  <span style="font-size:10px;color:#C5BAA8;">종일/오전/오후별로 각각 등록됩니다</span>
+                  <span style="font-size:10px;color:#C5BAA8;">일정의 시간대를 선택하세요</span>
                 </div>
                 <div style="display:flex;gap:6px;">
                   <button v-for="t in ['종일','오전','오후']" :key="t" type="button" @click="modalTime = t"
@@ -445,38 +445,10 @@
                       border: modalTime === t ? '2px solid #1A1100' : '2px solid #D0C9BC',
                       background: modalTime === t ? '#1A1100' : '#fff',
                       color: modalTime === t ? '#FDCB40' : '#6B5E4A',
-                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s', position:'relative',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
                     }">
                     {{ t }}
-                    <span v-if="modalAllSlots[t].status" :style="{
-                      position:'absolute', top:'-5px', right:'-5px',
-                      width:'8px', height:'8px', borderRadius:'50%',
-                      background: STATUS_STYLE_MAP[modalAllSlots[t].status]?.border ?? '#9A8F7A',
-                      border:'1.5px solid #fff',
-                    }"></span>
                   </button>
-                </div>
-                <!-- 등록된 슬롯 미리보기 -->
-                <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
-                  <template v-for="t in ['종일','오전','오후']" :key="t">
-                    <!-- 상태 있는 슬롯 -->
-                    <div v-if="modalAllSlots[t].status && STATUS_STYLE_MAP[modalAllSlots[t].status]"
-                      :style="{
-                        display:'inline-flex', alignItems:'center', gap:'3px',
-                        padding:'2px 7px', borderRadius:'4px', fontSize:'11px', fontWeight:'700',
-                        background: STATUS_STYLE_MAP[modalAllSlots[t].status].bg,
-                        color: STATUS_STYLE_MAP[modalAllSlots[t].status].color,
-                        border: '1.5px solid ' + STATUS_STYLE_MAP[modalAllSlots[t].status].border,
-                      }">
-                      <span style="opacity:0.6;font-size:10px;">({{ t }})</span>
-                      {{ STATUS_STYLE_MAP[modalAllSlots[t].status].icon }} {{ modalAllSlots[t].status }}<template v-if="modalAllSlots[t].content">: {{ modalAllSlots[t].content }}</template>
-                    </div>
-                    <!-- 내용만 있는 슬롯 (상태 없음) -->
-                    <div v-else-if="modalAllSlots[t].content"
-                      style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;background:#CFFAFE;color:#0E7490;border:1.5px solid #67E8F9;">
-                      <span style="opacity:0.6;font-size:10px;">({{ t }})</span> ✏ {{ modalAllSlots[t].content }}
-                    </div>
-                  </template>
                 </div>
               </div>
 
@@ -484,7 +456,7 @@
               <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
-                  <span style="font-size:10px;color:#B8B0C8;">{{ modalTime }} · 하나만 선택</span>
+                  <span style="font-size:10px;color:#B8B0C8;">하나만 선택</span>
                 </div>
                 <div style="display:flex;gap:7px;flex-wrap:wrap;">
                   <button v-for="tag in QUICK_TAGS" :key="tag.label" type="button"
@@ -492,11 +464,11 @@
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'5px',
                       padding:'5px 13px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
-                      border: modalAllSlots[modalTime].status === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: modalAllSlots[modalTime].status === tag.label ? tag.bg : '#fff',
-                      color: modalAllSlots[modalTime].status === tag.label ? tag.color : '#9A8F7A',
+                      border: modalStatus === tag.label ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: modalStatus === tag.label ? tag.bg : '#fff',
+                      color: modalStatus === tag.label ? tag.color : '#9A8F7A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: modalAllSlots[modalTime].status === tag.label ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: modalStatus === tag.label ? '2px 2px 0 #1A1100' : 'none',
                     }">
                     <span>{{ tag.icon }}</span>{{ tag.label }}
                   </button>
@@ -508,7 +480,6 @@
                 style="background:#FFFBF0;border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">내 사이트</span>
-                  <span style="font-size:10px;color:#C5BAA8;">{{ modalTime }}</span>
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="site in mySites" :key="site" type="button"
@@ -516,11 +487,11 @@
                     :style="{
                       display:'inline-flex', alignItems:'center', gap:'4px',
                       padding:'4px 12px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
-                      border: modalAllSlots[modalTime].sites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
-                      background: modalAllSlots[modalTime].sites.includes(site) ? '#FDCB40' : '#fff',
-                      color: modalAllSlots[modalTime].sites.includes(site) ? '#1A1100' : '#6B5E4A',
+                      border: modalSites.includes(site) ? '2px solid #1A1100' : '2px solid #D0C9BC',
+                      background: modalSites.includes(site) ? '#FDCB40' : '#fff',
+                      color: modalSites.includes(site) ? '#1A1100' : '#6B5E4A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
-                      boxShadow: modalAllSlots[modalTime].sites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
+                      boxShadow: modalSites.includes(site) ? '2px 2px 0 #1A1100' : 'none',
                     }">
                     {{ site }}
                   </button>
@@ -534,29 +505,29 @@
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
                   <span style="font-size:11px;color:#0369A1;font-weight:700;letter-spacing:0.03em;">내용</span>
-                  <span style="font-size:10px;color:#7DD3FC;">{{ modalTime }} 슬롯에 포함되어 표시됩니다</span>
+                  <span style="font-size:10px;color:#7DD3FC;">일정에 인라인으로 표시됩니다</span>
                 </div>
-                <!-- 미리보기 칩 — 슬롯 스타일로 통합 표시 -->
-                <div v-if="modalAllSlots[modalTime].content.trim()" style="margin-bottom:8px;">
+                <!-- 미리보기 칩 -->
+                <div v-if="modalContent.trim()" style="margin-bottom:8px;">
                   <div :style="{
                     display:'inline-flex', alignItems:'center', gap:'3px',
                     padding:'2px 8px', borderRadius:'4px', fontSize:'11px', fontWeight:'700',
-                    background: modalAllSlots[modalTime].status && STATUS_STYLE_MAP[modalAllSlots[modalTime].status] ? STATUS_STYLE_MAP[modalAllSlots[modalTime].status].bg : '#CFFAFE',
-                    color: modalAllSlots[modalTime].status && STATUS_STYLE_MAP[modalAllSlots[modalTime].status] ? STATUS_STYLE_MAP[modalAllSlots[modalTime].status].color : '#0E7490',
-                    border: '1.5px solid ' + (modalAllSlots[modalTime].status && STATUS_STYLE_MAP[modalAllSlots[modalTime].status] ? STATUS_STYLE_MAP[modalAllSlots[modalTime].status].border : '#67E8F9'),
+                    background: modalStatus && STATUS_STYLE_MAP[modalStatus] ? STATUS_STYLE_MAP[modalStatus].bg : '#CFFAFE',
+                    color: modalStatus && STATUS_STYLE_MAP[modalStatus] ? STATUS_STYLE_MAP[modalStatus].color : '#0E7490',
+                    border: '1.5px solid ' + (modalStatus && STATUS_STYLE_MAP[modalStatus] ? STATUS_STYLE_MAP[modalStatus].border : '#67E8F9'),
                   }">
                     <span style="opacity:0.6;font-size:10px;">({{ modalTime }})</span>
-                    <template v-if="modalAllSlots[modalTime].status && STATUS_STYLE_MAP[modalAllSlots[modalTime].status]">
-                      {{ STATUS_STYLE_MAP[modalAllSlots[modalTime].status].icon }} {{ modalAllSlots[modalTime].status }}:
+                    <template v-if="modalStatus && STATUS_STYLE_MAP[modalStatus]">
+                      {{ STATUS_STYLE_MAP[modalStatus].icon }} {{ modalStatus }}:
                     </template>
                     <template v-else>✏</template>
-                    {{ modalAllSlots[modalTime].content }}
+                    {{ modalContent }}
                   </div>
                 </div>
                 <textarea
-                  v-model="modalAllSlots[modalTime].content"
+                  v-model="modalContent"
                   rows="2"
-                  placeholder="내용을 입력하세요 — 현재 시간대 슬롯에 인라인으로 표시됩니다"
+                  placeholder="내용을 입력하세요 — 일정에 인라인으로 표시됩니다"
                   style="width:100%;background:#fff;border:1.5px solid #BAE6FD;border-radius:8px;padding:8px 11px;color:#1A1100;font-size:13px;font-family:inherit;outline:none;resize:none;line-height:1.65;transition:border-color 0.12s;"
                   @focus="e=>e.target.style.borderColor='#0369A1'"
                   @blur="e=>e.target.style.borderColor='#BAE6FD'"
@@ -1043,55 +1014,45 @@ const parsedCell = (text) => {
   return { slots, content: contentLines.join(' ').trim() }
 }
 
-// ── 저장 내용 빌드 — 신규 포맷 ───────────────────────────────────────────
+// ── 저장 내용 빌드 — 신규 포맷 (단일 일정) ───────────────────────────────
 const buildContent = () => {
-  const lines = []
-  for (const time of TIME_ORDER) {
-    const slot = modalAllSlots[time]
-    const c    = slot.content.replace(/\n/g, ' ').trim()
-    if (slot.status || slot.sites.length || c) {
-      const sitePart = slot.sites.join(',')
-      let line = `[${time}]${slot.status}`
-      if (sitePart) line += ':' + sitePart
-      if (c)        line += '|' + c
-      lines.push(line)
-    }
-  }
-  return lines.join('\n')
+  const status  = modalStatus.value
+  const sites   = modalSites.value
+  const content = modalContent.value.replace(/\n/g, ' ').trim()
+  if (!status && !sites.length && !content) return ''
+  let line = `[${modalTime.value}]${status}`
+  if (sites.length) line += ':' + sites.join(',')
+  if (content)      line += '|' + content
+  return line
 }
 
 // ── 모달 상태 ──────────────────────────────────────────
 const showModal    = ref(false)
 const modalDate    = ref(null)
-const modalTime    = ref('종일')   // 현재 편집 중인 시간대
-const modalAllSlots = reactive({
-  '종일': { status: '', sites: [], content: '' },
-  '오전': { status: '', sites: [], content: '' },
-  '오후': { status: '', sites: [], content: '' },
-})
+const modalTime    = ref('종일')   // 일정 시간대 (단순 표기용)
+// 단일 일정 모델 — 상태/사이트/내용은 시간대와 무관하게 하나로 관리
+const modalStatus  = ref('')
+const modalSites   = ref([])
+const modalContent = ref('')
 const modalSaving  = ref(false)
 const saveDone     = ref(false)
 let saveDoneTimer  = null
 
-// 상태 단일 선택 토글 (현재 시간대)
+// 상태 단일 선택 토글
 const selectStatus = (label) => {
-  const slot = modalAllSlots[modalTime.value]
-  slot.status = slot.status === label ? '' : label
+  modalStatus.value = modalStatus.value === label ? '' : label
 }
-// 사이트 토글 (현재 시간대)
+// 사이트 토글
 const selectSite = (site) => {
-  const slot = modalAllSlots[modalTime.value]
-  const idx  = slot.sites.indexOf(site)
-  if (idx === -1) slot.sites.push(site)
-  else            slot.sites.splice(idx, 1)
+  const idx = modalSites.value.indexOf(site)
+  if (idx === -1) modalSites.value.push(site)
+  else            modalSites.value.splice(idx, 1)
 }
 
-const resetSlots = () => {
-  for (const t of TIME_ORDER) {
-    modalAllSlots[t].status  = ''
-    modalAllSlots[t].sites   = []
-    modalAllSlots[t].content = ''
-  }
+const resetFields = () => {
+  modalStatus.value  = ''
+  modalSites.value   = []
+  modalContent.value = ''
 }
 
 const openModal = (date, content) => {
@@ -1101,27 +1062,29 @@ const openModal = (date, content) => {
   const raw    = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
   const parsed = parsedCell(raw)
 
-  resetSlots()
-  for (const slot of parsed.slots) {
-    if (modalAllSlots[slot.time]) {
-      modalAllSlots[slot.time].status  = slot.status
-      modalAllSlots[slot.time].sites   = [...slot.sites]
-      modalAllSlots[slot.time].content = slot.content ?? ''
-    }
+  resetFields()
+  // 단일 일정 모델: 기존 데이터의 첫 슬롯을 불러온다
+  const first = parsed.slots[0]
+  if (first) {
+    modalTime.value    = TIME_ORDER.includes(first.time) ? first.time : '종일'
+    modalStatus.value  = first.status
+    modalSites.value   = [...first.sites]
+    modalContent.value = first.content ?? ''
+  } else {
+    modalTime.value = '종일'
   }
-  // 구버전 별도 내용 → 종일 슬롯에 병합 (하위 호환)
-  if (parsed.content && !modalAllSlots['종일'].content) {
-    modalAllSlots['종일'].content = parsed.content
+  // 구버전 별도 내용 → 내용에 병합 (하위 호환)
+  if (parsed.content && !modalContent.value) {
+    modalContent.value = parsed.content
   }
-  modalTime.value    = '종일'
-  showModal.value    = true
+  showModal.value = true
 }
 
 const closeModal = () => {
   showModal.value = false
   modalDate.value = null
   modalTime.value = '종일'
-  resetSlots()
+  resetFields()
 }
 
 const saveModal = async () => {

@@ -270,8 +270,8 @@
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
-                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -296,8 +296,8 @@
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
-                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -326,8 +326,8 @@
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
-                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -380,8 +380,8 @@
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
-                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -410,8 +410,8 @@
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
-                          <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">└</span>
+                          <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>

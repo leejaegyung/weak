@@ -266,12 +266,12 @@
                     <template v-for="(sub, si) in item.sub_items" :key="si">
                       <div style="display:flex;gap:6px;align-items:flex-start;">
                         <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
-                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                        <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
                           <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -292,12 +292,12 @@
                     <template v-for="(sub, si) in item.sub_items" :key="si">
                       <div style="display:flex;gap:6px;align-items:flex-start;">
                         <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
-                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                        <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
                           <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -322,12 +322,12 @@
                     <template v-for="(sub, si) in item.sub_items" :key="si">
                       <div style="display:flex;gap:6px;align-items:flex-start;">
                         <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
-                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                        <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
                           <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -353,7 +353,7 @@
                   <div v-if="t.sub_items?.length" style="margin-left:24px;margin-top:3px;display:flex;flex-direction:column;gap:2px;">
                     <div v-for="(sub, si) in t.sub_items" :key="si" style="display:flex;gap:6px;align-items:flex-start;">
                       <span style="color:#9A8F7A;flex-shrink:0;font-size:12px;margin-top:1px;">-</span>
-                      <span style="font-size:12px;line-height:1.5;color:#4A3F2A;white-space:pre-wrap;word-break:break-word;">{{ typeof sub === 'string' ? sub : sub?.content }}</span>
+                      <span style="font-size:12px;line-height:1.5;color:#1A1100;white-space:pre-wrap;word-break:break-word;">{{ typeof sub === 'string' ? sub : sub?.content }}</span>
                     </div>
                   </div>
                 </div>
@@ -376,12 +376,12 @@
                     <template v-for="(sub, si) in item.sub_items" :key="si">
                       <div style="display:flex;gap:6px;align-items:flex-start;">
                         <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
-                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                        <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
                           <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>
@@ -406,12 +406,12 @@
                     <template v-for="(sub, si) in item.sub_items" :key="si">
                       <div style="display:flex;gap:6px;align-items:flex-start;">
                         <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
-                        <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
+                        <span style="color:#1A1100;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(typeof sub === 'string' ? sub : sub.content)"></span>
                       </div>
                       <template v-if="typeof sub !== 'string' && sub.details && sub.details.length">
                         <div v-for="(detail, di) in sub.details" :key="di" style="display:flex;gap:6px;align-items:flex-start;margin-left:16px;">
                           <span style="color:#C5BAA8;flex-shrink:0;font-size:11px;">└</span>
-                          <span style="color:#6B5E4A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
+                          <span style="color:#4A3F2A;font-size:11px;line-height:1.5;white-space:pre-wrap;" v-html="autoLink(detail)"></span>
                         </div>
                       </template>
                     </template>

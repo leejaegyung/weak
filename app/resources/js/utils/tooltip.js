@@ -7,7 +7,7 @@
  * 사용법:
  *   <button v-tooltip="'드래그하여 순서 변경'">…</button>
  *   <span v-tooltip="dynamicText">…</span>
- *   <span v-tooltip.bottom="'아래에 표시'">…</span>   (기본은 위쪽 표시)
+ *   <span v-tooltip.top="'위에 표시'">…</span>   (기본은 아래쪽 표시)
  *
  * 빈 문자열/falsy 값이면 툴팁을 표시하지 않는다.
  */
@@ -141,7 +141,7 @@ window.addEventListener('resize', onScrollResize)
 export const tooltip = {
   mounted(el, binding) {
     el._tooltipText = binding.value == null ? '' : String(binding.value)
-    el._tooltipPlacement = binding.modifiers.bottom ? 'bottom' : 'top'
+    el._tooltipPlacement = binding.modifiers.top ? 'top' : 'bottom'
     // 네이티브 title 중복 표시 방지
     if (el.getAttribute('title')) el.removeAttribute('title')
 
@@ -154,7 +154,7 @@ export const tooltip = {
   },
   updated(el, binding) {
     el._tooltipText = binding.value == null ? '' : String(binding.value)
-    el._tooltipPlacement = binding.modifiers.bottom ? 'bottom' : 'top'
+    el._tooltipPlacement = binding.modifiers.top ? 'top' : 'bottom'
     if (el.getAttribute('title')) el.removeAttribute('title')
     // 현재 표시 중이면 텍스트 갱신
     if (activeEl === el && tipEl) {

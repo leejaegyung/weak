@@ -19,8 +19,9 @@ class IssueController extends Controller
     {
         $issues = Issue::with('user')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn($i) => [
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn($i) => [
                 'id'              => $i->id,
                 'user_id'         => $i->user_id,
                 'user_name'       => $i->user?->name ?? '알 수 없음',

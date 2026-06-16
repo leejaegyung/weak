@@ -48,7 +48,7 @@
       </div>
 
       <!-- 빈 목록 -->
-      <div v-if="issues.length === 0" style="padding:64px 20px;text-align:center;color:#9A8F7A;">
+      <div v-if="issues.data.length === 0" style="padding:64px 20px;text-align:center;color:#9A8F7A;">
         <div style="font-size:28px;margin-bottom:10px;">📋</div>
         <div style="font-size:13px;font-weight:600;margin-bottom:4px;">등록된 이슈/요구사항이 없습니다</div>
         <div style="font-size:12px;">위의 글쓰기 버튼을 눌러 새 이슈를 등록해 보세요</div>
@@ -56,18 +56,18 @@
 
       <!-- 게시글 행 -->
       <template v-else>
-        <div v-for="(issue, i) in issues" :key="issue.id">
+        <div v-for="(issue, i) in issues.data" :key="issue.id">
           <!-- 목록 행 -->
           <div
             style="display:grid;grid-template-columns:60px 1fr 100px 120px 90px 44px;padding:14px 20px;align-items:center;cursor:pointer;transition:background 0.12s;"
-            :style="{ borderBottom: expandedId !== issue.id && i < issues.length-1 ? '1.5px solid #F5EDDB' : 'none' }"
+            :style="{ borderBottom: expandedId !== issue.id && i < issues.data.length-1 ? '1.5px solid #F5EDDB' : 'none' }"
             @click="toggleExpand(issue.id)"
             @mouseenter="e=>e.currentTarget.style.background='#FFF8EE'"
             @mouseleave="e=>e.currentTarget.style.background='transparent'">
 
             <!-- 번호 -->
             <div style="text-align:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#9A8F7A;">
-              {{ issues.length - i }}
+              {{ rowNumber(i) }}
             </div>
 
             <!-- 제목 + 내용 미리보기 -->
@@ -169,6 +169,60 @@
       </template>
     </div>
 
+    <!-- 페이지네이션 -->
+    <div v-if="issues.last_page > 1" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:20px;">
+      <!-- 이전 -->
+      <button type="button" @click="goToPage(issues.current_page - 1)"
+        :disabled="issues.current_page <= 1"
+        :style="{
+          display:'inline-flex', alignItems:'center', gap:'4px',
+          padding:'7px 12px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+          border:'2px solid #1A1100', background:'#fff', color:'#1A1100',
+          fontFamily:'inherit', cursor: issues.current_page <= 1 ? 'not-allowed' : 'pointer',
+          opacity: issues.current_page <= 1 ? 0.4 : 1, transition:'all 0.1s',
+        }">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        이전
+      </button>
+
+      <!-- 첫 페이지 + 생략 -->
+      <template v-if="pageNumbers[0] > 1">
+        <button type="button" @click="goToPage(1)" :style="pageBtnStyle(false)">1</button>
+        <span v-if="pageNumbers[0] > 2" style="color:#9A8F7A;font-size:12px;padding:0 2px;">…</span>
+      </template>
+
+      <!-- 페이지 번호 -->
+      <button v-for="p in pageNumbers" :key="p" type="button" @click="goToPage(p)"
+        :style="pageBtnStyle(p === issues.current_page)">
+        {{ p }}
+      </button>
+
+      <!-- 마지막 페이지 + 생략 -->
+      <template v-if="pageNumbers[pageNumbers.length-1] < issues.last_page">
+        <span v-if="pageNumbers[pageNumbers.length-1] < issues.last_page - 1" style="color:#9A8F7A;font-size:12px;padding:0 2px;">…</span>
+        <button type="button" @click="goToPage(issues.last_page)" :style="pageBtnStyle(false)">{{ issues.last_page }}</button>
+      </template>
+
+      <!-- 다음 -->
+      <button type="button" @click="goToPage(issues.current_page + 1)"
+        :disabled="issues.current_page >= issues.last_page"
+        :style="{
+          display:'inline-flex', alignItems:'center', gap:'4px',
+          padding:'7px 12px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+          border:'2px solid #1A1100', background:'#fff', color:'#1A1100',
+          fontFamily:'inherit', cursor: issues.current_page >= issues.last_page ? 'not-allowed' : 'pointer',
+          opacity: issues.current_page >= issues.last_page ? 0.4 : 1, transition:'all 0.1s',
+        }">
+        다음
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- 전체 건수 안내 -->
+    <p v-if="issues.total > 0" style="text-align:center;font-size:11px;color:#9A8F7A;margin-top:10px;">
+      전체 {{ issues.total }}건 중 {{ issues.from }}–{{ issues.to }}
+    </p>
+
     <!-- 글쓰기 모달 -->
     <div v-if="showWriteModal"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:16px;"
@@ -254,7 +308,43 @@ import { router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  issues: { type: Array, default: () => [] },
+  // Laravel 페이지네이터 객체: { data, current_page, last_page, per_page, total, ... }
+  issues: { type: Object, default: () => ({ data: [], current_page: 1, last_page: 1, per_page: 10, total: 0 }) },
+})
+
+// 게시판 번호 — 최신 글이 가장 큰 번호 (전체 기준, 페이지 오프셋 반영)
+const rowNumber = (i) => props.issues.total - (props.issues.current_page - 1) * props.issues.per_page - i
+
+// 표시할 페이지 번호 목록 (현재 페이지 기준 ±2 윈도우)
+const pageNumbers = computed(() => {
+  const last = props.issues.last_page
+  const cur  = props.issues.current_page
+  const pages = []
+  const start = Math.max(1, cur - 2)
+  const end   = Math.min(last, cur + 2)
+  for (let p = start; p <= end; p++) pages.push(p)
+  return pages
+})
+
+const goToPage = (n) => {
+  if (n < 1 || n > props.issues.last_page || n === props.issues.current_page) return
+  router.get('/issues', { page: n }, { preserveScroll: true, preserveState: false })
+}
+
+// 페이지 번호 버튼 스타일 (활성/비활성)
+const pageBtnStyle = (active) => ({
+  minWidth: '34px',
+  padding: '7px 10px',
+  borderRadius: '8px',
+  fontSize: '12px',
+  fontWeight: '700',
+  fontFamily: '\'Space Grotesk\',sans-serif',
+  border: '2px solid #1A1100',
+  background: active ? '#7C3AED' : '#fff',
+  color: active ? '#fff' : '#1A1100',
+  cursor: active ? 'default' : 'pointer',
+  boxShadow: active ? '2px 2px 0 #1A1100' : 'none',
+  transition: 'all 0.1s',
 })
 
 const page          = usePage()

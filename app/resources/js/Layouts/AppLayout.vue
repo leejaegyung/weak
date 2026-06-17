@@ -6,11 +6,8 @@
       <!-- 로고 -->
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:30px;height:30px;border-radius:8px;background:#FDCB40;border:2px solid #1A1100;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-          </div>
+          <img src="/favicon.svg" alt="SE"
+            style="width:30px;height:30px;border-radius:8px;border:2px solid #1A1100;flex-shrink:0;" />
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;">주간업무보고</span>
         </div>
         <span class="header-page-chip" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;">

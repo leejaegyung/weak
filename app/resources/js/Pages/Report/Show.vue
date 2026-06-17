@@ -175,11 +175,8 @@
       <!-- 보고서 헤더 (데스크탑) -->
       <div class="report-header-desktop" style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #1A1100;background:#fff;">
         <div style="padding:16px 22px;display:flex;align-items:center;gap:12px;">
-          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-          </div>
+          <img src="/favicon.svg" alt="SE"
+            style="width:36px;height:36px;border:2px solid #1A1100;border-radius:8px;flex-shrink:0;" />
           <div>
             <h2 style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.02em;">주간업무보고</h2>
             <p style="font-size:11px;color:#9A8F7A;margin-top:2px;">{{ report.week_label || report.week }}</p>
@@ -205,11 +202,8 @@
       <!-- 보고서 헤더 (모바일) -->
       <div class="report-header-mobile" style="padding:14px 16px;border-bottom:2px solid #1A1100;background:#fff;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-          </div>
+          <img src="/favicon.svg" alt="SE"
+            style="width:32px;height:32px;border:2px solid #1A1100;border-radius:8px;flex-shrink:0;" />
           <div>
             <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">주간업무보고</div>
             <div style="font-size:11px;color:#9A8F7A;">{{ report.week_label || report.week }}</div>

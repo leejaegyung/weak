@@ -4,11 +4,8 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <div style="background:#FD4401;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-          </div>
+          <img src="/favicon.svg" alt="SE"
+            style="width:32px;height:32px;border:2px solid #1A1100;border-radius:8px;flex-shrink:0;" />
           <h1 style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.03em;">보고서 목록</h1>
         </div>
         <p style="color:#9A8F7A;font-size:13px;margin-left:42px;">팀원들의 주간 보고서를 확인하세요</p>

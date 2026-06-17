@@ -46,9 +46,9 @@
 
       <!-- 카카오 로그인 구분선 -->
       <div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
-        <div style="flex:1;height:1.5px;background:#E8E0D0;"></div>
-        <span style="font-size:11px;color:#9A8F7A;white-space:nowrap;">또는</span>
-        <div style="flex:1;height:1.5px;background:#E8E0D0;"></div>
+        <div style="flex:1;height:2px;background:rgba(26,17,0,0.35);"></div>
+        <span style="font-size:11px;font-weight:700;color:#1A1100;white-space:nowrap;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">또는</span>
+        <div style="flex:1;height:2px;background:rgba(26,17,0,0.35);"></div>
       </div>
 
       <!-- 카카오 로그인 버튼 -->
@@ -61,12 +61,12 @@
         </svg>
         카카오 로그인
       </a>
-      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">처음이라면 자동으로 가입 신청됩니다 (관리자 승인 필요)</p>
+      <p style="font-size:11px;font-weight:600;color:#4A3F2A;text-align:center;margin-top:8px;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">처음이라면 자동으로 가입 신청됩니다 (관리자 승인 필요)</p>
 
       <!-- 회원가입 링크 -->
       <div style="text-align:center;margin-top:14px;">
-        <span style="font-size:13px;color:#9A8F7A;">계정이 없으신가요?</span>
-        <Link href="/register" style="font-size:13px;font-weight:700;color:#FD4401;margin-left:6px;text-decoration:none;">회원가입 신청</Link>
+        <span style="font-size:13px;font-weight:600;color:#4A3F2A;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">계정이 없으신가요?</span>
+        <Link href="/register" style="font-size:13px;font-weight:800;color:#D93A01;margin-left:6px;text-decoration:none;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">회원가입 신청</Link>
       </div>
     </div>
   </div>

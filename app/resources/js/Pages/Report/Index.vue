@@ -284,12 +284,21 @@
             <input v-model="mailForm.subject" type="text" class="input-field" placeholder="메일 제목" />
           </div>
 
-          <!-- 본문 미리보기 -->
+          <!-- 본문 (직접 작성 가능) -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">인사말 (본문 상단)</label>
+            <textarea v-model="mailForm.bodyIntro" rows="2" class="input-field" style="resize:vertical;line-height:1.6;" placeholder="메일 본문 상단 인사말"></textarea>
+          </div>
+
+          <!-- 본문 내용 (선택, 직접 작성) -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">본문 내용 (선택)</label>
+            <textarea v-model="mailForm.bodyMain" rows="3" class="input-field" style="resize:vertical;line-height:1.6;" placeholder="예) 이번 주 특이사항을 입력하세요. 비워두면 표시되지 않습니다."></textarea>
+          </div>
+
+          <!-- 보고서 링크 목록 미리보기 (자동 구성) -->
           <div style="background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:10px;padding:14px 16px;">
-            <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">본문 미리보기</div>
-            <p style="font-size:12px;color:#4A3F2A;line-height:1.7;margin-bottom:12px;">
-              안녕하세요.<br>이번 주 팀원 주간업무보고를 전달드립니다.
-            </p>
+            <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">첨부되는 보고서 링크</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <div v-for="r in submittedReports" :key="r.id"
                 style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #E8E0D0;border-radius:8px;padding:8px 12px;">
@@ -299,12 +308,18 @@
                     <template v-else>{{ r.user?.name?.charAt(0) }}</template>
                   </div>
                   <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ r.user?.name }}</span>
-                  <span style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
+                  <span v-if="r.user?.position" style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
+                  <span style="font-size:12px;font-weight:700;color:#9A8F7A;">:</span>
                 </div>
-                <span style="font-size:11px;color:#9A8F7A;">보고서 링크 포함</span>
+                <span style="font-size:11px;font-weight:700;color:#16A34A;">금주 리포트 링크 →</span>
               </div>
             </div>
-            <p style="font-size:12px;color:#9A8F7A;margin-top:10px;line-height:1.6;">감사합니다.</p>
+          </div>
+
+          <!-- 맺음말 -->
+          <div>
+            <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">맺음말 (본문 하단)</label>
+            <textarea v-model="mailForm.bodyOutro" rows="2" class="input-field" style="resize:vertical;line-height:1.6;" placeholder="메일 본문 하단 맺음말"></textarea>
           </div>
         </div>
 
@@ -615,7 +630,12 @@ const submittedReports = computed(() =>
 
 const showMailModal = ref(false)
 const mailSending   = ref(false)
-const mailForm      = ref({ to: '', ccInput: '', subject: '' })
+
+// 본문 기본 문구 (직접 수정 가능)
+const DEFAULT_BODY_INTRO = '안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.'
+const DEFAULT_BODY_OUTRO = '감사합니다.'
+
+const mailForm = ref({ to: '', ccInput: '', subject: '', bodyIntro: DEFAULT_BODY_INTRO, bodyMain: '', bodyOutro: DEFAULT_BODY_OUTRO })
 
 const openMailModal = async () => {
   // SMTP 기본값 불러오기
@@ -623,15 +643,21 @@ const openMailModal = async () => {
     const res = await window.axios.get('/admin/settings/mail-defaults')
     const d   = res.data
     mailForm.value = {
-      to:       d.mail_to ?? '',
-      ccInput:  (d.mail_cc ?? []).join(', '),
-      subject:  `[${props.weekLabel}] SE팀 주간업무보고`,
+      to:        d.mail_to ?? '',
+      ccInput:   (d.mail_cc ?? []).join(', '),
+      subject:   `[${props.weekLabel}] SE팀 주간업무보고`,
+      bodyIntro: DEFAULT_BODY_INTRO,
+      bodyMain:  '',
+      bodyOutro: DEFAULT_BODY_OUTRO,
     }
   } catch {
     mailForm.value = {
-      to:      '',
-      ccInput: '',
-      subject: `[${props.weekLabel}] SE팀 주간업무보고`,
+      to:        '',
+      ccInput:   '',
+      subject:   `[${props.weekLabel}] SE팀 주간업무보고`,
+      bodyIntro: DEFAULT_BODY_INTRO,
+      bodyMain:  '',
+      bodyOutro: DEFAULT_BODY_OUTRO,
     }
   }
   showMailModal.value = true
@@ -649,6 +675,9 @@ const sendWeeklyMail = async () => {
       to:         mailForm.value.to,
       cc:         ccArr,
       subject:    mailForm.value.subject,
+      body_intro: mailForm.value.bodyIntro,
+      body_main:  mailForm.value.bodyMain,
+      body_outro: mailForm.value.bodyOutro,
     })
     showMailModal.value = false
     alert('✅ ' + res.data.message)

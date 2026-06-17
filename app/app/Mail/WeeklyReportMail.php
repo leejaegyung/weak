@@ -13,7 +13,7 @@ class WeeklyReportMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param array $data {subject, week_start, week_end, reportLinks[{name, position, url}]}
+     * @param array $data {subject, body_intro, body_main, body_outro, week_start, week_end, reportLinks[{name, position, url}]}
      */
     public function __construct(public readonly array $data) {}
 

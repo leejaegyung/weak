@@ -228,6 +228,9 @@ class SettingController extends Controller
             'cc'         => ['nullable', 'array'],
             'cc.*'       => ['email'],
             'subject'    => ['required', 'string', 'max:200'],
+            'body_intro' => ['nullable', 'string', 'max:2000'],
+            'body_main'  => ['nullable', 'string', 'max:5000'],
+            'body_outro' => ['nullable', 'string', 'max:2000'],
         ]);
 
         if (!$this->mailService->isConfigured()) {
@@ -268,10 +271,13 @@ class SettingController extends Controller
             ], 422);
         }
 
-        // 보고서 링크 목록 구성 (sort_order 기준 정렬)
+        // 보고서 링크 목록 구성 (팀 일정판과 동일한 정렬: sort_order → name)
         $baseUrl = rtrim(config('app.url'), '/');
         $reportLinks = $submittedReports
-            ->sortBy(fn($r) => $r->user->sort_order ?? 9999)
+            ->sort(fn($a, $b) =>
+                [$a->user->sort_order ?? 9999, $a->user->name ?? '']
+                <=> [$b->user->sort_order ?? 9999, $b->user->name ?? '']
+            )
             ->values()
             ->map(fn($r) => [
                 'name'     => $r->user->name     ?? '-',
@@ -283,6 +289,9 @@ class SettingController extends Controller
             'to'          => $request->input('to'),
             'cc'          => array_filter($request->input('cc', [])),
             'subject'     => $request->input('subject'),
+            'body_intro'  => trim((string) $request->input('body_intro', '')) ?: "안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.",
+            'body_main'   => trim((string) $request->input('body_main', '')),
+            'body_outro'  => trim((string) $request->input('body_outro', '')) ?: '감사합니다.',
             'week_start'  => $weekStart,
             'week_end'    => $weekEnd,
             'reportLinks' => $reportLinks,

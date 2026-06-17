@@ -122,7 +122,11 @@
     .report-position {
       font-size: 11px;
       color: #9A8F7A;
-      margin-top: 2px;
+    }
+    .report-colon {
+      font-size: 14px;
+      font-weight: 700;
+      color: #9A8F7A;
     }
     .report-link {
       display: inline-block;
@@ -169,9 +173,14 @@
     <!-- 바디 -->
     <div class="body">
       <p class="greeting">
-        안녕하세요.<br>
-        이번 주 팀원 주간업무보고를 전달드립니다.
+        {!! nl2br(e($data['body_intro'] ?? "안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.")) !!}
       </p>
+
+      @if (!empty($data['body_main']))
+      <div style="background:#FFFBEF;border:1.5px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:24px;font-size:14px;color:#1A1100;line-height:1.7;">
+        {!! nl2br(e($data['body_main'])) !!}
+      </div>
+      @endif
 
       <div class="week-badge">
         📅 {{ \Carbon\Carbon::parse($data['week_start'])->format('Y.m.d') }}
@@ -183,24 +192,25 @@
 
       <hr class="divider">
 
-      <!-- 보고서 링크 목록 -->
+      <!-- 보고서 링크 목록 (팀 일정판 순서: 이름 : 금주 리포트 링크) -->
       <div class="report-list">
         @foreach ($data['reportLinks'] as $report)
         <div class="report-item">
           <div class="report-item-left">
             <div class="avatar">{{ mb_substr($report['name'], 0, 1) }}</div>
-            <div>
-              <div class="report-name">{{ $report['name'] }}</div>
-              <div class="report-position">{{ $report['position'] }}</div>
-            </div>
+            <span class="report-name">{{ $report['name'] }}</span>
+            @if (!empty($report['position']))
+            <span class="report-position">{{ $report['position'] }}</span>
+            @endif
+            <span class="report-colon">:</span>
           </div>
-          <a href="{{ $report['url'] }}" class="report-link" target="_blank">보고서 보기 →</a>
+          <a href="{{ $report['url'] }}" class="report-link" target="_blank">금주 리포트 링크 →</a>
         </div>
         @endforeach
       </div>
 
       <p style="font-size:13px;color:#9A8F7A;line-height:1.7;">
-        감사합니다.
+        {!! nl2br(e($data['body_outro'] ?? '감사합니다.')) !!}
       </p>
     </div>
 

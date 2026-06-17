@@ -320,9 +320,11 @@
                   </div>
                   <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ r.user?.name }}</span>
                   <span v-if="r.user?.position" style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
+                  <span :class="statusBadge(r.status)">{{ r.status_label }}</span>
                   <span style="font-size:12px;font-weight:700;color:#9A8F7A;">:</span>
                 </div>
-                <span style="font-size:11px;font-weight:700;color:#16A34A;">금주 리포트 링크 →</span>
+                <span v-if="r.submitted_at" style="font-size:11px;font-weight:700;color:#16A34A;flex-shrink:0;">금주 리포트 링크 →</span>
+                <span v-else style="font-size:11px;font-weight:700;color:#B45309;flex-shrink:0;">메일 미포함</span>
               </div>
             </div>
           </div>
@@ -399,6 +401,30 @@
           <button @click="confirmSendWeeklyMail"
             style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;">
             전송하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 메일 전송 결과 모달 -->
+    <div v-if="mailResult.show"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:120;backdrop-filter:blur(3px);padding:16px;"
+      @click.self="mailResult.show=false">
+      <div class="card" style="width:380px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
+        <div :style="{ width:'48px', height:'48px', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', background: mailResult.ok ? '#DCFCE7' : '#FEE2E2', border: mailResult.ok ? '2px solid #16A34A' : '2px solid #DC2626' }">
+          <svg v-if="mailResult.ok" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;margin-bottom:8px;">
+          {{ mailResult.ok ? '메일 전송 완료' : '메일 전송 실패' }}
+        </div>
+        <div style="font-size:13px;color:#9A8F7A;line-height:1.7;margin-bottom:22px;">
+          {{ mailResult.message }}
+        </div>
+        <div style="display:flex;justify-content:center;">
+          <button @click="mailResult.show=false"
+            :style="{ background: mailResult.ok ? '#16A34A' : '#FD4401', color:'#fff', border: mailResult.ok ? '2px solid #16A34A' : '2px solid #FD4401', borderRadius:'10px', padding:'8px 28px', fontSize:'13px', fontWeight:'700', cursor:'pointer', fontFamily:'inherit', boxShadow: mailResult.ok ? '2px 2px 0 #166534' : '2px 2px 0 #B91C1C', transition:'all 0.1s' }">
+            확인
           </button>
         </div>
       </div>
@@ -710,6 +736,9 @@ const openMailModal = async () => {
 // 미제출 전송 확인 모달
 const showMailConfirm = ref(false)
 
+// 메일 전송 결과 모달 { show, ok, message }
+const mailResult = ref({ show: false, ok: true, message: '' })
+
 const sendWeeklyMail = () => {
   if (!mailForm.value.to) return
 
@@ -743,9 +772,9 @@ const doSendWeeklyMail = async () => {
       body_outro: mailForm.value.bodyOutro,
     })
     showMailModal.value = false
-    alert('✅ ' + res.data.message)
+    mailResult.value = { show: true, ok: true, message: res.data.message ?? '메일을 성공적으로 전송했습니다.' }
   } catch (e) {
-    alert('❌ ' + (e.response?.data?.message ?? '메일 전송 실패. SMTP 설정을 확인해 주세요.'))
+    mailResult.value = { show: true, ok: false, message: e.response?.data?.message ?? '메일 전송 실패. SMTP 설정을 확인해 주세요.' }
   } finally {
     mailSending.value = false
   }

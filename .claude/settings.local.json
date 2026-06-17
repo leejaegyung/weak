@@ -107,7 +107,11 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\" -Filter \"*.md\" -File)",
       "Bash(Select-Object Name, Length)",
       "Skill(update-config)",
-      "PowerShell($content = Get-Content \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\\\\.claude\\\\settings.local.json\" -Raw; try { $j = $content | ConvertFrom-Json; $hook = $j.hooks.PostToolUse | Where-Object { $_.matcher -eq 'Bash' }; $hook.hooks | Where-Object { $_.type -eq 'command' } | Select-Object command, if, statusMessage } catch { \"JSON 오류: $_\" })"
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\leejk\\\\OneDrive\\\\바탕 화면\\\\개인 프로잭트\\\\주간보고\\\\.claude\\\\settings.local.json\" -Raw; try { $j = $content | ConvertFrom-Json; $hook = $j.hooks.PostToolUse | Where-Object { $_.matcher -eq 'Bash' }; $hook.hooks | Where-Object { $_.type -eq 'command' } | Select-Object command, if, statusMessage } catch { \"JSON 오류: $_\" })",
+      "Bash(git rm *)",
+      "Bash(grep -v \"//\")",
+      "Bash(PGPASSWORD=weeklyrpt123 psql -h 127.0.0.1 -p 5432 -U weeklyrpt_user -d weeklyrpt -c \"SELECT u.name, s.content FROM schedules s JOIN users u ON u.id = s.user_id WHERE s.date = '2026-06-11' AND s.content IS NOT NULL AND s.content != '' ORDER BY u.sort_order;\")",
+      "Bash(php -r ' *)"
     ]
   },
   "hooks": {

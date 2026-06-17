@@ -267,20 +267,22 @@
               </div>
             </td>
 
-            <!-- 날짜 셀들 (읽기 전용 + 본인 셀 클릭 → 모달) -->
+            <!-- 날짜 셀들 (본인 셀 클릭 → 편집 모달 / 타인 셀 클릭 → 읽기 전용 모달) -->
             <td v-for="(date, di) in [...currDates, ...nextDates]" :key="date"
-              @click="user.id === currentUserId ? openModal(date, localSchedules[user.id][date]) : null"
+              @click="user.id === currentUserId
+                ? openModal(date, localSchedules[user.id][date])
+                : (localSchedules[user.id]?.[date] ? openViewModal(user, date, localSchedules[user.id][date]) : null)"
               :style="{
                 borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
                 background: isToday(date) ? '#FFF0A0' : 'transparent',
                 padding:'6px',
                 verticalAlign:'top',
                 overflow:'hidden',
-                cursor: user.id === currentUserId ? 'pointer' : 'default',
+                cursor: (user.id === currentUserId || localSchedules[user.id]?.[date]) ? 'pointer' : 'default',
                 transition:'background 0.1s',
                 position:'relative',
               }"
-              @mouseenter="e=>{ if(user.id === currentUserId) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
+              @mouseenter="e=>{ if(user.id === currentUserId || localSchedules[user.id]?.[date]) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
               @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
 
               <!-- 내용 표시 (시간대별 슬롯 칩 — 고정 높이, 최대 2개 표시) -->
@@ -569,6 +571,64 @@
                 {{ modalSaving ? '저장 중...' : '저장' }}
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 타 사용자 일정 읽기 전용 모달 -->
+    <Transition name="modal-fade">
+      <div v-if="viewModal.show"
+        style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px);padding:16px;"
+        @click.self="viewModal.show=false">
+        <div class="card" style="width:420px;max-width:100%;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+
+          <!-- 헤더 -->
+          <div style="padding:16px 20px;background:#F5EDDB;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div :style="{ width:'34px', height:'34px', borderRadius:'50%', background: avatarImg(viewModal.userId) ? 'transparent' : avatarColor(viewModal.userId), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'13px', fontWeight:'800', flexShrink:0, overflow:'hidden' }">
+                <img v-if="avatarImg(viewModal.userId)" :src="avatarImg(viewModal.userId)" style="width:100%;height:100%;object-fit:cover;" />
+                <template v-else>{{ viewModal.userName.charAt(0) }}</template>
+              </div>
+              <div>
+                <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;color:#1A1100;">{{ viewModal.userName }}</div>
+                <div style="font-size:11px;color:#9A8F7A;margin-top:1px;">{{ fmtDayModalDate(viewModal.date) }} · 일정 보기</div>
+              </div>
+            </div>
+            <button type="button" @click="viewModal.show=false"
+              style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- 바디: 슬롯 목록 -->
+          <div style="padding:18px 20px;overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;">
+            <div v-for="(slot, si) in parsedCell(viewModal.content).slots" :key="si"
+              style="display:flex;align-items:flex-start;gap:10px;background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:10px;padding:11px 14px;">
+              <!-- 시간 뱃지 -->
+              <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#1A1100;color:#FDCB40;white-space:nowrap;flex-shrink:0;">{{ slot.time }}</span>
+              <div style="flex:1;min-width:0;">
+                <!-- 상태 칩 -->
+                <span v-if="slot.status && STATUS_STYLE_MAP[slot.status]"
+                  :style="{ display:'inline-flex', alignItems:'center', gap:'3px', padding:'2px 8px', borderRadius:'6px', fontSize:'12px', fontWeight:'800', background: STATUS_STYLE_MAP[slot.status].bg, color: STATUS_STYLE_MAP[slot.status].color, border:'1.5px solid ' + STATUS_STYLE_MAP[slot.status].border }">
+                  {{ STATUS_STYLE_MAP[slot.status].icon }} {{ slot.status }}
+                </span>
+                <!-- 사이트 -->
+                <div v-if="slot.sites?.length" style="font-size:13px;color:#1A1100;font-weight:600;margin-top:5px;">
+                  📍 {{ slot.sites.join(', ') }}
+                </div>
+                <!-- 내용 -->
+                <div v-if="slot.content" style="font-size:12px;color:#6B5E4A;margin-top:4px;line-height:1.6;">{{ slot.content }}</div>
+              </div>
+            </div>
+            <div v-if="!parsedCell(viewModal.content).slots.length"
+              style="padding:24px;text-align:center;color:#9A8F7A;font-size:13px;">표시할 일정 내용이 없습니다</div>
+          </div>
+
+          <!-- 푸터 -->
+          <div style="padding:12px 20px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="font-size:11px;color:#9A8F7A;">🔒 본인 일정만 수정할 수 있습니다</span>
+            <button type="button" @click="viewModal.show=false" class="btn-secondary btn-sm">닫기</button>
           </div>
         </div>
       </div>
@@ -1102,6 +1162,14 @@ const closeModal = () => {
   modalDate.value = null
   modalTime.value = '종일'
   resetFields()
+}
+
+// ── 타 사용자 일정 읽기 전용 모달 ──────────────────────
+const viewModal = ref({ show: false, userId: null, userName: '', date: '', content: '' })
+
+const openViewModal = (user, date, content) => {
+  if (!content?.trim()) return
+  viewModal.value = { show: true, userId: user.id, userName: user.name ?? '', date, content }
 }
 
 const saveModal = async () => {

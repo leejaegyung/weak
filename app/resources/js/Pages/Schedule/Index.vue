@@ -613,32 +613,26 @@
                   <span :style="{ fontFamily: '\'Space Grotesk\',\'Noto Sans KR\',sans-serif', fontSize: '14px', fontWeight: '800', color: tag.color }">{{ tag.label }}</span>
                   <span :style="{ marginLeft: 'auto', fontSize: '11px', fontWeight: '700', color: tag.color, opacity: 0.7 }">{{ dayModalGroups[tag.label].length }}명</span>
                 </div>
-                <!-- 사람 목록 -->
+                <!-- 사람 목록 (동일 인물은 한 줄로 병합) -->
                 <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
-                  <div v-for="(entry, ei) in dayModalGroups[tag.label]" :key="ei"
-                    style="display:flex;align-items:center;gap:8px;">
+                  <div v-for="(person, pi) in dayModalGroups[tag.label]" :key="pi"
+                    style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <!-- 아바타 -->
-                    <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(entry.userId) ? 'transparent' : avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
-                      <img v-if="avatarImg(entry.userId)" :src="avatarImg(entry.userId)" style="width:100%;height:100%;object-fit:cover;" />
-                      <template v-else>{{ entry.userName.charAt(0) }}</template>
+                    <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(person.userId) ? 'transparent' : avatarColor(person.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+                      <img v-if="avatarImg(person.userId)" :src="avatarImg(person.userId)" style="width:100%;height:100%;object-fit:cover;" />
+                      <template v-else>{{ person.userName.charAt(0) }}</template>
                     </div>
                     <!-- 이름 -->
-                    <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ entry.userName }}</span>
-                    <!-- 시간 (종일 아닌 경우) -->
-                    <span v-if="entry.time && entry.time !== '종일'"
-                      style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">
-                      {{ entry.time }}
-                    </span>
-                    <!-- 사이트 -->
-                    <span v-if="entry.sites?.length"
-                      :style="{ fontSize:'12px', color: tag.color, fontWeight:'600' }">
-                      — {{ entry.sites.join(', ') }}
-                    </span>
-                    <!-- 기타 내용 -->
-                    <span v-else-if="entry.content"
-                      :style="{ fontSize:'12px', color: tag.color, fontWeight:'600' }">
-                      — {{ entry.content }}
-                    </span>
+                    <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ person.userName }}</span>
+                    <!-- 슬롯 세그먼트: 오전 — MBC 상암, 오후 — 방통대 -->
+                    <template v-for="(seg, si) in personSegments(person)" :key="si">
+                      <span v-if="si > 0" style="font-size:12px;color:#9A8F7A;font-weight:700;">,</span>
+                      <span v-if="seg.time"
+                        style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">
+                        {{ seg.time }}
+                      </span>
+                      <span v-if="seg.text" :style="{ fontSize:'12px', color: tag.color, fontWeight:'600' }">— {{ seg.text }}</span>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -653,19 +647,18 @@
                 <span style="margin-left:auto;font-size:11px;font-weight:700;color:#0F766E;opacity:0.7;">{{ dayModalGroups['__etc'].length }}명</span>
               </div>
               <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px;">
-                <div v-for="(entry, ei) in dayModalGroups['__etc']" :key="ei" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(entry.userId) ? 'transparent' : avatarColor(entry.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
-                    <img v-if="avatarImg(entry.userId)" :src="avatarImg(entry.userId)" style="width:100%;height:100%;object-fit:cover;" />
-                    <template v-else>{{ entry.userName.charAt(0) }}</template>
+                <div v-for="(person, pi) in dayModalGroups['__etc']" :key="pi" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <div :style="{ width:'26px', height:'26px', borderRadius:'50%', background: avatarImg(person.userId) ? 'transparent' : avatarColor(person.userId), border:'2px solid rgba(0,0,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'10px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+                    <img v-if="avatarImg(person.userId)" :src="avatarImg(person.userId)" style="width:100%;height:100%;object-fit:cover;" />
+                    <template v-else>{{ person.userName.charAt(0) }}</template>
                   </div>
-                  <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ entry.userName }}</span>
-                  <span v-if="entry.time && entry.time !== '종일'" style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">{{ entry.time }}</span>
-                  <!-- 사이트 또는 내용 표시 -->
-                  <span v-if="entry.sites?.length" style="font-size:12px;color:#0F766E;font-weight:600;">
-                    — {{ entry.sites.join(', ') }}
-                    <span v-if="entry.content" style="color:#9A8F7A;"> · {{ entry.content }}</span>
-                  </span>
-                  <span v-else-if="entry.content" style="font-size:12px;color:#0F766E;font-weight:600;">— {{ entry.content }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#1A1100;white-space:nowrap;">{{ person.userName }}</span>
+                  <!-- 슬롯 세그먼트 (사이트 · 내용 포함) -->
+                  <template v-for="(seg, si) in personSegments(person, true)" :key="si">
+                    <span v-if="si > 0" style="font-size:12px;color:#9A8F7A;font-weight:700;">,</span>
+                    <span v-if="seg.time" style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.07);color:#4A3F2A;white-space:nowrap;flex-shrink:0;">{{ seg.time }}</span>
+                    <span v-if="seg.text" style="font-size:12px;color:#0F766E;font-weight:600;">— {{ seg.text }}</span>
+                  </template>
                 </div>
               </div>
             </div>
@@ -899,24 +892,48 @@ const showDayModal  = ref(false)
 const dayModalDate  = ref('')
 const openDayModal  = (date) => { dayModalDate.value = date; showDayModal.value = true }
 
-// 카테고리별 그룹핑 (모달용)
+// 카테고리별 그룹핑 (모달용) — 동일 인물의 여러 슬롯(오전/오후 등)은 한 줄로 병합
 // 상태(외근/출장/반차/휴가) 선택 시 해당 그룹, 미선택 시 모두 기타 일정으로 분류
 const dayModalGroups = computed(() => {
   const entries = monthDayEntriesMap.value[dayModalDate.value] ?? []
   const groups  = {}
+  const personIndex = {}  // groupKey -> { userId -> person }
+
   for (const entry of entries) {
-    if (entry.status && STATUS_STYLE_MAP[entry.status]) {
-      // 상태 있는 경우 → 해당 카테고리 그룹
-      if (!groups[entry.status]) groups[entry.status] = []
-      groups[entry.status].push(entry)
-    } else {
-      // 상태 없는 경우 → 사이트/내용 무관하게 모두 기타 일정
-      if (!groups['__etc']) groups['__etc'] = []
-      groups['__etc'].push(entry)
+    const key = (entry.status && STATUS_STYLE_MAP[entry.status]) ? entry.status : '__etc'
+    if (!groups[key]) { groups[key] = []; personIndex[key] = {} }
+
+    let person = personIndex[key][entry.userId]
+    if (!person) {
+      person = { userId: entry.userId, userName: entry.userName, slots: [] }
+      personIndex[key][entry.userId] = person
+      groups[key].push(person)
+    }
+    person.slots.push({ time: entry.time, sites: entry.sites, content: entry.content })
+  }
+
+  // 각 인물의 슬롯을 시간순(종일 → 오전 → 오후)으로 정렬
+  for (const key of Object.keys(groups)) {
+    for (const person of groups[key]) {
+      person.slots.sort((a, b) => TIME_ORDER.indexOf(a.time) - TIME_ORDER.indexOf(b.time))
     }
   }
   return groups
 })
+
+// 인물의 슬롯들을 표시용 세그먼트로 변환 ({ time, text }) — 빈 슬롯 제외
+const personSegments = (person, withSiteContent = false) => {
+  return (person.slots ?? []).map(s => {
+    let text = ''
+    if (s.sites?.length) {
+      text = s.sites.join(', ')
+      if (withSiteContent && s.content) text += ' · ' + s.content
+    } else if (s.content) {
+      text = s.content
+    }
+    return { time: (s.time && s.time !== '종일') ? s.time : '', text }
+  }).filter(seg => seg.time || seg.text)
+}
 
 const fmtDayModalDate = (date) => {
   if (!date) return ''

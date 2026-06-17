@@ -47,7 +47,7 @@
         <!-- 팀장 메일 전송 (관리자만) -->
         <button v-if="isAdmin" @click="openMailModal"
           :disabled="!canSendMail"
-          v-tooltip="!canSendMail ? '전원 제출 완료 후 전송 가능합니다' : '주간보고 메일 전송'"
+          v-tooltip="'주간보고 메일 전송'"
           class="btn-secondary btn-sm"
           style="display:inline-flex;align-items:center;gap:5px;"
           :style="{ opacity: canSendMail ? 1 : 0.45, cursor: canSendMail ? 'pointer' : 'not-allowed' }">
@@ -266,6 +266,17 @@
 
         <!-- 모달 바디 -->
         <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;min-height:0;">
+          <!-- 미제출 경고 -->
+          <div v-if="notSubmittedCount > 0"
+            style="display:flex;align-items:flex-start;gap:8px;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div style="font-size:12px;color:#92400E;line-height:1.6;">
+              <strong>제출하지 않은 인원이 있습니다 ({{ notSubmittedCount }}명).</strong>
+              <template v-if="notSubmittedNames.length"><br>{{ notSubmittedNames.join(', ') }}</template>
+              <br>제출된 보고서만 메일에 포함되어 전송됩니다.
+            </div>
+          </div>
+
           <!-- 받는 사람 -->
           <div>
             <label style="font-size:11px;color:#9A8F7A;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">받는 사람</label>
@@ -616,16 +627,19 @@ const sendNotSubmittedAlert = async () => {
 }
 
 // ── 메일 전송 ──────────────────────────────────────
-// 전원 제출 완료 여부 (미제출=0 이고 제출된 보고서가 1개 이상)
-const canSendMail = computed(() =>
-  isAdmin.value &&
-  (props.counts.notSubmitted ?? 1) === 0 &&
-  (props.counts.submitted ?? 0) > 0
-)
+// 관리자는 상시 전송 가능 (미제출자가 있어도 제출분만 포함하여 발송)
+const canSendMail = computed(() => isAdmin.value)
 
 // 제출된 보고서 목록 (메일 미리보기용)
 const submittedReports = computed(() =>
   props.reports.filter(r => r.status !== 'not_submitted' && r.user)
+)
+
+// 미제출 인원 (경고용)
+const notSubmittedCount = computed(() => props.counts.notSubmitted ?? 0)
+const notSubmittedNames = computed(() =>
+  props.reports.filter(r => r.status === 'not_submitted' && r.user)
+    .map(r => r.user?.name).filter(Boolean)
 )
 
 const showMailModal = ref(false)
@@ -665,6 +679,13 @@ const openMailModal = async () => {
 
 const sendWeeklyMail = async () => {
   if (!mailForm.value.to) return
+
+  // 미제출 인원이 있으면 전송 전 경고 확인
+  if (notSubmittedCount.value > 0) {
+    const namePart = notSubmittedNames.value.length ? `\n(${notSubmittedNames.value.join(', ')})` : ''
+    if (!confirm(`⚠️ 제출하지 않은 인원이 있습니다 (${notSubmittedCount.value}명).${namePart}\n제출된 보고서만 포함하여 전송하시겠습니까?`)) return
+  }
+
   mailSending.value = true
   try {
     const ccArr = mailForm.value.ccInput

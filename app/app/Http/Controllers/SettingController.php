@@ -243,26 +243,11 @@ class SettingController extends Controller
         $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd   = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
 
-        // 미제출 여부 확인
+        // 제출된 보고서 조회 (미제출자가 있어도 제출분만 포함하여 상시 전송 가능)
         $submittedReports = WeeklyReport::with('user')
             ->whereBetween('curr_start', [$weekStart, $weekEnd])
             ->whereNotNull('submitted_at')
             ->get();
-
-        $activeUsers = User::where('is_active', true)
-            ->where('is_hidden', false)
-            ->get();
-
-        $submittedUserIds   = $submittedReports->pluck('user_id');
-        $notSubmittedUsers  = $activeUsers->whereNotIn('id', $submittedUserIds);
-
-        if ($notSubmittedUsers->isNotEmpty()) {
-            $names = $notSubmittedUsers->pluck('name')->join(', ');
-            return response()->json([
-                'ok'      => false,
-                'message' => "미제출 팀원이 있어 전송할 수 없습니다: {$names}",
-            ], 422);
-        }
 
         if ($submittedReports->isEmpty()) {
             return response()->json([

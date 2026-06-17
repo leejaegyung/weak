@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height:100vh;background:#FFF8EE;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div style="min-height:100vh;background:#FFF8EE url('/images/login-bg.png') center / cover no-repeat fixed;display:flex;align-items:center;justify-content:center;padding:24px;">
     <div style="width:100%;max-width:380px;">
       <!-- 헤더 -->
       <div style="text-align:center;margin-bottom:28px;">

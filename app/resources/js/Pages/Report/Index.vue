@@ -374,6 +374,36 @@
       </div>
     </div>
 
+    <!-- 미제출 전송 확인 모달 -->
+    <div v-if="showMailConfirm"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:110;backdrop-filter:blur(3px);padding:16px;"
+      @click.self="showMailConfirm=false">
+      <div class="card" style="width:400px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
+        <div style="width:48px;height:48px;background:#FEF3C7;border:2px solid #F59E0B;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;margin-bottom:8px;">
+          제출하지 않은 인원이 있습니다 ({{ notSubmittedCount }}명)
+        </div>
+        <div v-if="notSubmittedNames.length"
+          style="font-size:12px;color:#92400E;background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:10px;padding:10px 12px;line-height:1.6;margin-bottom:14px;">
+          {{ notSubmittedNames.join(', ') }}
+        </div>
+        <div style="font-size:13px;color:#9A8F7A;line-height:1.7;margin-bottom:22px;">
+          제출된 보고서만 포함하여<br>전송하시겠습니까?
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button @click="showMailConfirm=false" class="btn-secondary">취소</button>
+          <button @click="confirmSendWeeklyMail"
+            style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;">
+            전송하기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 코멘트 팝업 모달 (2단 레이아웃) -->
     <div v-if="commentModal.show"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:12px;"
@@ -677,15 +707,27 @@ const openMailModal = async () => {
   showMailModal.value = true
 }
 
-const sendWeeklyMail = async () => {
+// 미제출 전송 확인 모달
+const showMailConfirm = ref(false)
+
+const sendWeeklyMail = () => {
   if (!mailForm.value.to) return
 
-  // 미제출 인원이 있으면 전송 전 경고 확인
+  // 미제출 인원이 있으면 커스텀 확인 모달 표시
   if (notSubmittedCount.value > 0) {
-    const namePart = notSubmittedNames.value.length ? `\n(${notSubmittedNames.value.join(', ')})` : ''
-    if (!confirm(`⚠️ 제출하지 않은 인원이 있습니다 (${notSubmittedCount.value}명).${namePart}\n제출된 보고서만 포함하여 전송하시겠습니까?`)) return
+    showMailConfirm.value = true
+    return
   }
+  doSendWeeklyMail()
+}
 
+const confirmSendWeeklyMail = () => {
+  showMailConfirm.value = false
+  doSendWeeklyMail()
+}
+
+const doSendWeeklyMail = async () => {
+  if (!mailForm.value.to) return
   mailSending.value = true
   try {
     const ccArr = mailForm.value.ccInput

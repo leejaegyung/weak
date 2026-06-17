@@ -69,15 +69,15 @@ class WebhookService
 
         if ($schedules->isEmpty()) return null;
 
-        // status → [['name' => '김선호', 'time' => '오전'], ...]
+        // 동일 인물의 여러 슬롯(오전/오후 등)은 한 명으로 병합
+        // status → [ name => ['name' => '박성원', 'times' => ['오전','오후']], ... ]
         $statusGroups = [];
-        // site → [['name' => '김선호', 'time' => '종일'], ...]
+        // site   → 인물 기준: [ name => ['name' => '박성원', 'sites' => [['site'=>'MBC 상암','time'=>'오전'], ...]], ... ]
         $siteGroups   = [];
 
         foreach ($schedules as $sched) {
             $name    = $sched->user->name ?? '?';
             $parsed  = $this->parseContent($sched->content ?? '');
-            $seen    = []; // 같은 (status, name, time) 중복 방지
 
             foreach ($parsed['entries'] as $entry) {
                 $time   = $entry['time']   ?? '종일';
@@ -89,17 +89,24 @@ class WebhookService
                     ? $status
                     : '외근';
 
-                $statusKey = "{$effectiveStatus}|{$name}|{$time}";
-                if (!isset($seen[$statusKey])) {
-                    $seen[$statusKey] = true;
-                    $statusGroups[$effectiveStatus][] = ['name' => $name, 'time' => $time];
+                if (!isset($statusGroups[$effectiveStatus][$name])) {
+                    $statusGroups[$effectiveStatus][$name] = ['name' => $name, 'times' => []];
+                }
+                if (!in_array($time, $statusGroups[$effectiveStatus][$name]['times'], true)) {
+                    $statusGroups[$effectiveStatus][$name]['times'][] = $time;
                 }
 
                 foreach ($sites as $site) {
-                    $siteKey = "{$site}|{$name}";
-                    if (!isset($seen[$siteKey])) {
-                        $seen[$siteKey] = true;
-                        $siteGroups[$site][] = ['name' => $name, 'time' => $time];
+                    if (!isset($siteGroups[$name])) {
+                        $siteGroups[$name] = ['name' => $name, 'sites' => []];
+                    }
+                    // 동일 (사이트, 시간) 중복 방지
+                    $dup = false;
+                    foreach ($siteGroups[$name]['sites'] as $sx) {
+                        if ($sx['site'] === $site && $sx['time'] === $time) { $dup = true; break; }
+                    }
+                    if (!$dup) {
+                        $siteGroups[$name]['sites'][] = ['site' => $site, 'time' => $time];
                     }
                 }
             }
@@ -115,22 +122,45 @@ class WebhookService
 
         foreach ($statusGroups as $status => $people) {
             $icon      = $statusIcons[$status] ?? '•';
-            $peopleStr = implode(', ', array_map(
-                fn($p) => $p['time'] !== '종일' ? "{$p['name']}({$p['time']})" : $p['name'],
-                $people
-            ));
+            $peopleStr = implode(', ', array_map([$this, 'formatPerson'], array_values($people)));
             $lines[] = "{$icon} {$status}: {$peopleStr}";
         }
 
-        foreach ($siteGroups as $site => $people) {
-            $peopleStr = implode(', ', array_map(
-                fn($p) => $p['time'] !== '종일' ? "{$p['name']}({$p['time']})" : $p['name'],
-                $people
+        $timeOrder = ['종일' => 0, '오전' => 1, '오후' => 2];
+        foreach ($siteGroups as $person) {
+            $sites = $person['sites'];
+            usort($sites, fn($a, $b) => ($timeOrder[$a['time']] ?? 9) <=> ($timeOrder[$b['time']] ?? 9));
+            $siteStr = implode(', ', array_map(
+                fn($s) => ($s['time'] !== '' && $s['time'] !== '종일') ? "{$s['site']}({$s['time']})" : $s['site'],
+                $sites
             ));
-            $lines[] = "🌐 {$site}: {$peopleStr}";
+            $lines[] = "🌐 {$person['name']}: {$siteStr}";
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * 인물 표시 문자열 생성 — 동일 인물의 시간을 묶어 한 번만 표기
+     * 예) 박성원(오전, 오후), 종일이거나 시간 구분 없으면 이름만
+     */
+    private function formatPerson(array $person): string
+    {
+        $times = array_values(array_filter(
+            $person['times'] ?? [],
+            fn($t) => $t !== '' && $t !== '종일'
+        ));
+
+        // 종일이 포함되어 있거나 시간 구분이 없으면 이름만
+        if (in_array('종일', $person['times'] ?? [], true) || empty($times)) {
+            return $person['name'];
+        }
+
+        // 시간순 정렬 (오전 → 오후)
+        $order = ['오전' => 0, '오후' => 1];
+        usort($times, fn($a, $b) => ($order[$a] ?? 9) <=> ($order[$b] ?? 9));
+
+        return $person['name'] . '(' . implode(', ', $times) . ')';
     }
 
     /** 당일 팀 일정 Webhook 발송 (스케줄러에서 호출) */

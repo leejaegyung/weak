@@ -134,7 +134,7 @@ class WebhookService
                 fn($s) => ($s['time'] !== '' && $s['time'] !== '종일') ? "{$s['site']}({$s['time']})" : $s['site'],
                 $sites
             ));
-            $lines[] = "🌐 {$person['name']}: {$siteStr}";
+            $lines[] = "- {$person['name']} : {$siteStr}";
         }
 
         return implode("\n", $lines);

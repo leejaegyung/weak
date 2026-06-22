@@ -132,66 +132,84 @@
     <div class="app-body" style="display:flex;flex:1;overflow:hidden;">
 
       <!-- ── 사이드바 ── -->
-      <aside class="app-sidebar" style="width:180px;background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 8px;flex-shrink:0;overflow-y:auto;">
+      <aside class="app-sidebar" :class="{ collapsed }"
+        :style="{ width: collapsed ? '64px' : '180px' }"
+        style="background:#F5EDDB;border-right:2px solid #1A1100;display:flex;flex-direction:column;padding:20px 8px;flex-shrink:0;overflow-y:auto;overflow-x:hidden;transition:width 0.18s ease;">
 
-        <div style="font-size:10px;color:#9A8F7A;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0 8px;margin-bottom:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
-          메뉴
+        <div class="sidebar-head" style="display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px 0 8px;margin-bottom:10px;min-height:26px;">
+          <span class="nav-label" style="font-size:10px;color:#9A8F7A;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">메뉴</span>
+          <button type="button" @click="toggleCollapse"
+            class="sidebar-toggle"
+            v-tooltip="collapsed ? '메뉴 펼치기' : '메뉴 접기'"
+            style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;border:1.5px solid #1A1100;background:#fff;cursor:pointer;flex-shrink:0;color:#1A1100;transition:background 0.12s;"
+            @mouseenter="e=>{ e.currentTarget.style.background='#FDCB40' }"
+            @mouseleave="e=>{ e.currentTarget.style.background='#fff' }">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              :style="{ transition:'transform 0.18s ease', transform: collapsed ? 'rotate(180deg)' : 'none' }">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
         </div>
 
         <nav style="display:flex;flex-direction:column;gap:4px;">
           <Link href="/schedules"
             class="nav-item"
+            v-tooltip="collapsed ? '팀 일정판' : ''"
             :style="isActive('/schedules') ? { background:'#FDCB40', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/schedules'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
               </svg>
             </div>
-            팀 일정판
+            <span class="nav-label">팀 일정판</span>
           </Link>
 
           <Link href="/reports"
             class="nav-item"
+            v-tooltip="collapsed ? '보고서 목록' : ''"
             :style="isActive('/reports') && !isActive('/reports/create') ? { background:'#DBEAFE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/reports') && !isActive('/reports/create'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
               </svg>
             </div>
-            보고서 목록
+            <span class="nav-label">보고서 목록</span>
           </Link>
 
           <Link href="/reports/create"
             class="nav-item"
+            v-tooltip="collapsed ? '보고서 작성' : ''"
             :style="isActive('/reports/create') ? { background:'#F0FDF4', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/reports/create'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </div>
-            보고서 작성
+            <span class="nav-label">보고서 작성</span>
           </Link>
 
           <Link href="/issues"
             class="nav-item"
+            v-tooltip="collapsed ? '요구/이슈' : ''"
             :style="isActive('/issues') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/issues'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
             </div>
-            요구/이슈
+            <span class="nav-label">요구/이슈</span>
           </Link>
 
           <Link href="/profile"
             class="nav-item"
+            v-tooltip="collapsed ? '개인설정' : ''"
             :style="isActive('/profile') ? { background:'#FFF0F0', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/profile'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
               </svg>
             </div>
-            개인설정
+            <span class="nav-label">개인설정</span>
           </Link>
 
           <!-- 알림 설정 — 아코디언 서브메뉴 -->
@@ -199,6 +217,7 @@
             <!-- 부모 토글 버튼 -->
             <button type="button" @click="settingsOpen = !settingsOpen"
               class="nav-item"
+              v-tooltip="collapsed ? '알림 설정' : ''"
               style="width:100%;text-align:left;background:none;border:none;cursor:pointer;"
               :style="isSettingsActive ? { background:'#F5F3FF', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
               <div :style="navIconStyle(isSettingsActive)">
@@ -207,8 +226,8 @@
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               </div>
-              알림 설정
-              <svg :style="{ marginLeft:'4px', transition:'transform 0.2s', transform: settingsOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
+              <span class="nav-label">알림 설정</span>
+              <svg class="nav-label submenu-chevron" :style="{ marginLeft:'4px', transition:'transform 0.2s', transform: settingsOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }"
                 width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -216,33 +235,36 @@
 
             <!-- 서브메뉴 -->
             <Transition name="submenu">
-              <div v-if="settingsOpen" style="display:flex;flex-direction:column;gap:2px;padding-left:14px;margin-top:2px;">
+              <div v-if="settingsOpen" class="settings-submenu" style="display:flex;flex-direction:column;gap:2px;padding-left:14px;margin-top:2px;">
                 <Link href="/admin/settings/webhook"
                   class="nav-item"
+                  v-tooltip="collapsed ? 'Webhook' : ''"
                   style="font-size:12px;"
                   :style="isActive('/admin/settings/webhook') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
                   <div :style="{ ...navIconStyle(isActive('/admin/settings/webhook')), width:'20px', height:'20px', borderRadius:'6px' }">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3M8 12h8"/></svg>
                   </div>
-                  Webhook
+                  <span class="nav-label">Webhook</span>
                 </Link>
                 <Link href="/admin/settings/kakao"
                   class="nav-item"
+                  v-tooltip="collapsed ? '카카오 연동' : ''"
                   style="font-size:12px;"
                   :style="isActive('/admin/settings/kakao') ? { background:'#FEF9C3', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
                   <div :style="{ ...navIconStyle(isActive('/admin/settings/kakao')), width:'20px', height:'20px', borderRadius:'6px' }">
                     <svg width="11" height="11" viewBox="0 0 512 512" fill="#1A1100"><path d="M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z"/></svg>
                   </div>
-                  카카오 연동
+                  <span class="nav-label">카카오 연동</span>
                 </Link>
                 <Link href="/admin/settings/smtp"
                   class="nav-item"
+                  v-tooltip="collapsed ? '메일(SMTP) 설정' : ''"
                   style="font-size:12px;"
                   :style="isActive('/admin/settings/smtp') ? { background:'#DCFCE7', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
                   <div :style="{ ...navIconStyle(isActive('/admin/settings/smtp')), width:'20px', height:'20px', borderRadius:'6px' }">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   </div>
-                  메일(SMTP) 설정
+                  <span class="nav-label">메일(SMTP) 설정</span>
                 </Link>
               </div>
             </Transition>
@@ -251,6 +273,8 @@
           <Link v-if="auth?.user?.role === 'admin'"
             href="/admin/users"
             class="nav-item"
+            style="position:relative;"
+            v-tooltip="collapsed ? (pendingCount > 0 ? `사용자 관리 — 승인 대기 ${pendingCount}건` : '사용자 관리') : ''"
             :style="isActive('/admin/users')
               ? { background:'#FFF0F3', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' }
               : pendingCount > 0 ? { background:'#FEE2E2', borderColor:'#DC2626', fontWeight:'700' } : {}">
@@ -259,28 +283,32 @@
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             </div>
-            사용자 관리
-            <span v-if="pendingCount > 0"
+            <span class="nav-label">사용자 관리</span>
+            <span v-if="pendingCount > 0" class="nav-label"
               style="margin-left:4px;background:#DC2626;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;font-family:'Space Grotesk',sans-serif;">
               {{ pendingCount }}
             </span>
+            <!-- 접힘 상태 대기 알림 점 -->
+            <span v-if="pendingCount > 0" class="collapse-dot"
+              style="position:absolute;top:5px;right:7px;width:8px;height:8px;border-radius:50%;background:#DC2626;border:1.5px solid #F5EDDB;"></span>
           </Link>
 
           <Link v-if="auth?.user?.role === 'admin'"
             href="/admin/settings/api"
             class="nav-item"
+            v-tooltip="collapsed ? 'API 키 관리' : ''"
             :style="isActive('/admin/settings/api') ? { background:'#EDE9FE', borderColor:'#1A1100', boxShadow:'2px 2px 0 #1A1100', fontWeight:'700' } : {}">
             <div :style="navIconStyle(isActive('/admin/settings/api'))">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
               </svg>
             </div>
-            API 키 관리
+            <span class="nav-label">API 키 관리</span>
           </Link>
         </nav>
 
         <!-- 이번 주 위젯 -->
-        <div style="margin-top:auto;padding-top:20px;">
+        <div class="week-widget" style="margin-top:auto;padding-top:20px;">
           <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:16px;box-shadow:4px 4px 0 #1A1100;padding:16px;">
             <div style="font-size:10px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#4A3F2A;margin-bottom:8px;">이번 주</div>
             <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:18px;font-weight:800;margin-bottom:3px;letter-spacing:-0.02em;">{{ currentWeek?.label }}</div>
@@ -377,6 +405,13 @@ const settingsOpen    = ref(SETTINGS_SUBMENU_PATHS.some(p => window.location.pat
 const isSettingsActive = SETTINGS_SUBMENU_PATHS.some(p => window.location.pathname.startsWith(p))
 
 defineProps({ pageTitle: { type: String, default: '' } })
+
+// ── 사이드바 접힘 토글 (localStorage 영속) ──
+const collapsed = ref(localStorage.getItem('sidebarCollapsed') === '1')
+const toggleCollapse = () => {
+  collapsed.value = !collapsed.value
+  localStorage.setItem('sidebarCollapsed', collapsed.value ? '1' : '0')
+}
 
 const page         = usePage()
 const auth         = computed(() => page.props.auth)
@@ -505,6 +540,24 @@ const logout = () => router.post('/logout')
 <style scoped>
 .notif-drop-enter-active, .notif-drop-leave-active { transition: all 0.18s ease; }
 .notif-drop-enter-from, .notif-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* ===========================
+   사이드바 접힘 (collapsed)
+   =========================== */
+/* 접힘 점 표시는 기본 숨김 → 접힘 시에만 노출 */
+.collapse-dot { display: none; }
+.app-sidebar.collapsed .nav-label { display: none; }
+.app-sidebar.collapsed .collapse-dot { display: block; }
+.app-sidebar.collapsed .sidebar-head { justify-content: center; }
+.app-sidebar.collapsed .week-widget { display: none; }
+.app-sidebar.collapsed .settings-submenu { padding-left: 0 !important; }
+/* 아이콘만 남도록 가운데 정렬 (.nav-item 은 전역 클래스 → :deep) */
+.app-sidebar.collapsed :deep(.nav-item) {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+}
 .submenu-enter-active, .submenu-leave-active { transition: all 0.18s ease; overflow: hidden; }
 .submenu-enter-from, .submenu-leave-to { opacity: 0; transform: translateY(-4px); }
 

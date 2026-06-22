@@ -86,52 +86,30 @@
       gap: 16px;
       margin-bottom: 28px;
     }
-    .report-card {
-      background: #FDFAF5;
-      border: 1.5px solid #E8E0D0;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .report-card-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #F5EDDB;
-      border-bottom: 1.5px solid #E8E0D0;
-      padding: 12px 16px;
-    }
-    .report-item-left {
+    /* 보고서 이름 링크 행 */
+    .report-link-row {
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-    /* 본문 텍스트 섹션 */
-    .report-section {
+      background: #FDFAF5;
+      border: 1.5px solid #E8E0D0;
+      border-radius: 12px;
       padding: 12px 16px;
-      border-top: 1px solid #F0E9DA;
+      text-decoration: none;
+      color: #1A1100;
     }
-    .report-section:first-of-type {
-      border-top: none;
-    }
-    .report-section-label {
-      display: inline-block;
-      font-size: 11px;
+    .report-name-link {
+      font-size: 15px;
       font-weight: 800;
       color: #FD4401;
-      letter-spacing: 0.02em;
-      margin-bottom: 6px;
+      text-decoration: underline;
     }
-    .report-section-text {
-      font-size: 13px;
-      line-height: 1.7;
-      color: #1A1100;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .report-empty {
-      padding: 14px 16px;
+    .report-arrow {
+      margin-left: auto;
       font-size: 12px;
-      color: #9A8F7A;
+      font-weight: 700;
+      color: #1A1100;
+      white-space: nowrap;
     }
     .avatar {
       width: 34px;
@@ -225,34 +203,17 @@
 
       <hr class="divider">
 
-      <!-- 보고서 본문 (팀 일정판 순서: 모든 항목을 텍스트로 전달) -->
+      <!-- 보고서 목록 (팀 일정판 순서: 이름 클릭 시 보고서로 이동) -->
       <div class="report-list">
         @foreach ($data['reports'] as $report)
-        <div class="report-card">
-          <!-- 작성자 헤더 -->
-          <div class="report-card-head">
-            <div class="report-item-left">
-              <div class="avatar">{{ mb_substr($report['name'], 0, 1) }}</div>
-              <span class="report-name">{{ $report['name'] }}</span>
-              @if (!empty($report['position']))
-              <span class="report-position">{{ $report['position'] }}</span>
-              @endif
-            </div>
-            <a href="{{ $report['url'] }}" class="report-link" target="_blank">원문 보기 →</a>
-          </div>
-
-          <!-- 본문 텍스트 섹션 -->
-          @if (empty($report['sections']))
-            <div class="report-empty">작성된 내용이 없습니다.</div>
-          @else
-            @foreach ($report['sections'] as $section)
-            <div class="report-section">
-              <div class="report-section-label">{{ $section['label'] }}</div>
-              <div class="report-section-text">{!! nl2br(e($section['text'])) !!}</div>
-            </div>
-            @endforeach
+        <a href="{{ $report['url'] }}" class="report-link-row" target="_blank">
+          <span class="avatar">{{ mb_substr($report['name'], 0, 1) }}</span>
+          <span class="report-name-link">{{ $report['name'] }}</span>
+          @if (!empty($report['position']))
+          <span class="report-position">{{ $report['position'] }}</span>
           @endif
-        </div>
+          <span class="report-arrow">바로가기 →</span>
+        </a>
         @endforeach
       </div>
 

@@ -3,7 +3,7 @@
 
     <!-- 팀원 보고서 스위처 (관리자 또는 팀원 전체 조회 가능한 경우) -->
     <div v-if="teamUsers.length > 1"
-      style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;">
+      style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <div v-for="u in teamUsers" :key="u.id"
         @click="u.report_id && router.get(`/reports/${u.report_id}`)"
         v-tooltip="u.report_id ? u.name + ' 보고서 보기' : u.name + ' — 미제출'"

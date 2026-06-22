@@ -114,7 +114,8 @@
             minHeight: '100px',
             borderRight: '1px solid #E8E0D0',
             borderBottom: '1px solid #E8E0D0',
-            background: day.isToday ? '#FFFBEB' : '#fff',
+            background: day.isToday ? '#FFF0A0' : '#fff',
+            boxShadow: day.isToday ? 'inset 0 0 0 2px #FD4401' : 'none',
             position: 'relative',
           }">
           <!-- 날짜 숫자 + 공휴일명 -->
@@ -424,6 +425,40 @@
               </div>
             </div>
 
+            <!-- 이 날짜에 등록된 일정 — 시간대별로 각각 추가/수정 가능 -->
+            <div v-if="existingSlots.length">
+              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">
+                등록된 일정
+                <span style="font-weight:600;color:#1A1100;text-transform:none;font-size:11px;margin-left:6px;">클릭하여 수정 · 시간대별로 각각 등록</span>
+              </label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <button v-for="(slot, si) in existingSlots" :key="si" type="button"
+                  @click="loadSlot(slot)"
+                  :style="{
+                    display:'inline-flex', alignItems:'center', gap:'5px',
+                    padding:'5px 11px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+                    border: slot.time === modalTime ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                    background: slot.time === modalTime ? '#FDCB40' : '#fff',
+                    color:'#1A1100', cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                    boxShadow: slot.time === modalTime ? '2px 2px 0 #1A1100' : 'none',
+                    maxWidth:'100%', overflow:'hidden',
+                  }">
+                  <span style="font-size:10px;opacity:0.6;white-space:nowrap;">({{ slot.time }})</span>
+                  <span v-if="slot.status && STATUS_STYLE_MAP[slot.status]" style="white-space:nowrap;">{{ STATUS_STYLE_MAP[slot.status].icon }} {{ slot.status }}</span>
+                  <span v-if="slot.sites.length || slot.content" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;opacity:0.85;">
+                    {{ [...slot.sites, slot.content].filter(Boolean).join(', ') }}
+                  </span>
+                </button>
+                <button type="button" @click="startNewSlot"
+                  style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;border:2px dashed #C5BAA8;background:#FFFBF0;color:#6B5E4A;cursor:pointer;font-family:inherit;transition:all 0.12s;"
+                  @mouseenter="e=>{e.currentTarget.style.borderColor='#1A1100';e.currentTarget.style.color='#1A1100';}"
+                  @mouseleave="e=>{e.currentTarget.style.borderColor='#C5BAA8';e.currentTarget.style.color='#6B5E4A';}">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  새 일정
+                </button>
+              </div>
+            </div>
+
             <!-- 일정 내용 -->
             <div>
               <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">
@@ -538,14 +573,14 @@
                   @keydown.ctrl.enter.prevent="saveModal"
                 ></textarea>
               </div>
-              <p style="font-size:11px;color:#9A8F7A;margin-top:6px;">모두 비워두면 해당 날짜 일정이 삭제됩니다 &nbsp;·&nbsp; Ctrl+Enter로 빠르게 저장</p>
+              <p style="font-size:11px;color:#9A8F7A;margin-top:6px;">저장하면 현재 시간대({{ modalTime }}) 일정만 갱신되고 다른 시간대 일정은 유지됩니다 &nbsp;·&nbsp; Ctrl+Enter로 저장</p>
             </div>
           </div>
 
           <!-- 모달 푸터 -->
           <div style="padding:14px 24px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <!-- 삭제 버튼 (기존 내용 있을 때) -->
-            <button v-if="modalDate && localSchedules[currentUserId]?.[modalDate]"
+            <!-- 삭제 버튼 (현재 시간대 일정이 등록돼 있을 때) -->
+            <button v-if="currentSlotExists"
               type="button" @click="deleteSchedule"
               style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
               @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
@@ -554,7 +589,7 @@
                 <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                 <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
-              삭제
+              이 일정 삭제
             </button>
             <div v-else></div>
 
@@ -1132,6 +1167,65 @@ const resetFields = () => {
   modalContent.value = ''
 }
 
+// ── 다중 일정 병합 ────────────────────────────────────
+// 한 날짜에 시간대(종일/오전/오후)별로 여러 일정을 각각 등록할 수 있도록,
+// 저장 시 현재 시간대 슬롯만 갱신하고 다른 시간대 일정은 보존한다.
+
+// 주간/월간 어느 뷰든 현재 사용자의 해당 날짜 셀 원본 조회
+const cellRawFor = (date) => {
+  if (!date) return ''
+  return localSchedules[props.currentUserId]?.[date]
+      ?? monthlySchedules[props.currentUserId]?.[date]
+      ?? ''
+}
+
+// 선택한 날짜에 이미 등록된 슬롯 목록 (모달에서 클릭하여 수정 가능)
+const existingSlots = computed(() =>
+  modalDate.value ? parsedCell(cellRawFor(modalDate.value)).slots : []
+)
+const currentSlotExists = computed(() =>
+  existingSlots.value.some(s => s.time === modalTime.value)
+)
+
+// 슬롯 객체 → 저장 라인 (buildContent와 동일 포맷)
+const slotToLine = (slot) => {
+  let line = `[${slot.time}]${slot.status}`
+  if (slot.sites?.length) line += ':' + slot.sites.join(',')
+  if (slot.content)       line += '|' + slot.content
+  return line
+}
+
+const slotLineOrder = (line) => {
+  const t = line.match(/^\[([^\]]+)\]/)?.[1] ?? ''
+  const i = TIME_ORDER.indexOf(t)
+  return i < 0 ? TIME_ORDER.length : i
+}
+
+// 현재 시간대 슬롯을 기존 셀에 병합 — newLine이 빈 문자열이면 해당 슬롯 삭제
+const mergeCurrentSlot = (date, newLine) => {
+  const lines = parsedCell(cellRawFor(date)).slots
+    .filter(s => s.time !== modalTime.value)
+    .map(slotToLine)
+  if (newLine) lines.push(newLine)
+  lines.sort((a, b) => slotLineOrder(a) - slotLineOrder(b))
+  return lines.join('\n')
+}
+
+// 기존 슬롯을 편집기로 불러오기
+const loadSlot = (slot) => {
+  modalTime.value    = TIME_ORDER.includes(slot.time) ? slot.time : '종일'
+  modalStatus.value  = slot.status
+  modalSites.value   = [...slot.sites]
+  modalContent.value = slot.content ?? ''
+}
+
+// 새 일정 추가 — 미사용 시간대를 자동 선택하고 입력값 초기화
+const startNewSlot = () => {
+  const used = existingSlots.value.map(s => s.time)
+  modalTime.value = TIME_ORDER.find(t => !used.includes(t)) ?? '종일'
+  resetFields()
+}
+
 const openModal = (date, content) => {
   const defaultDate = allDates.value.includes(today) ? today : props.currDates[0]
   modalDate.value = date ?? defaultDate
@@ -1175,7 +1269,8 @@ const openViewModal = (user, date, content) => {
 const saveModal = async () => {
   if (!modalDate.value || modalSaving.value) return
   modalSaving.value = true
-  const content = buildContent()
+  // 현재 시간대 슬롯만 갱신하고 다른 시간대 일정은 보존하여 병합
+  const content = mergeCurrentSlot(modalDate.value, buildContent())
   try {
     await window.axios.post('/schedules/upsert', {
       date:    modalDate.value,
@@ -1200,14 +1295,16 @@ const saveModal = async () => {
 const deleteSchedule = async () => {
   if (!modalDate.value) return
   modalSaving.value = true
+  // 현재 시간대 슬롯만 삭제하고 다른 시간대 일정은 보존
+  const content = mergeCurrentSlot(modalDate.value, '')
   try {
     await window.axios.post('/schedules/upsert', {
       date:    modalDate.value,
-      content: null,
+      content: content || null,
     })
-    if (localSchedules[props.currentUserId]) {
-      localSchedules[props.currentUserId][modalDate.value] = ''
-    }
+    if (!localSchedules[props.currentUserId]) localSchedules[props.currentUserId] = {}
+    localSchedules[props.currentUserId][modalDate.value] = content
+    refreshMonthlySchedule(modalDate.value, content)
     clearTimeout(saveDoneTimer)
     saveDone.value = true
     saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)

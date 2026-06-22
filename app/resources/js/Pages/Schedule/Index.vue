@@ -20,22 +20,45 @@
 
       <!-- 주차 네비게이션 + 일정 추가 버튼 -->
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <Link :href="`/schedules?week=${prevWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          이전 주
-        </Link>
-        <Link v-if="!isCurrentWeek" href="/schedules"
-          style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;text-decoration:none;">
-          오늘
-        </Link>
-        <div v-else
-          style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;">
-          이번 주
-        </div>
-        <Link :href="`/schedules?week=${nextWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
-          다음 주
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        </Link>
+        <!-- 주간 뷰: 주 단위 이동 -->
+        <template v-if="viewMode === 'week'">
+          <Link :href="`/schedules?week=${prevWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            이전 주
+          </Link>
+          <Link v-if="!isCurrentWeek" href="/schedules"
+            style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;text-decoration:none;">
+            오늘
+          </Link>
+          <div v-else
+            style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;">
+            이번 주
+          </div>
+          <Link :href="`/schedules?week=${nextWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">
+            다음 주
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </Link>
+        </template>
+
+        <!-- 월간 뷰: 달 단위 이동 -->
+        <template v-else>
+          <button type="button" @click="changeMonth(-1)" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            이전 달
+          </button>
+          <button v-if="!isCurrentMonth" type="button" @click="goToCurrentMonth"
+            style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;cursor:pointer;font-family:inherit;">
+            이번 달
+          </button>
+          <div v-else
+            style="background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;">
+            이번 달
+          </div>
+          <button type="button" @click="changeMonth(1)" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+            다음 달
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </template>
 
         <!-- 주간/월간 전환 버튼 -->
         <div style="display:flex;background:#F5EDDB;border:2px solid #1A1100;border-radius:10px;overflow:hidden;">
@@ -947,6 +970,18 @@ const changeMonth = async (delta) => {
   if (m < 1)  { m = 12; y-- }
   monthlyMonth.value = m
   monthlyYear.value  = y
+  await loadMonthlyData()
+}
+
+// 현재 달 여부 / 이번 달로 복귀
+const isCurrentMonth = computed(() =>
+  monthlyYear.value === todayDate.getFullYear() &&
+  monthlyMonth.value === todayDate.getMonth() + 1
+)
+const goToCurrentMonth = async () => {
+  if (isCurrentMonth.value) return
+  monthlyYear.value  = todayDate.getFullYear()
+  monthlyMonth.value = todayDate.getMonth() + 1
   await loadMonthlyData()
 }
 

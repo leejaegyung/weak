@@ -186,7 +186,8 @@ class ReportController extends Controller
         $user = Auth::user();
         // 모든 인증 사용자가 열람 가능 (수정/삭제/제출은 본인·관리자만 프론트에서 제한)
 
-        $report->load('user');
+        // comments_count 를 함께 로드 → 진입 즉시 코멘트 카운트 배지 표시
+        $report->load('user')->loadCount('comments');
 
         // 같은 주차 팀원 보고서 맵 (사용자 스위처용)
         $weekReports = WeeklyReport::where('week', $report->week)->pluck('id', 'user_id');

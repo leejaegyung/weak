@@ -731,12 +731,20 @@ const doDelete = () => router.delete(`/reports/${props.report.id}`)
 const showCommentPanel = ref(false)
 const commentLoading   = ref(false)
 const comments         = ref([])
-const commentCount     = ref(0)
+const commentCount     = ref(props.report.comments_count ?? 0)
 const newComment       = ref('')
 const newSection       = ref('general')
 const addingComment    = ref(false)
 const editingId        = ref(null)
 const editingText      = ref('')
+
+// 보고서 전환(전주/다음주/팀원 스위처) 시 코멘트 상태 동기화
+// → 새 보고서의 comments_count 로 카운트 배지 즉시 갱신
+watch(() => props.report.id, () => {
+  comments.value = []
+  commentCount.value = props.report.comments_count ?? 0
+  showCommentPanel.value = false
+})
 
 const openCommentPanel = async () => {
   showCommentPanel.value = true

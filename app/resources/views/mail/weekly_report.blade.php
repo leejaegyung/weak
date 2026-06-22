@@ -79,26 +79,59 @@
       border-top: 2px solid #1A1100;
       margin: 0 0 20px 0;
     }
-    /* 보고서 링크 목록 */
+    /* 보고서 본문 목록 */
     .report-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
       margin-bottom: 28px;
     }
-    .report-item {
+    .report-card {
+      background: #FDFAF5;
+      border: 1.5px solid #E8E0D0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .report-card-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #FDFAF5;
-      border: 1.5px solid #E8E0D0;
-      border-radius: 10px;
-      padding: 14px 18px;
+      background: #F5EDDB;
+      border-bottom: 1.5px solid #E8E0D0;
+      padding: 12px 16px;
     }
     .report-item-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+    }
+    /* 본문 텍스트 섹션 */
+    .report-section {
+      padding: 12px 16px;
+      border-top: 1px solid #F0E9DA;
+    }
+    .report-section:first-of-type {
+      border-top: none;
+    }
+    .report-section-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #FD4401;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+    .report-section-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #1A1100;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .report-empty {
+      padding: 14px 16px;
+      font-size: 12px;
+      color: #9A8F7A;
     }
     .avatar {
       width: 34px;
@@ -192,19 +225,33 @@
 
       <hr class="divider">
 
-      <!-- 보고서 링크 목록 (팀 일정판 순서: 이름 : 금주 리포트 링크) -->
+      <!-- 보고서 본문 (팀 일정판 순서: 모든 항목을 텍스트로 전달) -->
       <div class="report-list">
-        @foreach ($data['reportLinks'] as $report)
-        <div class="report-item">
-          <div class="report-item-left">
-            <div class="avatar">{{ mb_substr($report['name'], 0, 1) }}</div>
-            <span class="report-name">{{ $report['name'] }}</span>
-            @if (!empty($report['position']))
-            <span class="report-position">{{ $report['position'] }}</span>
-            @endif
-            <span class="report-colon">:</span>
+        @foreach ($data['reports'] as $report)
+        <div class="report-card">
+          <!-- 작성자 헤더 -->
+          <div class="report-card-head">
+            <div class="report-item-left">
+              <div class="avatar">{{ mb_substr($report['name'], 0, 1) }}</div>
+              <span class="report-name">{{ $report['name'] }}</span>
+              @if (!empty($report['position']))
+              <span class="report-position">{{ $report['position'] }}</span>
+              @endif
+            </div>
+            <a href="{{ $report['url'] }}" class="report-link" target="_blank">원문 보기 →</a>
           </div>
-          <a href="{{ $report['url'] }}" class="report-link" target="_blank">금주 리포트 링크 →</a>
+
+          <!-- 본문 텍스트 섹션 -->
+          @if (empty($report['sections']))
+            <div class="report-empty">작성된 내용이 없습니다.</div>
+          @else
+            @foreach ($report['sections'] as $section)
+            <div class="report-section">
+              <div class="report-section-label">{{ $section['label'] }}</div>
+              <div class="report-section-text">{!! nl2br(e($section['text'])) !!}</div>
+            </div>
+            @endforeach
+          @endif
         </div>
         @endforeach
       </div>

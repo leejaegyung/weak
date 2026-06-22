@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Services\KakaoService;
 use App\Services\MailService;
+use App\Services\ReportService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class SettingController extends Controller
         private WebhookService $webhookService,
         private KakaoService   $kakaoService,
         private MailService    $mailService,
+        private ReportService  $reportService,
     ) {}
 
     // ═══════════════════════════════════════════════
@@ -256,9 +258,10 @@ class SettingController extends Controller
             ], 422);
         }
 
-        // 보고서 링크 목록 구성 (팀 일정판과 동일한 정렬: sort_order → name)
+        // 보고서 목록 구성 — 화면(링크)이 아닌 모든 항목을 텍스트로 전달
+        // (팀 일정판과 동일한 정렬: sort_order → name)
         $baseUrl = rtrim(config('app.url'), '/');
-        $reportLinks = $submittedReports
+        $reports = $submittedReports
             ->sort(fn($a, $b) =>
                 [$a->user->sort_order ?? 9999, $a->user->name ?? '']
                 <=> [$b->user->sort_order ?? 9999, $b->user->name ?? '']
@@ -268,6 +271,7 @@ class SettingController extends Controller
                 'name'     => $r->user->name     ?? '-',
                 'position' => $r->user->position ?? '',
                 'url'      => "{$baseUrl}/reports/{$r->id}",
+                'sections' => $this->reportService->formatReportSections($r),
             ])->toArray();
 
         $data = [
@@ -279,7 +283,7 @@ class SettingController extends Controller
             'body_outro'  => trim((string) $request->input('body_outro', '')) ?: '감사합니다.',
             'week_start'  => $weekStart,
             'week_end'    => $weekEnd,
-            'reportLinks' => $reportLinks,
+            'reports'     => $reports,
         ];
 
         try {

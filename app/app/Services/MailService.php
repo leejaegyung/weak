@@ -55,7 +55,7 @@ class MailService
     /**
      * 주간보고 메일 발송
      *
-     * @param array $data {to, cc[], subject, week_start, week_end, reportLinks[]}
+     * @param array $data {to, cc[], subject, week_start, week_end, reports[]}
      */
     public function sendWeeklyReport(array $data): void
     {

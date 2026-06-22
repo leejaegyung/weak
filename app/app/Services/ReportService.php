@@ -477,6 +477,40 @@ class ReportService
         return $s . '~' . $e;
     }
 
+    /**
+     * 보고서를 메일 본문용 텍스트 섹션 목록으로 변환
+     * 화면(링크)이 아닌 모든 항목을 텍스트로 전달하기 위해 사용
+     * @return array<int, array{label: string, text: string}> 빈 섹션은 제외
+     */
+    public function formatReportSections(WeeklyReport $report): array
+    {
+        $curr = $report->curr_work ?? [];
+        $byCat = fn(string $cat) => collect($curr)
+            ->filter(fn($i) => ($i['category'] ?? '') === $cat)->values()->toArray();
+        $etc  = collect($curr)
+            ->filter(fn($i) => !in_array($i['category'] ?? '', ['지원', '내부작업', '공유'], true))
+            ->values()->toArray();
+
+        $candidates = [
+            ['전주 업무 — 지원',    $this->formatItemsAsText($byCat('지원'))],
+            ['전주 업무 — 내부작업', $this->formatItemsAsText($byCat('내부작업'))],
+            ['전주 업무 — 공유',    $this->formatItemsAsText($byCat('공유'))],
+            ['전주 업무 — 기타',    $this->formatItemsAsText($etc)],
+            ['금주 업무',          $this->formatItemsAsText($report->next_plan ?? [])],
+            ['Todo (일정 미정)',   $this->formatTodoItems($report->todo_items ?? [])],
+            ['특이사항',           trim((string) $report->notes)],
+            ['요청사항',           trim((string) $report->requests)],
+        ];
+
+        $sections = [];
+        foreach ($candidates as [$label, $text]) {
+            if (trim($text) !== '') {
+                $sections[] = ['label' => $label, 'text' => $text];
+            }
+        }
+        return $sections;
+    }
+
     private function formatItemsAsText(array $items): string
     {
         $lines = [];

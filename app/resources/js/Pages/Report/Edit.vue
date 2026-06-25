@@ -335,8 +335,16 @@
 
       <!-- 지원: 이번 주 | 다음 주 (2열) -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr" />
-        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next" />
+        <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
+          :canPaste="jiWonClipboard !== null"
+          :suggestions="mySites"
+          @copy="() => copyJiWon('curr')"
+          @paste="() => pasteJiWon('curr')" />
+        <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
+          :canPaste="jiWonClipboard !== null"
+          :suggestions="mySites"
+          @copy="() => copyJiWon('next')"
+          @paste="() => pasteJiWon('next')" />
       </div>
 
       <!-- 내부작업 (전체 폭) -->
@@ -700,6 +708,20 @@ const updateTodoSub = (idx, sIdx, val) => {
   const subs = form.todo_items[idx].sub_items || []
   subs[sIdx] = typeof subs[sIdx] === 'string' ? val : { ...subs[sIdx], content: val }
   form.todo_items[idx].sub_items = [...subs]
+}
+
+// ── 지원 항목 복사/붙여넣기 클립보드 (이번 주 ↔ 다음 주 양방향) ──
+const jiWonClipboard = ref(null)
+
+const copyJiWon = (from) => {
+  const src = from === 'curr' ? form.jiWon_curr : form.jiWon_next
+  jiWonClipboard.value = JSON.parse(JSON.stringify(src))
+}
+
+const pasteJiWon = (to) => {
+  if (!jiWonClipboard.value) return
+  if (to === 'curr') form.jiWon_curr = JSON.parse(JSON.stringify(jiWonClipboard.value))
+  else               form.jiWon_next = JSON.parse(JSON.stringify(jiWonClipboard.value))
 }
 
 // ── 제출 로딩 상태 ──

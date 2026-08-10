@@ -77,7 +77,7 @@
         <!-- 추가 일정 전송 (오늘 내 일정을 팀 채널에 공유) -->
         <button v-if="notifyEnabled" type="button" @click="sendNotify"
           :disabled="notifySending"
-          v-tooltip="'오늘 내 일정을 팀 채널에 전송합니다'"
+          v-tooltip="'금일 수정 및 추가된 일정을 팀 채널에 전송합니다'"
           :style="{
             display:'inline-flex', alignItems:'center', gap:'6px',
             background:'#fff', color:'#1A1100',

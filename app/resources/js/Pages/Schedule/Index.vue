@@ -80,15 +80,15 @@
           v-tooltip="'금일 수정 및 추가된 일정을 팀 채널에 전송합니다'"
           :style="{
             display:'inline-flex', alignItems:'center', gap:'6px',
-            background:'#fff', color:'#1A1100',
+            background:'#B8284F', color:'#fff',
             border:'2px solid #1A1100', borderRadius:'10px', padding:'7px 14px',
             fontSize:'13px', fontWeight:'700', fontFamily:'inherit',
             boxShadow:'2px 2px 0 #1A1100', transition:'all 0.1s',
             opacity: notifySending ? 0.5 : 1,
             cursor: notifySending ? 'not-allowed' : 'pointer',
           }"
-          @mouseenter="e=>{ if(!notifySending){ e.currentTarget.style.background='#FFF0A0'; e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
-          @mouseleave="e=>{ e.currentTarget.style.background='#fff'; e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
+          @mouseenter="e=>{ if(!notifySending){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+          @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
@@ -777,18 +777,18 @@
               <!-- 저장 + 팀 채널 공유 (오늘 일정이 선택된 경우만) -->
               <button v-if="canNotify && !isBulkDelete" type="button" @click="saveAndNotify"
                 :disabled="!canSubmit || modalSaving"
-                v-tooltip="'저장한 뒤 오늘 일정을 팀 채널에 바로 알립니다'"
+                v-tooltip="'저장한 뒤 금일 수정 및 추가된 일정을 팀 채널에 전송합니다'"
                 :style="{
                   display:'inline-flex', alignItems:'center', gap:'5px',
-                  background:'#fff', color:'#1A1100',
+                  background:'#B8284F', color:'#fff',
                   border:'2px solid #1A1100', borderRadius:'8px', padding:'7px 14px',
                   fontSize:'13px', fontWeight:'700', fontFamily:'inherit',
-                  boxShadow:'2px 2px 0 #1A1100', transition:'all 0.1s',
+                  boxShadow:'2px 2px 0 #C5BAA8', transition:'all 0.1s',
                   opacity: !canSubmit || modalSaving ? 0.5 : 1,
                   cursor: !canSubmit || modalSaving ? 'not-allowed' : 'pointer',
                 }"
-                @mouseenter="e=>{ if(canSubmit && !modalSaving){ e.currentTarget.style.background='#FFF0A0'; } }"
-                @mouseleave="e=>{ e.currentTarget.style.background='#fff'; }">
+                @mouseenter="e=>{ if(canSubmit && !modalSaving){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #C5BAA8'; } }"
+                @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #C5BAA8'; }">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>

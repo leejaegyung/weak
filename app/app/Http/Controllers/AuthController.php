@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +35,9 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/reports');
+        // 개인설정에서 지정한 시작 화면으로 (미지정 시 팀 일정판)
+        // 보호된 페이지를 열려다 로그인한 경우엔 원래 가려던 곳이 우선한다
+        return redirect()->intended(Auth::user()?->defaultPage() ?? User::DEFAULT_PAGE_FALLBACK);
     }
 
     public function showRegister(): Response

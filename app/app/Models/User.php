@@ -11,12 +11,24 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
+    /** 로그인 후 시작 화면으로 지정할 수 있는 좌측 탭 (경로 => 표시명) */
+    public const DEFAULT_PAGES = [
+        '/schedules'      => '팀 일정판',
+        '/reports'        => '보고서 목록',
+        '/reports/create' => '보고서 작성',
+        '/issues'         => '요구/이슈',
+    ];
+
+    /** 별도로 지정하지 않았을 때의 시작 화면 */
+    public const DEFAULT_PAGE_FALLBACK = '/schedules';
+
     protected $fillable = [
         'name',
         'username',
         'email',
         'password',
         'position',
+        'default_page',
         'role',
         'is_active',
         'is_hidden',
@@ -88,5 +100,16 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * 로그인 후 이동할 경로.
+     * 허용 목록에 없는 값(설정 안 함·삭제된 화면)은 기본값으로 되돌린다.
+     */
+    public function defaultPage(): string
+    {
+        return array_key_exists((string) $this->default_page, self::DEFAULT_PAGES)
+            ? $this->default_page
+            : self::DEFAULT_PAGE_FALLBACK;
     }
 }

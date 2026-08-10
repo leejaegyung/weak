@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\UserSite;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,12 +29,16 @@ class ProfileController extends Controller
                 'name'             => $user->name,
                 'username'         => $user->username,
                 'position'         => $user->position ?? '',
+                'default_page'     => $user->defaultPage(),
                 'role'             => $user->role,
                 'kakao_connected'  => !empty($user->kakao_id),
                 'avatar_color'     => $user->avatar_color,
                 'avatar_image_url' => $user->avatar_image_url,
             ],
-            'sites' => $sites,
+            'sites'        => $sites,
+            'defaultPages' => collect(User::DEFAULT_PAGES)
+                ->map(fn($label, $path) => ['value' => $path, 'label' => $label])
+                ->values()->toArray(),
         ]);
     }
 
@@ -55,6 +61,8 @@ class ProfileController extends Controller
         $data = $request->validate([
             'name'                  => ['required', 'string', 'max:50'],
             'position'              => ['nullable', 'string', 'max:30'],
+            // 허용 목록으로 제한 — 임의 경로가 저장되지 않도록 한다
+            'default_page'          => ['nullable', Rule::in(array_keys(User::DEFAULT_PAGES))],
             'current_password'      => ['nullable', 'string'],
             'new_password'          => ['nullable', 'confirmed', Password::min(6)],
         ]);
@@ -67,8 +75,9 @@ class ProfileController extends Controller
             $user->password = Hash::make($data['new_password']);
         }
 
-        $user->name     = $data['name'];
-        $user->position = $data['position'] ?? $user->position;
+        $user->name         = $data['name'];
+        $user->position     = $data['position'] ?? $user->position;
+        $user->default_page = $data['default_page'] ?? null;
         $user->save();
 
         return redirect()->route('profile')->with('success', '개인정보가 저장되었습니다.');

@@ -44,6 +44,27 @@
             </div>
           </div>
 
+          <!-- 시작 화면 -->
+          <div style="margin-top:16px;">
+            <label style="font-size:11px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:6px;">
+              시작 화면
+              <span style="font-weight:600;color:#C5BAA8;margin-left:4px;">로그인하면 이 화면부터 열립니다</span>
+            </label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button v-for="p in defaultPages" :key="p.value" type="button"
+                @click="infoForm.default_page = p.value"
+                :style="{
+                  padding:'7px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
+                  border: infoForm.default_page === p.value ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                  background: infoForm.default_page === p.value ? '#FDCB40' : '#fff',
+                  color: '#1A1100', cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                  boxShadow: infoForm.default_page === p.value ? '2px 2px 0 #1A1100' : 'none',
+                }">
+                {{ p.label }}
+              </button>
+            </div>
+          </div>
+
           <!-- 비밀번호 변경 (토글) -->
           <div style="margin-top:4px;">
             <button type="button" @click="showPwSection = !showPwSection"
@@ -288,8 +309,9 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-  profileUser: { type: Object, required: true },
-  sites:       { type: Array,  default: () => [] },
+  profileUser:  { type: Object, required: true },
+  sites:        { type: Array,  default: () => [] },
+  defaultPages: { type: Array,  default: () => [] },
 })
 
 const kakaoConnected = ref(props.profileUser.kakao_connected ?? false)
@@ -312,6 +334,7 @@ const infoErrors    = ref({})
 const infoForm = ref({
   name:                    props.profileUser.name,
   position:                props.profileUser.position,
+  default_page:            props.profileUser.default_page,
   current_password:        '',
   new_password:            '',
   new_password_confirmation: '',

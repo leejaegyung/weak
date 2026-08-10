@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Services\HolidayService;
 use App\Services\ScheduleService;
+use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class ScheduleController extends Controller
     public function __construct(
         private ScheduleService $scheduleService,
         private HolidayService $holidayService,
+        private WebhookService $webhookService,
     ) {
     }
 
@@ -83,6 +85,7 @@ class ScheduleController extends Controller
             'isCurrentWeek'  => $monday->isSameDay($now->copy()->startOfWeek(Carbon::MONDAY)),
             'weekReportMap'  => $weekReportMap,
             'mySites'        => $mySites,
+            'notifyEnabled'  => $this->webhookService->isEnabled(),
         ]);
     }
 
@@ -161,6 +164,33 @@ class ScheduleController extends Controller
         );
 
         return response()->json($schedule);
+    }
+
+    /**
+     * 당일 본인 일정을 팀 채널에 알림 (수동).
+     * 아침 정기 발송 이후 급하게 잡힌 일정을 바로 공유하기 위한 용도라 당일만 허용한다.
+     */
+    public function notify(Request $request): JsonResponse
+    {
+        $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
+
+        $date  = $request->input('date');
+        $today = Carbon::now('Asia/Seoul')->toDateString();
+
+        if ($date !== $today) {
+            return response()->json(['ok' => false, 'message' => '당일 일정만 알릴 수 있습니다.'], 422);
+        }
+
+        if (!$this->webhookService->isEnabled()) {
+            return response()->json(['ok' => false, 'message' => '팀 알림이 설정되어 있지 않습니다.'], 422);
+        }
+
+        $sent = $this->webhookService->notifyUserSchedule(Auth::user(), $date);
+
+        return response()->json([
+            'ok'      => $sent,
+            'message' => $sent ? '팀에 알렸습니다.' : '알림 전송에 실패했습니다.',
+        ], $sent ? 200 : 502);
     }
 
     /** 기간 일괄 등록/삭제 (본인 일정 한정) */

@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedules/holidays', [ScheduleController::class, 'holidays'])->name('schedules.holidays');
     Route::post('/schedules/upsert', [ScheduleController::class, 'upsert'])->name('schedules.upsert');
     Route::post('/schedules/bulk-upsert', [ScheduleController::class, 'bulkUpsert'])->name('schedules.bulk-upsert');
+    Route::post('/schedules/notify', [ScheduleController::class, 'notify'])->name('schedules.notify');
 
     // 개인설정
     Route::get('/profile',                        [ProfileController::class, 'show'])->name('profile');

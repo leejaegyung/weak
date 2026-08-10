@@ -752,6 +752,28 @@
 
             <div style="display:flex;gap:8px;">
               <button type="button" @click="closeModal" class="btn-secondary btn-sm">취소</button>
+
+              <!-- 저장 + 팀 채널 공유 (오늘 일정이 선택된 경우만) -->
+              <button v-if="canNotify && !isBulkDelete" type="button" @click="saveAndNotify"
+                :disabled="!canSubmit || modalSaving"
+                v-tooltip="'저장한 뒤 오늘 일정을 팀 채널에 바로 알립니다'"
+                :style="{
+                  display:'inline-flex', alignItems:'center', gap:'5px',
+                  background:'#fff', color:'#1A1100',
+                  border:'2px solid #1A1100', borderRadius:'8px', padding:'7px 14px',
+                  fontSize:'13px', fontWeight:'700', fontFamily:'inherit',
+                  boxShadow:'2px 2px 0 #1A1100', transition:'all 0.1s',
+                  opacity: !canSubmit || modalSaving ? 0.5 : 1,
+                  cursor: !canSubmit || modalSaving ? 'not-allowed' : 'pointer',
+                }"
+                @mouseenter="e=>{ if(canSubmit && !modalSaving){ e.currentTarget.style.background='#FFF0A0'; } }"
+                @mouseleave="e=>{ e.currentTarget.style.background='#fff'; }">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                팀에 알리기
+              </button>
+
               <button type="button" @click="submitModal"
                 :disabled="!canSubmit || modalSaving"
                 :style="{
@@ -953,6 +975,7 @@ const props = defineProps({
   isCurrentWeek:  { type: Boolean, default: true },
   weekReportMap:  { type: Object,  default: () => ({}) },
   mySites:        { type: Array,   default: () => [] },
+  notifyEnabled:  { type: Boolean, default: false },
   holidays:       { type: Object,  default: () => ({}) },
 })
 
@@ -1659,10 +1682,11 @@ const openViewModal = (user, date, content) => {
   viewModal.value = { show: true, userId: user.id, userName: user.name ?? '', date, content }
 }
 
+// 저장 함수들은 성공 여부(boolean)를 반환한다 — '팀에 알리기'가 저장 성공 시에만 발송하기 위함
 const saveModal = async () => {
   // 여러 날짜를 골랐으면 일괄 처리로 넘긴다
   if (modalDates.value.length > 1) return saveSelectedDates(false)
-  if (!modalDate.value || modalSaving.value) return
+  if (!modalDate.value || modalSaving.value) return false
   modalSaving.value = true
   // 현재 시간대 슬롯만 갱신하고 다른 시간대 일정은 보존하여 병합
   const content = mergeCurrentSlot(modalDate.value, buildContent())
@@ -1678,8 +1702,10 @@ const saveModal = async () => {
 
     showSaveToast('일정이 저장되었습니다')
     closeModal()
+    return true
   } catch (e) {
     console.error('일정 저장 실패', e)
+    return false
   } finally {
     modalSaving.value = false
   }
@@ -1707,12 +1733,14 @@ const postBulk = async (payload, deleting) => {
 
     showSaveToast(`${data.saved}일 일정을 ${deleting ? '삭제' : '등록'}했습니다${suffix}`)
     closeModal()
+    return true
   } catch (e) {
     const errors = e?.response?.data?.errors
     bulkError.value = errors
       ? Object.values(errors).flat()[0]
       : '일괄 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
     console.error('일괄 일정 처리 실패', e)
+    return false
   } finally {
     modalSaving.value = false
   }
@@ -1720,7 +1748,7 @@ const postBulk = async (payload, deleting) => {
 
 // 직접 고른 날짜들에 일괄 적용
 const saveSelectedDates = (deleting) => {
-  if (modalSaving.value || !modalDates.value.length) return
+  if (modalSaving.value || !modalDates.value.length) return false
   return postBulk({
     dates:   [...modalDates.value],
     time:    modalTime.value,
@@ -1733,8 +1761,28 @@ const saveSelectedDates = (deleting) => {
 
 // 삭제 모드면 일괄 삭제, 아니면 저장 (선택 날짜 수는 saveModal 내부에서 판단)
 const submitModal = () => {
-  if (!canSubmit.value || modalSaving.value) return
+  if (!canSubmit.value || modalSaving.value) return false
   return isBulkDelete.value ? saveSelectedDates(true) : saveModal()
+}
+
+// ── 팀에 알리기 (당일 일정 한정) ────────────────────────
+// 아침 정기 발송 이후 급하게 잡힌 일정을 수동으로 팀 채널에 공유한다.
+const canNotify = computed(() =>
+  props.notifyEnabled && modalDates.value.includes(today)
+)
+
+const saveAndNotify = async () => {
+  const saved = await submitModal()
+  if (!saved) return
+
+  try {
+    const { data } = await window.axios.post('/schedules/notify', { date: today })
+    showSaveToast(data.message ?? '팀에 알렸습니다')
+  } catch (e) {
+    const msg = e?.response?.data?.message ?? '알림 전송에 실패했습니다'
+    showSaveToast(`저장은 완료됐지만 ${msg}`)
+    console.error('팀 알림 실패', e)
+  }
 }
 
 const deleteSchedule = async () => {

@@ -43,6 +43,50 @@ class WebhookService
         $this->send("⚠️ **보고서 반려 알림**\n{$userName}님의 {$week} 주간보고가 반려되었습니다. 수정 후 재제출해 주세요.{$reasonText}");
     }
 
+    /**
+     * 본인 하루 일정을 팀에 공유 (일정판의 '팀에 알리기' 버튼).
+     * 아침 정기 발송 이후에 급하게 잡힌 일정을 바로 알리기 위한 수동 알림이다.
+     */
+    public function notifyUserSchedule(\App\Models\User $user, string $date): bool
+    {
+        if (!$this->isEnabled()) return false;
+
+        return $this->send($this->buildUserDayMessage($user, $date));
+    }
+
+    /** 특정 사용자의 하루 일정 메시지 */
+    public function buildUserDayMessage(\App\Models\User $user, string $date): string
+    {
+        $content = Schedule::where('user_id', $user->id)->where('date', $date)->value('content');
+
+        $carbon = Carbon::parse($date);
+        $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
+        $header = "🔔 **일정 변경** — {$carbon->format('m월 d일')}({$dayKr})";
+
+        $entries = $this->parseContent($content ?? '')['entries'];
+
+        if (empty($entries)) {
+            return "{$header}\n- {$user->name} : 일정 없음";
+        }
+
+        $statusIcons = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'];
+        $parts       = [];
+
+        foreach ($entries as $entry) {
+            $time   = $entry['time']   ?? '종일';
+            $status = $entry['status'] ?? '';
+            $sites  = $entry['sites']  ?? [];
+
+            $icon   = $statusIcons[$status] ?? '•';
+            $prefix = ($time !== '' && $time !== '종일') ? "({$time}) " : '';
+            $label  = trim($status . ($sites ? ' ' . implode(', ', $sites) : ''));
+
+            $parts[] = $icon . ' ' . $prefix . ($label !== '' ? $label : '일정');
+        }
+
+        return "{$header}\n- {$user->name} : " . implode(' / ', $parts);
+    }
+
     /** 미제출자 일괄 알림 */
     public function notifyNotSubmitted(array $userNames, string $weekLabel): void
     {

@@ -336,19 +336,23 @@
       <!-- 지원: 이번 주 | 다음 주 (2열) -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <SupportSection title="이번 주 결과 — 지원" v-model="form.jiWon_curr"
-          :canPaste="jiWonClipboard !== null"
+          :canPaste="canPasteSection"
           :suggestions="mySites"
-          @copy="() => copyJiWon('curr')"
-          @paste="() => pasteJiWon('curr')" />
+          @copy="() => copySection('jiWon_curr')"
+          @paste="() => pasteSection('jiWon_curr')" />
         <SupportSection title="다음 주 계획 — 지원" v-model="form.jiWon_next"
-          :canPaste="jiWonClipboard !== null"
+          :canPaste="canPasteSection"
           :suggestions="mySites"
-          @copy="() => copyJiWon('next')"
-          @paste="() => pasteJiWon('next')" />
+          @copy="() => copySection('jiWon_next')"
+          @paste="() => pasteSection('jiWon_next')" />
       </div>
 
       <!-- 내부작업 (전체 폭) -->
-      <SupportSection title="내부작업" v-model="form.naebu" />
+      <SupportSection title="내부작업" v-model="form.naebu"
+        :canPaste="canPasteSection"
+        :suggestions="mySites"
+        @copy="() => copySection('naebu')"
+        @paste="() => pasteSection('naebu')" />
 
       <!-- Todo -->
       <div class="card" style="padding:0;overflow:hidden;">
@@ -366,6 +370,7 @@
               <span style="font-size:11px;color:#9A8F7A;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">{{ idx+1 }}.</span>
               <input type="checkbox" v-model="t.done" style="accent-color:#FD4401;width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
               <textarea v-model="t.content" rows="1"
+                :ref="el => { if (el) todoContentRefs[idx] = el }"
                 @input="e => { e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
                 class="input-field todo-textarea"
                 :style="{ textDecoration: t.done ? 'line-through' : 'none', flex:1, resize:'none', overflow:'hidden', minHeight:'36px', lineHeight:'1.55', fontWeight:'700', fontSize:'13px' }"
@@ -383,6 +388,7 @@
                 style="display:flex;gap:6px;align-items:flex-start;">
                 <span style="color:#9A8F7A;font-size:12px;flex-shrink:0;margin-top:7px;">-</span>
                 <textarea :value="sub === null || sub === undefined ? '' : (typeof sub === 'string' ? sub : (sub?.content ?? ''))"
+                  :ref="el => { if (el) todoSubRefs[`${idx}-${sIdx}`] = el }"
                   @input="e => { updateTodoSub(idx, sIdx, e.target.value); e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px' }"
                   class="input-field auto-resize-ta"
                   rows="1"
@@ -416,10 +422,18 @@
       </div>
 
       <!-- 공유 (전체 폭) -->
-      <SupportSection title="공유" v-model="form.gongyu" />
+      <SupportSection title="공유" v-model="form.gongyu"
+        :canPaste="canPasteSection"
+        :suggestions="mySites"
+        @copy="() => copySection('gongyu')"
+        @paste="() => pasteSection('gongyu')" />
 
       <!-- 기타 (전체 폭) -->
-      <SupportSection title="기타" v-model="form.gita" />
+      <SupportSection title="기타" v-model="form.gita"
+        :canPaste="canPasteSection"
+        :suggestions="mySites"
+        @copy="() => copySection('gita')"
+        @paste="() => pasteSection('gita')" />
 
       <!-- 특이사항 / 요청사항 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-bottom:16px;">
@@ -696,10 +710,21 @@ const form = useForm({
   requests:   props.report.requests ?? '',
 })
 
-const addTodo    = () => form.todo_items.push({ content: '', done: false, sub_items: [] })
+// Todo 항목명 / 내용 textarea — 추가 직후 포커스 이동에 사용
+const todoContentRefs = ref({})   // 키: 항목idx
+const todoSubRefs     = ref({})   // 키: `${항목idx}-${내용idx}`
+
+const addTodo = async () => {
+  form.todo_items.push({ content: '', done: false, sub_items: [] })
+  await nextTick()
+  todoContentRefs.value[form.todo_items.length - 1]?.focus()
+}
 const removeTodo = (idx) => form.todo_items.splice(idx, 1)
-const addTodoSub = (idx) => {
+const addTodoSub = async (idx) => {
+  const newIdx = (form.todo_items[idx].sub_items || []).length
   form.todo_items[idx].sub_items = [...(form.todo_items[idx].sub_items || []), '']
+  await nextTick()
+  todoSubRefs.value[`${idx}-${newIdx}`]?.focus()
 }
 const removeTodoSub = (idx, sIdx) => {
   form.todo_items[idx].sub_items.splice(sIdx, 1)
@@ -711,17 +736,18 @@ const updateTodoSub = (idx, sIdx, val) => {
 }
 
 // ── 지원 항목 복사/붙여넣기 클립보드 (이번 주 ↔ 다음 주 양방향) ──
-const jiWonClipboard = ref(null)
+// 지원(이번 주/다음 주)·내부작업·공유·기타 사이를 자유롭게 복사·붙여넣기한다.
+// 인자는 form의 필드명 그대로 사용한다.
+const sectionClipboard = ref(null)
+const canPasteSection  = computed(() => sectionClipboard.value !== null)
 
-const copyJiWon = (from) => {
-  const src = from === 'curr' ? form.jiWon_curr : form.jiWon_next
-  jiWonClipboard.value = JSON.parse(JSON.stringify(src))
+const copySection = (field) => {
+  sectionClipboard.value = JSON.parse(JSON.stringify(form[field] ?? []))
 }
 
-const pasteJiWon = (to) => {
-  if (!jiWonClipboard.value) return
-  if (to === 'curr') form.jiWon_curr = JSON.parse(JSON.stringify(jiWonClipboard.value))
-  else               form.jiWon_next = JSON.parse(JSON.stringify(jiWonClipboard.value))
+const pasteSection = (field) => {
+  if (!sectionClipboard.value) return
+  form[field] = JSON.parse(JSON.stringify(sectionClipboard.value))
 }
 
 // ── 제출 로딩 상태 ──

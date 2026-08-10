@@ -50,7 +50,9 @@ Route::middleware('auth')->group(function () {
     // 일정 (팀 일정판)
     Route::get('/schedules',         [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/schedules/monthly', [ScheduleController::class, 'monthly'])->name('schedules.monthly');
+    Route::get('/schedules/holidays', [ScheduleController::class, 'holidays'])->name('schedules.holidays');
     Route::post('/schedules/upsert', [ScheduleController::class, 'upsert'])->name('schedules.upsert');
+    Route::post('/schedules/bulk-upsert', [ScheduleController::class, 'bulkUpsert'])->name('schedules.bulk-upsert');
 
     // 개인설정
     Route::get('/profile',                        [ProfileController::class, 'show'])->name('profile');

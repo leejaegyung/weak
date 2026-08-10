@@ -373,7 +373,7 @@
       <div v-if="saveDone"
         style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1100;color:#FDCB40;border-radius:12px;padding:10px 22px;font-size:13px;font-weight:700;font-family:'Space Grotesk','Noto Sans KR',sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,0.3);z-index:200;display:flex;align-items:center;gap:8px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        일정이 저장되었습니다
+        {{ saveMsg }}
       </div>
     </Transition>
 
@@ -391,7 +391,10 @@
                   <path d="M8 2v3M16 2v3M3.5 9.5h17M3 6.5h18a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
                 </svg>
               </div>
-              <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">일정 추가</span>
+              <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">
+                {{ isBulkDelete ? `일정 일괄 삭제 (${modalDates.length}일)`
+                  : modalDates.length > 1 ? `일정 일괄 등록 (${modalDates.length}일)` : '일정 추가' }}
+              </span>
               <span style="font-size:12px;color:#9A8F7A;">내 일정만 추가·수정됩니다</span>
             </div>
             <button type="button" @click="closeModal"
@@ -405,9 +408,126 @@
           <!-- 모달 본문 -->
           <div style="padding:22px 24px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;flex:1;min-height:0;">
 
-            <!-- 날짜 선택 -->
+            <!-- 날짜 선택 (다중 선택 + 구간 채우기) -->
             <div>
-              <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">날짜 선택</label>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:700;color:#9A8F7A;letter-spacing:0.04em;text-transform:uppercase;">
+                  날짜 선택
+                  <span v-if="modalDates.length > 1" style="font-weight:700;color:#FD4401;text-transform:none;font-size:11px;margin-left:6px;">
+                    {{ modalDates.length }}일 선택됨
+                  </span>
+                </label>
+
+                <!-- 일괄 등록 (달력 선택) 전환 -->
+                <button type="button" @click="toggleBulkCalendar"
+                  v-tooltip="'달력에서 여러 날짜를 한 번에 선택합니다 (3주 이상 일정)'"
+                  :style="{
+                    display:'inline-flex', alignItems:'center', gap:'5px',
+                    padding:'4px 10px', borderRadius:'8px', fontSize:'11px', fontWeight:'700',
+                    border: '2px solid ' + (bulkCalendar ? '#1A1100' : '#E8E0D0'),
+                    background: bulkCalendar ? '#FDCB40' : '#fff',
+                    color: bulkCalendar ? '#1A1100' : '#6B5E4A',
+                    boxShadow: bulkCalendar ? '2px 2px 0 #1A1100' : 'none',
+                    cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s', flexShrink:0,
+                  }">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                  일괄 등록
+                </button>
+              </div>
+
+              <p v-if="bulkCalendar" style="font-size:11px;color:#9A8F7A;margin-bottom:10px;">
+                시작일과 종료일을 차례로 누르면 사이 날짜가 모두 선택됩니다 · 선택된 날짜를 다시 누르면 그 날짜만 해제됩니다
+              </p>
+
+              <!-- ── 달력 다중 선택 (일괄 등록 / 삭제) ── -->
+              <div v-if="bulkCalendar" style="border:2px solid #1A1100;border-radius:12px;overflow:hidden;">
+                <!-- 등록 / 삭제 전환 -->
+                <div style="display:flex;gap:6px;padding:8px 12px;background:#FDFAF5;border-bottom:1.5px solid #E8E0D0;">
+                  <button v-for="a in [{ key:'create', label:'일괄 등록' }, { key:'delete', label:'일괄 삭제' }]" :key="a.key"
+                    type="button" @click="switchBulkAction(a.key)"
+                    :style="{
+                      padding:'4px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:'700',
+                      border: bulkAction === a.key ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                      background: bulkAction === a.key ? (a.key === 'delete' ? '#FEE2E2' : '#FDCB40') : '#fff',
+                      color: bulkAction === a.key && a.key === 'delete' ? '#DC2626' : '#1A1100',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
+                    }">
+                    {{ a.label }}
+                  </button>
+                </div>
+
+                <!-- 월 이동 -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#F5EDDB;border-bottom:2px solid #1A1100;">
+                  <button type="button" @click="changePickerMonth(-1)"
+                    style="background:none;border:none;cursor:pointer;color:#1A1100;padding:2px 6px;border-radius:6px;display:flex;align-items:center;"
+                    @mouseenter="e=>e.currentTarget.style.background='rgba(253,203,64,0.5)'"
+                    @mouseleave="e=>e.currentTarget.style.background='none'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:800;">
+                    {{ pickerYear }}년 {{ pickerMonth }}월
+                  </span>
+                  <button type="button" @click="changePickerMonth(1)"
+                    style="background:none;border:none;cursor:pointer;color:#1A1100;padding:2px 6px;border-radius:6px;display:flex;align-items:center;"
+                    @mouseenter="e=>e.currentTarget.style.background='rgba(253,203,64,0.5)'"
+                    @mouseleave="e=>e.currentTarget.style.background='none'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+
+                <!-- 요일 헤더 -->
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#FDFAF5;border-bottom:1.5px solid #E8E0D0;">
+                  <div v-for="(d, di) in DAY_FULL" :key="d"
+                    :style="{ padding:'5px 0', textAlign:'center', fontSize:'11px', fontWeight:'700', color: di===6 ? '#2563EB' : di===0 ? '#DC2626' : '#9A8F7A' }">
+                    {{ d }}
+                  </div>
+                </div>
+
+                <!-- 날짜 그리드 -->
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);padding:6px;gap:2px;">
+                  <div v-for="n in pickerOffset" :key="'pad-'+n"></div>
+                  <button v-for="day in pickerDays" :key="day.date" type="button"
+                    @click="toggleDate(day.date)"
+                    :style="{
+                      height:'32px', borderRadius:'6px', fontSize:'12px', fontWeight:'700',
+                      border: dateAnchor === day.date && modalDates.length > 1 ? '2px solid #FD4401' : '1.5px solid ' + (isDateSelected(day.date) ? '#1A1100' : 'transparent'),
+                      background: isDateSelected(day.date) ? '#1A1100' : (day.isToday ? '#FFF0A0' : 'transparent'),
+                      color: isDateSelected(day.date) ? '#FDCB40'
+                           : (pickerHolidays[day.date] || day.isSun) ? '#DC2626'
+                           : day.isSat ? '#2563EB' : '#4A3F2A',
+                      cursor:'pointer', fontFamily:'inherit', transition:'all 0.1s', padding:0,
+                    }"
+                    v-tooltip="pickerHolidays[day.date] ?? ''"
+                    @mouseenter="e=>{ if(!isDateSelected(day.date)) e.currentTarget.style.background='#F5EDDB' }"
+                    @mouseleave="e=>{ if(!isDateSelected(day.date)) e.currentTarget.style.background = day.isToday ? '#FFF0A0' : 'transparent' }">
+                    {{ day.dayNum }}
+                  </button>
+                </div>
+
+                <!-- 구간 채우기 옵션 -->
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 12px;background:#FDFAF5;border-top:1.5px solid #E8E0D0;">
+                  <label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#4A3F2A;cursor:pointer;">
+                    <input type="checkbox" v-model="skipWeekend" style="accent-color:#FD4401;width:13px;height:13px;cursor:pointer;" />
+                    주말 제외
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#4A3F2A;cursor:pointer;">
+                    <input type="checkbox" v-model="skipHoliday" style="accent-color:#FD4401;width:13px;height:13px;cursor:pointer;" />
+                    공휴일 제외
+                  </label>
+                  <span style="font-size:10px;color:#C5BAA8;">구간 선택 시 적용 · 개별 클릭은 그대로 선택됩니다</span>
+                  <button v-if="modalDates.length" type="button" @click="clearSelection"
+                    style="margin-left:auto;background:none;border:none;padding:0;font-size:11px;font-weight:700;color:#9A8F7A;cursor:pointer;font-family:inherit;text-decoration:underline;"
+                    @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
+                    @mouseleave="e=>e.currentTarget.style.color='#9A8F7A'">
+                    선택 초기화
+                  </button>
+                </div>
+              </div>
+
+              <template v-else>
+
               <!-- 금주 -->
               <div style="margin-bottom:8px;">
                 <div style="font-size:11px;color:#9A8F7A;font-weight:600;margin-bottom:6px;padding-left:2px;">
@@ -415,12 +535,12 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="(date, i) in currDates" :key="date" type="button"
-                    @click="modalDate = date"
+                    @click="pickSingleDate(date)"
                     :style="{
                       padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
-                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
-                      background: modalDate === date ? (isToday(date) ? '#FDCB40' : '#1A1100') : (isToday(date) ? '#FFF0A0' : '#fff'),
-                      color: modalDate === date ? (isToday(date) ? '#1A1100' : '#FDCB40') : '#4A3F2A',
+                      border: isDateSelected(date) ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                      background: isDateSelected(date) ? (isToday(date) ? '#FDCB40' : '#1A1100') : (isToday(date) ? '#FFF0A0' : '#fff'),
+                      color: isDateSelected(date) ? (isToday(date) ? '#1A1100' : '#FDCB40') : '#4A3F2A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
                     }">
                     {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
@@ -434,22 +554,23 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button v-for="(date, i) in nextDates" :key="date" type="button"
-                    @click="modalDate = date"
+                    @click="pickSingleDate(date)"
                     :style="{
                       padding:'6px 10px', borderRadius:'8px', fontSize:'12px', fontWeight:'700',
-                      border: modalDate === date ? '2px solid #1A1100' : '2px solid #E8E0D0',
-                      background: modalDate === date ? '#1A1100' : '#fff',
-                      color: modalDate === date ? '#FDCB40' : '#4A3F2A',
+                      border: isDateSelected(date) ? '2px solid #1A1100' : '2px solid #E8E0D0',
+                      background: isDateSelected(date) ? '#1A1100' : '#fff',
+                      color: isDateSelected(date) ? '#FDCB40' : '#4A3F2A',
                       cursor:'pointer', fontFamily:'inherit', transition:'all 0.12s',
                     }">
                     {{ DAY_KR[i] }} <span style="font-weight:400;font-size:11px;">{{ date.substring(5).replace('-','/') }}</span>
                   </button>
                 </div>
               </div>
+              </template>
             </div>
 
             <!-- 이 날짜에 등록된 일정 — 시간대별로 각각 추가/수정 가능 -->
-            <div v-if="existingSlots.length">
+            <div v-if="modalDates.length === 1 && existingSlots.length">
               <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">
                 등록된 일정
                 <span style="font-weight:600;color:#1A1100;text-transform:none;font-size:11px;margin-left:6px;">클릭하여 수정 · 시간대별로 각각 등록</span>
@@ -485,9 +606,9 @@
             <!-- 일정 내용 -->
             <div>
               <label style="font-size:12px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase;">
-                일정 내용
-                <span v-if="modalDate" style="font-weight:600;color:#1A1100;text-transform:none;font-size:12px;margin-left:6px;">
-                  — {{ modalDate.substring(5).replace('-','/') }} ({{ DAY_KR[allDates.indexOf(modalDate) % 5] }})
+                {{ isBulkDelete ? '삭제할 시간대' : '일정 내용' }}
+                <span v-if="modalDates.length" style="font-weight:600;color:#1A1100;text-transform:none;font-size:12px;margin-left:6px;">
+                  — {{ selectedDatesLabel }}
                 </span>
               </label>
 
@@ -496,10 +617,12 @@
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">시간</span>
-                  <span style="font-size:10px;color:#C5BAA8;">일정의 시간대를 선택하세요</span>
+                  <span style="font-size:10px;color:#C5BAA8;">
+                    {{ isBulkDelete ? '삭제할 시간대를 선택하세요' : '일정의 시간대를 선택하세요' }}
+                  </span>
                 </div>
-                <div style="display:flex;gap:6px;">
-                  <button v-for="t in ['종일','오전','오후']" :key="t" type="button" @click="modalTime = t"
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button v-for="t in timeOptions" :key="t" type="button" @click="modalTime = t"
                     :style="{
                       padding:'5px 16px', borderRadius:'4px', fontSize:'12px', fontWeight:'700',
                       border: modalTime === t ? '2px solid #1A1100' : '2px solid #D0C9BC',
@@ -513,7 +636,7 @@
               </div>
 
               <!-- ── 상태 선택 (라디오, 단일, 현재 시간대) ── -->
-              <div style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+              <div v-if="!isBulkDelete" style="background:#F8F7FF;border:1.5px solid #E0DCF5;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">상태</span>
                   <span style="font-size:10px;color:#B8B0C8;">하나만 선택</span>
@@ -536,7 +659,7 @@
               </div>
 
               <!-- ── 내 사이트 (현재 시간대) ── -->
-              <div v-if="mySites.length"
+              <div v-if="!isBulkDelete && mySites.length"
                 style="background:#FFFBF0;border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <span style="font-size:11px;color:#9A8F7A;font-weight:700;letter-spacing:0.03em;">내 사이트</span>
@@ -559,7 +682,7 @@
               </div>
 
               <!-- ── 내용 (현재 시간대 슬롯에 인라인 포함) ── -->
-              <div style="background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;padding:10px 12px;">
+              <div v-if="!isBulkDelete" style="background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;padding:10px 12px;">
                 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -592,18 +715,29 @@
                   @focus="e=>e.target.style.borderColor='#0369A1'"
                   @blur="e=>e.target.style.borderColor='#BAE6FD'"
                   @keydown.enter.prevent
-                  @keydown.meta.enter.prevent="saveModal"
-                  @keydown.ctrl.enter.prevent="saveModal"
+                  @keydown.meta.enter.prevent="submitModal"
+                  @keydown.ctrl.enter.prevent="submitModal"
                 ></textarea>
               </div>
-              <p style="font-size:11px;color:#9A8F7A;margin-top:6px;">저장하면 현재 시간대({{ modalTime }}) 일정만 갱신되고 다른 시간대 일정은 유지됩니다 &nbsp;·&nbsp; Ctrl+Enter로 저장</p>
+              <p v-if="isBulkDelete" style="font-size:11px;color:#9A8F7A;margin-top:6px;">
+                선택한 <strong style="color:#DC2626;">{{ modalDates.length }}일</strong>에서
+                <strong style="color:#DC2626;">{{ modalTime === TIME_ALL ? '모든 시간대 일정이' : `${modalTime} 시간대 일정만` }}</strong>
+                삭제됩니다
+              </p>
+              <p v-else-if="modalDates.length > 1" style="font-size:11px;color:#9A8F7A;margin-top:6px;">
+                선택한 <strong style="color:#FD4401;">{{ modalDates.length }}일</strong>의 {{ modalTime }} 시간대에 같은 내용이 등록되며, 다른 시간대 일정은 유지됩니다 &nbsp;·&nbsp; Ctrl+Enter로 저장
+              </p>
+              <p v-else style="font-size:11px;color:#9A8F7A;margin-top:6px;">저장하면 현재 시간대({{ modalTime }}) 일정만 갱신되고 다른 시간대 일정은 유지됩니다 &nbsp;·&nbsp; Ctrl+Enter로 저장</p>
             </div>
+
+            <!-- 일괄 처리 오류 -->
+            <p v-if="bulkError" style="font-size:12px;font-weight:700;color:#DC2626;margin:0;">{{ bulkError }}</p>
           </div>
 
           <!-- 모달 푸터 -->
           <div style="padding:14px 24px;background:#F5EDDB;border-top:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
             <!-- 삭제 버튼 (현재 시간대 일정이 등록돼 있을 때) -->
-            <button v-if="currentSlotExists"
+            <button v-if="!isBulkDelete && modalDates.length === 1 && currentSlotExists"
               type="button" @click="deleteSchedule"
               style="display:inline-flex;align-items:center;gap:5px;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.1s;"
               @mouseenter="e=>{e.currentTarget.style.background='#DC2626';e.currentTarget.style.color='#fff';}"
@@ -618,15 +752,23 @@
 
             <div style="display:flex;gap:8px;">
               <button type="button" @click="closeModal" class="btn-secondary btn-sm">취소</button>
-              <button type="button" @click="saveModal"
-                :disabled="!modalDate || modalSaving"
-                style="display:inline-flex;align-items:center;gap:5px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
-                :style="{ opacity: !modalDate || modalSaving ? 0.5 : 1, cursor: !modalDate || modalSaving ? 'not-allowed' : 'pointer' }"
-                @mouseenter="e=>{ if(modalDate && !modalSaving){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+              <button type="button" @click="submitModal"
+                :disabled="!canSubmit || modalSaving"
+                :style="{
+                  display:'inline-flex', alignItems:'center', gap:'5px',
+                  background: isBulkDelete ? '#DC2626' : '#FDCB40',
+                  color: isBulkDelete ? '#fff' : '#1A1100',
+                  border:'2px solid #1A1100', borderRadius:'8px', padding:'7px 16px',
+                  fontSize:'13px', fontWeight:'700', fontFamily:'inherit',
+                  boxShadow:'2px 2px 0 #1A1100', transition:'all 0.1s',
+                  opacity: !canSubmit || modalSaving ? 0.5 : 1,
+                  cursor: !canSubmit || modalSaving ? 'not-allowed' : 'pointer',
+                }"
+                @mouseenter="e=>{ if(canSubmit && !modalSaving){ e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
                 @mouseleave="e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
                 <svg v-if="modalSaving" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                 <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                {{ modalSaving ? '저장 중...' : '저장' }}
+                {{ submitLabel }}
               </button>
             </div>
           </div>
@@ -1175,7 +1317,10 @@ const buildContent = () => {
 
 // ── 모달 상태 ──────────────────────────────────────────
 const showModal    = ref(false)
-const modalDate    = ref(null)
+const modalDate    = ref(null)     // 기준 날짜 — 등록된 일정 표시·단일 저장에 사용
+const modalDates   = ref([])       // 선택된 날짜 전체 (다중 선택)
+const dateAnchor   = ref(null)     // 구간 채우기 기준일 (마지막으로 새로 누른 날짜)
+const datePicked   = ref(false)    // 사용자가 이 모달에서 날짜를 직접 누른 적이 있는지
 const modalTime    = ref('종일')   // 일정 시간대 (단순 표기용)
 // 단일 일정 모델 — 상태/사이트/내용은 시간대와 무관하게 하나로 관리
 const modalStatus  = ref('')
@@ -1183,7 +1328,110 @@ const modalSites   = ref([])
 const modalContent = ref('')
 const modalSaving  = ref(false)
 const saveDone     = ref(false)
+const saveMsg      = ref('일정이 저장되었습니다')
 let saveDoneTimer  = null
+
+// ── 일괄 등록(달력 다중 선택) 상태 ─────────────────────
+const MAX_BULK_DAYS = 92          // 서버(ScheduleService::BULK_MAX_DAYS)와 동일
+const TIME_ALL      = '전체'      // 삭제 전용 — 그 날 모든 시간대
+
+const bulkCalendar  = ref(false)  // 달력 선택기 표시 여부
+const bulkAction    = ref('create')   // 'create' | 'delete'
+const skipWeekend   = ref(true)   // 구간 채우기 시 주말 제외
+const skipHoliday   = ref(true)   // 구간 채우기 시 공휴일 제외
+const bulkError     = ref('')
+
+const isBulkDelete = computed(() => bulkCalendar.value && bulkAction.value === 'delete')
+
+// 삭제할 때만 '전체' 시간대를 고를 수 있다
+const timeOptions = computed(() => isBulkDelete.value ? [...TIME_ORDER, TIME_ALL] : TIME_ORDER)
+
+const switchBulkAction = (action) => {
+  bulkAction.value = action
+  bulkError.value  = ''
+  if (action === 'create' && modalTime.value === TIME_ALL) modalTime.value = '종일'
+}
+
+const pickerYear     = ref(new Date().getFullYear())
+const pickerMonth    = ref(new Date().getMonth() + 1)
+const pickerHolidays = ref({})    // { 'YYYY-MM-DD': '공휴일명' }
+
+const toIsoDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+// 달력 첫 칸 오프셋 (일요일 시작)
+const pickerOffset = computed(() => new Date(pickerYear.value, pickerMonth.value - 1, 1).getDay())
+
+const pickerDays = computed(() => {
+  const last = new Date(pickerYear.value, pickerMonth.value, 0).getDate()
+  const out  = []
+  for (let d = 1; d <= last; d++) {
+    const cur = new Date(pickerYear.value, pickerMonth.value - 1, d)
+    const iso = toIsoDate(cur)
+    out.push({ date: iso, dayNum: d, isSat: cur.getDay() === 6, isSun: cur.getDay() === 0, isToday: iso === today })
+  }
+  return out
+})
+
+// 표시 중인 달의 공휴일 로드 (구간 채우기 제외 판정 + 빨간 표시)
+const loadPickerHolidays = async () => {
+  const start = toIsoDate(new Date(pickerYear.value, pickerMonth.value - 1, 1))
+  const end   = toIsoDate(new Date(pickerYear.value, pickerMonth.value, 0))
+  try {
+    const { data } = await window.axios.get('/schedules/holidays', { params: { start, end } })
+    pickerHolidays.value = { ...pickerHolidays.value, ...data }
+  } catch (e) { console.error('공휴일 조회 실패', e) }
+}
+
+const changePickerMonth = async (delta) => {
+  let m = pickerMonth.value + delta
+  let y = pickerYear.value
+  if (m > 12) { m = 1;  y++ }
+  if (m < 1)  { m = 12; y-- }
+  pickerMonth.value = m
+  pickerYear.value  = y
+  await loadPickerHolidays()
+}
+
+const toggleBulkCalendar = async () => {
+  bulkCalendar.value = !bulkCalendar.value
+  if (!bulkCalendar.value) {
+    // 칩 모드로 돌아갈 땐 하루만 남기고 삭제 모드도 해제한다
+    switchBulkAction('create')
+    setSelection(modalDates.value.slice(0, 1), null)
+    return
+  }
+  // 기준일이 속한 달부터 보여준다
+  const base = dateAnchor.value ?? modalDates.value[0] ?? today
+  pickerYear.value  = Number(base.substring(0, 4))
+  pickerMonth.value = Number(base.substring(5, 7))
+  await loadPickerHolidays()
+}
+
+const clearSelection = () => {
+  setSelection([], null)
+  datePicked.value = false
+}
+
+// 상태·사이트·내용 중 하나 이상 입력됐는지
+const hasBulkContent = computed(() =>
+  !!(modalStatus.value || modalSites.value.length || modalContent.value.trim())
+)
+
+const canSubmit = computed(() => {
+  if (!modalDates.value.length) return false
+  if (modalDates.value.length > MAX_BULK_DAYS) return false
+  if (isBulkDelete.value) return true
+  // 여러 날짜를 한 번에 등록할 땐 빈 내용 저장(=슬롯 삭제)을 막는다
+  return modalDates.value.length > 1 ? hasBulkContent.value : true
+})
+
+const submitLabel = computed(() => {
+  if (modalSaving.value) return isBulkDelete.value ? '삭제 중...' : '저장 중...'
+  const n = modalDates.value.length
+  if (isBulkDelete.value) return `${n}일 일괄 삭제`
+  return n > 1 ? `${n}일 저장` : '저장'
+})
 
 // 상태 단일 선택 토글
 const selectStatus = (label) => {
@@ -1201,6 +1449,94 @@ const resetFields = () => {
   modalSites.value   = []
   modalContent.value = ''
 }
+
+// ── 날짜 다중 선택 ─────────────────────────────────────
+// · 선택된 날짜를 다시 누르면 그 날짜만 해제
+// · 선택이 없으면 그 날짜가 기준일이 되고, 이후 다른 날짜를 누르면 기준일~그 날짜 구간이 채워진다
+const isDateSelected = (date) => modalDates.value.includes(date)
+
+// 금주·차주 칩 — 하루만 선택 (일괄은 달력에서만)
+const pickSingleDate = (date) => {
+  bulkError.value = ''
+  setSelection([date], date)
+}
+
+const setSelection = (dates, anchor) => {
+  // 항상 날짜순 정렬 상태로 보관 (ISO 문자열은 사전순 = 날짜순)
+  modalDates.value = [...new Set(dates)].filter(Boolean).sort()
+  dateAnchor.value = anchor && modalDates.value.includes(anchor)
+    ? anchor
+    : (modalDates.value[modalDates.value.length - 1] ?? null)
+  modalDate.value  = dateAnchor.value
+}
+
+const toggleDate = (date) => {
+  const sel = modalDates.value
+
+  // 모달을 열 때 자동으로 잡힌 날짜는 기준일로 쓰지 않는다.
+  // 첫 클릭은 항상 "이 날짜 하나만 선택"이 되고, 그 다음 클릭부터 구간이 채워진다.
+  if (!datePicked.value) {
+    datePicked.value = true
+    setSelection([date], date)
+    return
+  }
+
+  if (sel.includes(date)) {
+    setSelection(sel.filter(d => d !== date), dateAnchor.value === date ? null : dateAnchor.value)
+    return
+  }
+  if (!sel.length || !dateAnchor.value) {
+    setSelection([date], date)
+    return
+  }
+
+  // 기준일 ~ 새로 누른 날짜 구간을 기존 선택에 더한다
+  const span = fillRange(dateAnchor.value, date)
+  if (!span.includes(date)) span.push(date)   // 누른 날짜는 제외 옵션과 무관하게 항상 포함
+
+  const next = [...new Set([...sel, ...span])]
+  if (next.length > MAX_BULK_DAYS) {
+    bulkError.value = `한 번에 처리할 수 있는 날짜는 최대 ${MAX_BULK_DAYS}일입니다`
+    return
+  }
+  bulkError.value = ''
+  setSelection(next, date)
+}
+
+// 공휴일명 조회 — 달력·주간 뷰·월간 뷰에서 받아 둔 데이터를 모두 참조
+const holidayNameFor = (date) =>
+  pickerHolidays.value[date] ?? props.holidays?.[date] ?? monthlyHolidays.value?.[date] ?? null
+
+// 구간 채우기 — 주말·공휴일 제외 옵션 반영
+const fillRange = (from, to) => {
+  if (!from || !to) return to ? [to] : []
+  const [s, e]  = from <= to ? [from, to] : [to, from]
+  const cursor  = new Date(s + 'T00:00:00')
+  const last    = new Date(e + 'T00:00:00')
+  const out     = []
+  let guard     = 0
+
+  while (cursor <= last && guard++ <= MAX_BULK_DAYS + 1) {
+    const iso = toIsoDate(cursor)
+    const dow = cursor.getDay()
+    const skip = (skipWeekend.value && (dow === 0 || dow === 6))
+              || (skipHoliday.value && holidayNameFor(iso))
+    if (!skip) out.push(iso)
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return out
+}
+
+// 선택 날짜 표시 라벨
+const DAY_FULL = ['일', '월', '화', '수', '목', '금', '토']
+const fmtDateLabel = (d) => `${d.substring(5).replace('-', '/')} (${DAY_FULL[new Date(d + 'T00:00:00').getDay()]})`
+
+const selectedDatesLabel = computed(() => {
+  const sel = modalDates.value
+  if (!sel.length) return ''
+  if (sel.length === 1) return fmtDateLabel(sel[0])
+  return `${fmtDateLabel(sel[0])} 외 ${sel.length - 1}일`
+})
 
 // ── 다중 일정 병합 ────────────────────────────────────
 // 한 날짜에 시간대(종일/오전/오후)별로 여러 일정을 각각 등록할 수 있도록,
@@ -1263,7 +1599,15 @@ const startNewSlot = () => {
 
 const openModal = (date, content) => {
   const defaultDate = allDates.value.includes(today) ? today : props.currDates[0]
-  modalDate.value = date ?? defaultDate
+  const startDate   = date ?? defaultDate
+  setSelection(startDate ? [startDate] : [], startDate)
+  datePicked.value   = false
+
+  // 일괄 등록(달력) 초기화
+  bulkCalendar.value = false
+  skipWeekend.value  = true
+  skipHoliday.value  = true
+  bulkError.value    = ''
 
   const raw    = content ?? (date ? (localSchedules[props.currentUserId]?.[date] ?? '') : '')
   const parsed = parsedCell(raw)
@@ -1287,10 +1631,24 @@ const openModal = (date, content) => {
 }
 
 const closeModal = () => {
-  showModal.value = false
-  modalDate.value = null
-  modalTime.value = '종일'
+  showModal.value  = false
+  modalDate.value  = null
+  modalDates.value = []
+  dateAnchor.value = null
+  datePicked.value = false
+  modalTime.value  = '종일'
+  bulkCalendar.value = false
+  bulkAction.value   = 'create'
+  bulkError.value    = ''
   resetFields()
+}
+
+// 저장 완료 토스트 표시
+const showSaveToast = (msg) => {
+  saveMsg.value = msg
+  clearTimeout(saveDoneTimer)
+  saveDone.value = true
+  saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2600)
 }
 
 // ── 타 사용자 일정 읽기 전용 모달 ──────────────────────
@@ -1302,6 +1660,8 @@ const openViewModal = (user, date, content) => {
 }
 
 const saveModal = async () => {
+  // 여러 날짜를 골랐으면 일괄 처리로 넘긴다
+  if (modalDates.value.length > 1) return saveSelectedDates(false)
   if (!modalDate.value || modalSaving.value) return
   modalSaving.value = true
   // 현재 시간대 슬롯만 갱신하고 다른 시간대 일정은 보존하여 병합
@@ -1316,9 +1676,7 @@ const saveModal = async () => {
     // 월간 달력도 즉시 반영
     refreshMonthlySchedule(modalDate.value, content)
 
-    clearTimeout(saveDoneTimer)
-    saveDone.value = true
-    saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)
+    showSaveToast('일정이 저장되었습니다')
     closeModal()
   } catch (e) {
     console.error('일정 저장 실패', e)
@@ -1327,7 +1685,61 @@ const saveModal = async () => {
   }
 }
 
+// ── 일괄 등록 / 삭제 ───────────────────────────────────
+// 날짜 다중 선택(dates)과 기간 지정(start_date~end_date) 모두 같은 엔드포인트를 쓴다
+const postBulk = async (payload, deleting) => {
+  modalSaving.value = true
+  bulkError.value   = ''
+
+  try {
+    const { data } = await window.axios.post('/schedules/bulk-upsert', payload)
+
+    // 화면에 로드된 주간/월간 데이터에 결과 반영
+    for (const [date, content] of Object.entries(data.schedules ?? {})) {
+      if (localSchedules[props.currentUserId]) localSchedules[props.currentUserId][date] = content
+      if (monthlySchedules[props.currentUserId]) monthlySchedules[props.currentUserId][date] = content
+    }
+
+    const skipped = []
+    if (data.skipped_weekend) skipped.push(`주말 ${data.skipped_weekend}일`)
+    if (data.skipped_holiday) skipped.push(`공휴일 ${data.skipped_holiday}일`)
+    const suffix = skipped.length ? ` (${skipped.join(' · ')} 제외)` : ''
+
+    showSaveToast(`${data.saved}일 일정을 ${deleting ? '삭제' : '등록'}했습니다${suffix}`)
+    closeModal()
+  } catch (e) {
+    const errors = e?.response?.data?.errors
+    bulkError.value = errors
+      ? Object.values(errors).flat()[0]
+      : '일괄 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+    console.error('일괄 일정 처리 실패', e)
+  } finally {
+    modalSaving.value = false
+  }
+}
+
+// 직접 고른 날짜들에 일괄 적용
+const saveSelectedDates = (deleting) => {
+  if (modalSaving.value || !modalDates.value.length) return
+  return postBulk({
+    dates:   [...modalDates.value],
+    time:    modalTime.value,
+    status:  deleting ? '' : modalStatus.value,
+    sites:   deleting ? [] : modalSites.value,
+    content: deleting ? '' : modalContent.value,
+    delete:  deleting,
+  }, deleting)
+}
+
+// 삭제 모드면 일괄 삭제, 아니면 저장 (선택 날짜 수는 saveModal 내부에서 판단)
+const submitModal = () => {
+  if (!canSubmit.value || modalSaving.value) return
+  return isBulkDelete.value ? saveSelectedDates(true) : saveModal()
+}
+
 const deleteSchedule = async () => {
+  // 여러 날짜를 골랐으면 일괄 삭제로 넘긴다
+  if (modalDates.value.length > 1) return saveSelectedDates(true)
   if (!modalDate.value) return
   modalSaving.value = true
   // 현재 시간대 슬롯만 삭제하고 다른 시간대 일정은 보존
@@ -1340,9 +1752,7 @@ const deleteSchedule = async () => {
     if (!localSchedules[props.currentUserId]) localSchedules[props.currentUserId] = {}
     localSchedules[props.currentUserId][modalDate.value] = content
     refreshMonthlySchedule(modalDate.value, content)
-    clearTimeout(saveDoneTimer)
-    saveDone.value = true
-    saveDoneTimer  = setTimeout(() => { saveDone.value = false }, 2200)
+    showSaveToast('일정이 삭제되었습니다')
     closeModal()
   } catch (e) {
     console.error('일정 삭제 실패', e)

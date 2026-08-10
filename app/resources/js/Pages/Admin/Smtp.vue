@@ -92,7 +92,8 @@
           <label class="field-label" style="margin-bottom:8px;display:block;">참조 (CC) — 선택</label>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <div v-for="(_, i) in form.mail_cc" :key="i" style="display:flex;gap:6px;align-items:center;">
-              <input v-model="form.mail_cc[i]" type="email" class="input-field" style="flex:1;" :placeholder="`참조 ${i+1} 이메일`" />
+              <input v-model="form.mail_cc[i]" type="email" class="input-field" style="flex:1;"
+                :ref="el => { if (el) ccRefs[i] = el }" :placeholder="`참조 ${i+1} 이메일`" />
               <button type="button" @click="removeCc(i)"
                 style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
                 @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
@@ -149,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -176,7 +177,14 @@ const form = useForm({
   mail_cc:           [...props.mail_cc],
 })
 
-const addCc    = () => form.mail_cc.push('')
+// 참조 입력칸 — 추가 직후 포커스 이동에 사용
+const ccRefs = ref({})
+
+const addCc = async () => {
+  form.mail_cc.push('')
+  await nextTick()
+  ccRefs.value[form.mail_cc.length - 1]?.focus()
+}
 const removeCc = (i) => form.mail_cc.splice(i, 1)
 
 const save = () => form.post('/admin/settings/smtp')

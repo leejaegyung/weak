@@ -247,6 +247,7 @@
         <!-- 사이트 추가 폼 -->
         <div style="display:flex;gap:8px;">
           <input
+            ref="newSiteInput"
             v-model="newSiteName"
             type="text"
             class="input-field"
@@ -282,7 +283,7 @@
 </style>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -340,8 +341,9 @@ const submitProfile = async () => {
 
 // ── 점검 사이트 ───────────────────────────────────────
 const localSites  = ref([...props.sites])
-const newSiteName = ref('')
-const siteAdding  = ref(false)
+const newSiteName  = ref('')
+const newSiteInput = ref(null)
+const siteAdding   = ref(false)
 
 const addSite = async () => {
   const name = newSiteName.value.trim()
@@ -352,6 +354,9 @@ const addSite = async () => {
     localSites.value.push(res.data)
     newSiteName.value = ''
     showToast('사이트가 추가되었습니다.')
+    // 연속 입력을 위해 입력칸에 커서를 돌려준다
+    await nextTick()
+    newSiteInput.value?.focus()
   } catch (e) {
     console.error(e)
   } finally {

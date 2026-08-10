@@ -170,6 +170,7 @@
             <div style="display:flex;gap:6px;align-items:flex-start;">
               <span style="color:#9A8F7A;font-size:12px;font-weight:700;flex-shrink:0;margin-top:7px;width:10px;">-</span>
               <textarea
+                :ref="el => { if (el) subRefs[`${idx}-${sIdx}`] = el }"
                 :value="sub.content"
                 @input="(e) => { updateSubContent(idx, sIdx, e.target.value); autoResize(e.target) }"
                 class="input-field"
@@ -189,6 +190,7 @@
                 style="display:flex;gap:6px;align-items:flex-start;">
                 <span style="color:#C5BAA8;font-size:11px;flex-shrink:0;margin-top:7px;width:10px;">└</span>
                 <textarea
+                  :ref="el => { if (el) detailRefs[`${idx}-${sIdx}-${dIdx}`] = el }"
                   :value="detail"
                   @input="(e) => { updateDetail(idx, sIdx, dIdx, e.target.value); autoResize(e.target) }"
                   class="input-field"
@@ -329,6 +331,9 @@ const handleCancel = () => {
 const rootRef       = ref(null)
 const titleRefs     = ref({})
 const containerRefs = ref({})
+// 내용(sub_items) / 세부항목(details) textarea — 추가 직후 포커스 이동에 사용
+const subRefs       = ref({})   // 키: `${항목idx}-${내용idx}`
+const detailRefs    = ref({})   // 키: `${항목idx}-${내용idx}-${세부idx}`
 
 // 모든 textarea 높이 일괄 재계산 (초기 로드 시 기존 데이터 높이 맞춤)
 // nextTick → rAF → setTimeout 3단계로 브라우저 레이아웃/폰트 로드 완료 후 높이 재계산 보장
@@ -544,7 +549,9 @@ const updateSubContent = (idx, sIdx, val) => {
   emit('update:modelValue', arr)
 }
 
-const addDetail = (idx, sIdx) => {
+const addDetail = async (idx, sIdx) => {
+  // 추가될 세부항목의 인덱스 — 갱신 전에 미리 계산해 두고 렌더 후 포커스 이동
+  const newIdx = (normalizeSubItems(props.modelValue[idx]?.sub_items)[sIdx]?.details || []).length
   const arr = props.modelValue.map((item, i) => {
     if (i !== idx) return item
     const subs = normalizeSubItems(item.sub_items)
@@ -552,6 +559,8 @@ const addDetail = (idx, sIdx) => {
     return { ...item, sub_items: subs }
   })
   emit('update:modelValue', arr)
+  await nextTick()
+  detailRefs.value[`${idx}-${sIdx}-${newIdx}`]?.focus()
 }
 
 const updateDetail = (idx, sIdx, dIdx, val) => {
@@ -578,10 +587,14 @@ const removeDetail = (idx, sIdx, dIdx) => {
   emit('update:modelValue', arr)
 }
 
-const addSubItem = (idx) => {
+const addSubItem = async (idx) => {
+  // 추가될 내용의 인덱스 — 갱신 전에 미리 계산해 두고 렌더 후 포커스 이동
+  const newIdx = normalizeSubItems(props.modelValue[idx]?.sub_items).length
   emit('update:modelValue', props.modelValue.map((item, i) =>
     i !== idx ? item : { ...item, sub_items: [...normalizeSubItems(item.sub_items), { content: '', details: [] }] }
   ))
+  await nextTick()
+  subRefs.value[`${idx}-${newIdx}`]?.focus()
 }
 
 const removeSubItem = (idx, sIdx) => {

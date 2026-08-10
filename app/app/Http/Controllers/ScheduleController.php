@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkStoreScheduleRequest;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Services\HolidayService;
@@ -122,6 +123,19 @@ class ScheduleController extends Controller
         ]);
     }
 
+    /** 공휴일(대체공휴일 포함) 맵 조회 — 일괄 등록 달력용 */
+    public function holidays(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start' => ['required', 'date_format:Y-m-d'],
+            'end'   => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        return response()->json(
+            $this->holidayService->between($request->query('start'), $request->query('end'))
+        );
+    }
+
     public function upsert(Request $request): JsonResponse
     {
         $request->validate([
@@ -147,5 +161,13 @@ class ScheduleController extends Controller
         );
 
         return response()->json($schedule);
+    }
+
+    /** 기간 일괄 등록/삭제 (본인 일정 한정) */
+    public function bulkUpsert(BulkStoreScheduleRequest $request): JsonResponse
+    {
+        $result = $this->scheduleService->bulkUpsert(Auth::id(), $request->validated());
+
+        return response()->json($result);
     }
 }

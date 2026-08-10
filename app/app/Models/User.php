@@ -68,6 +68,16 @@ class User extends Authenticatable
         return $this->hasMany(UserSite::class)->orderBy('created_at');
     }
 
+    public function issues()
+    {
+        return $this->hasMany(Issue::class);
+    }
+
+    public function reportComments()
+    {
+        return $this->hasMany(ReportComment::class);
+    }
+
     public function getAvatarImageUrlAttribute(): ?string
     {
         return $this->avatar_image

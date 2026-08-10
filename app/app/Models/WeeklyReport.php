@@ -13,7 +13,8 @@ class WeeklyReport extends Model
     protected $appends = ['status_label', 'week_label'];
 
     protected $fillable = [
-        'user_id', 'week', 'status', 'reject_reason',
+        'user_id', 'author_name', 'author_position',
+        'week', 'status', 'reject_reason',
         'curr_start', 'curr_end',
         'next_start', 'next_end',
         'curr_work', 'next_plan',
@@ -44,6 +45,58 @@ class WeeklyReport extends Model
     public function comments()
     {
         return $this->hasMany(\App\Models\ReportComment::class, 'report_id');
+    }
+
+    /**
+     * 작성자 표시 정보. 계정이 삭제된 경우 저장해 둔 스냅샷으로 대체한다.
+     * 화면에서 쓰는 user 페이로드와 형태가 같아 그대로 끼워 넣을 수 있다.
+     */
+    public function authorPayload(): ?array
+    {
+        if ($this->user) {
+            return [
+                'id'               => $this->user->id,
+                'name'             => $this->user->name,
+                'position'         => $this->user->position,
+                'avatar_color'     => $this->user->avatar_color,
+                'avatar_image_url' => $this->user->avatar_image_url,
+                'is_deleted'       => false,
+            ];
+        }
+
+        if (!$this->author_name) {
+            return null;
+        }
+
+        return [
+            'id'               => null,
+            'name'             => $this->author_name,
+            'position'         => $this->author_position,
+            'avatar_color'     => null,
+            'avatar_image_url' => null,
+            'is_deleted'       => true,
+        ];
+    }
+
+    /** 작성자 이름 (계정 삭제 시 스냅샷) */
+    public function getAuthorLabelAttribute(): string
+    {
+        return $this->user?->name ?? $this->author_name ?? '-';
+    }
+
+    /**
+     * user 관계가 비어 있으면(=계정 삭제) 스냅샷으로 채워 직렬화한다.
+     * 덕분에 화면 쪽 report.user 참조를 그대로 두어도 이름이 계속 표시된다.
+     */
+    public function toArray(): array
+    {
+        $array = parent::toArray();
+
+        if (array_key_exists('user', $array) && $array['user'] === null) {
+            $array['user'] = $this->authorPayload();
+        }
+
+        return $array;
     }
 
     public function getStatusLabelAttribute(): string

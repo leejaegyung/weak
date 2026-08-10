@@ -243,11 +243,24 @@
           </svg>
         </div>
         <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:17px;font-weight:800;color:#1A1100;margin-bottom:10px;">사용자를 삭제할까요?</div>
-        <div style="font-size:13px;color:#9A8F7A;line-height:1.8;margin-bottom:22px;">
-          <strong style="color:#1A1100;">{{ deleteTarget?.name }}</strong> (@{{ deleteTarget?.username }}) 계정과<br>
-          해당 사용자의 <strong style="color:#DC2626;">모든 보고서 및 일정</strong>이<br>
-          영구적으로 삭제됩니다. 되돌릴 수 없습니다.
+        <div style="font-size:13px;color:#9A8F7A;line-height:1.8;margin-bottom:14px;">
+          <strong style="color:#1A1100;">{{ deleteTarget?.name }}</strong> (@{{ deleteTarget?.username }}) 계정을 삭제합니다.
         </div>
+
+        <!-- 보존되는 데이터 -->
+        <div v-if="deleteTarget?.report_count"
+          style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px;text-align:left;font-size:12px;color:#166534;line-height:1.7;">
+          <strong>주간보고 {{ deleteTarget.report_count }}건은 그대로 남습니다</strong><br>
+          <span style="color:#15803D;">작성자 이름은 유지되며, 열람·인쇄·엑셀 출력 모두 가능합니다.</span>
+        </div>
+
+        <!-- 함께 삭제되는 데이터 -->
+        <div v-if="deletedWithUser.length"
+          style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:10px;padding:10px 14px;margin-bottom:20px;text-align:left;font-size:12px;color:#991B1B;line-height:1.7;">
+          <strong>{{ deletedWithUser.join(' · ') }}은(는) 함께 삭제됩니다</strong><br>
+          <span style="color:#DC2626;">되돌릴 수 없습니다.</span>
+        </div>
+        <div v-else style="margin-bottom:20px;"></div>
         <div style="display:flex;gap:8px;justify-content:center;">
           <button @click="deleteTarget=null" class="btn-secondary">취소</button>
           <button @click="doDelete"
@@ -312,7 +325,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -364,6 +377,17 @@ const toggleHidden = (u) => router.post(`/admin/users/${u.id}/toggle-hidden`)
 // ── 사용자 삭제 ──
 const deleteTarget = ref(null)
 const confirmDelete = (u) => { deleteTarget.value = u }
+
+// 계정과 함께 사라지는 데이터 (주간보고는 보존되므로 제외)
+const deletedWithUser = computed(() => {
+  const t = deleteTarget.value
+  if (!t) return []
+  return [
+    t.schedule_count ? `일정 ${t.schedule_count}건`   : '',
+    t.comment_count  ? `코멘트 ${t.comment_count}건`  : '',
+    t.issue_count    ? `이슈 ${t.issue_count}건`      : '',
+  ].filter(Boolean)
+})
 const doDelete = () => {
   if (!deleteTarget.value) return
   router.delete(`/admin/users/${deleteTarget.value.id}`, {

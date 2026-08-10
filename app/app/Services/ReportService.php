@@ -74,6 +74,7 @@ class ReportService
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                  ->orWhere('author_name', 'like', "%{$search}%")   // 삭제된 계정의 보고서
                   ->orWhere('week', 'like', "%{$search}%");
             });
         }
@@ -94,7 +95,7 @@ class ReportService
             'submitted_at'  => $r->submitted_at?->format('Y-m-d H:i'),
             'comment_count' => $hasComments ? ($r->comments_count ?? 0) : 0,
             'user_id'       => $r->user_id,
-            'user'          => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'position' => $r->user->position, 'avatar_color' => $r->user->avatar_color, 'avatar_image_url' => $r->user->avatar_image_url] : null,
+            'user'          => $r->authorPayload(),
         ]);
 
         // 특정 주차 조회 + 상태 필터 없음 → 미제출 사용자도 포함
@@ -218,7 +219,7 @@ class ReportService
         // Sheet 2+: 개인 보고서 (sort_order 순)
         foreach ($reports as $idx => $report) {
             $sheet = $spreadsheet->createSheet($idx + 1);
-            $sheet->setTitle(substr($report->user->name ?? '무명', 0, 31));
+            $sheet->setTitle(substr($report->author_label !== '-' ? $report->author_label : '무명', 0, 31));
             $this->fillReportSheet($sheet, $report);
         }
 
@@ -329,8 +330,8 @@ class ReportService
     {
         $currRange = $this->fmtExcelRange($report->curr_start, $report->curr_end);
         $nextRange = $this->fmtExcelRange($report->next_start, $report->next_end);
-        $userName  = $report->user?->name     ?? '-';
-        $userPos   = $report->user?->position ?? '사원';
+        $userName  = $report->author_label;
+        $userPos   = $report->user?->position ?? $report->author_position ?? '사원';
 
         // ── 헤더 (Row 1~2) ─────────────────────────────
         // A1:E2 병합: 주간업무보고

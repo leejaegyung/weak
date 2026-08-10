@@ -158,7 +158,7 @@
             minHeight: '100px',
             borderRight: '1px solid #E8E0D0',
             borderBottom: '1px solid #E8E0D0',
-            background: day.isToday ? '#FFF0A0' : '#fff',
+            background: monthCellBg(day),
             boxShadow: day.isToday ? 'inset 0 0 0 2px #FD4401' : 'none',
             position: 'relative',
           }">
@@ -244,7 +244,7 @@
                 fontSize:'12px',
                 fontWeight:'700',
                 borderRight: i < 9 ? (i===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.15)') : 'none',
-                background: isToday(date) ? '#FFF0A0' : 'transparent',
+                background: weekColBg(date),
                 width: '90px',
               }">
               <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;"
@@ -319,7 +319,7 @@
                 : (localSchedules[user.id]?.[date] ? openViewModal(user, date, localSchedules[user.id][date]) : null)"
               :style="{
                 borderRight: di < 9 ? (di===4 ? '2px solid #1A1100' : '1.5px solid rgba(26,17,0,0.1)') : 'none',
-                background: isToday(date) ? '#FFF0A0' : 'transparent',
+                background: weekColBg(date),
                 padding:'6px',
                 verticalAlign:'top',
                 overflow:'hidden',
@@ -327,8 +327,8 @@
                 transition:'background 0.1s',
                 position:'relative',
               }"
-              @mouseenter="e=>{ if(user.id === currentUserId || localSchedules[user.id]?.[date]) e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : '#FFFBF0'; }"
-              @mouseleave="e=>{ e.currentTarget.style.background = isToday(date) ? '#FFF0A0' : 'transparent'; }">
+              @mouseenter="e=>{ if(user.id === currentUserId || localSchedules[user.id]?.[date]) e.currentTarget.style.background = (isToday(date) || weekHolidayName(date)) ? weekColBg(date) : '#FFFBF0'; }"
+              @mouseleave="e=>{ e.currentTarget.style.background = weekColBg(date); }">
 
               <!-- 내용 표시 (시간대별 슬롯 칩 — 고정 높이, 최대 2개 표시) -->
               <div style="height:44px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;overflow:hidden;flex-shrink:0;">
@@ -514,7 +514,7 @@
                     :style="{
                       height:'32px', borderRadius:'6px', fontSize:'12px', fontWeight:'700',
                       border: dateAnchor === day.date && modalDates.length > 1 ? '2px solid #FD4401' : '1.5px solid ' + (isDateSelected(day.date) ? '#1A1100' : 'transparent'),
-                      background: isDateSelected(day.date) ? '#1A1100' : (day.isToday ? '#FFF0A0' : 'transparent'),
+                      background: isDateSelected(day.date) ? '#1A1100' : pickerCellBg(day),
                       color: isDateSelected(day.date) ? '#FDCB40'
                            : (pickerHolidays[day.date] || day.isSun) ? '#DC2626'
                            : day.isSat ? '#2563EB' : '#4A3F2A',
@@ -522,7 +522,7 @@
                     }"
                     v-tooltip="pickerHolidays[day.date] ?? ''"
                     @mouseenter="e=>{ if(!isDateSelected(day.date)) e.currentTarget.style.background='#F5EDDB' }"
-                    @mouseleave="e=>{ if(!isDateSelected(day.date)) e.currentTarget.style.background = day.isToday ? '#FFF0A0' : 'transparent' }">
+                    @mouseleave="e=>{ if(!isDateSelected(day.date)) e.currentTarget.style.background = pickerCellBg(day) }">
                     {{ day.dayNum }}
                   </button>
                 </div>
@@ -1005,8 +1005,17 @@ const DAY_KR = ['월', '화', '수', '목', '금']
 // ── 공휴일(대체공휴일 포함) ────────────────────────────
 // 주간 뷰는 서버에서 받은 props.holidays, 월간 뷰는 월별로 별도 로드
 const weekHolidayName  = (date) => props.holidays?.[date] ?? null
+
+// 주간 표 열 배경 — 오늘 > 공휴일 순으로 우선한다
+const HOLIDAY_BG = '#FDEBEC'   // 연붉은색
+const weekColBg  = (date) =>
+  isToday(date) ? '#FFF0A0' : (weekHolidayName(date) ? HOLIDAY_BG : 'transparent')
 const monthlyHolidays  = ref({})
 const monthHolidayName = (date) => monthlyHolidays.value?.[date] ?? null
+
+// 월간 달력 칸 배경 — 주간 표와 같은 규칙 (오늘 > 공휴일)
+const monthCellBg = (day) =>
+  day.isToday ? '#FFF0A0' : (monthHolidayName(day.date) ? HOLIDAY_BG : '#fff')
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 
@@ -1416,6 +1425,10 @@ const pickerDays = computed(() => {
   }
   return out
 })
+
+// 달력 선택기 칸 배경 — 주간·월간과 같은 규칙 (선택됨 > 오늘 > 공휴일)
+const pickerCellBg = (day) =>
+  day.isToday ? '#FFF0A0' : (pickerHolidays.value[day.date] ? HOLIDAY_BG : 'transparent')
 
 // 표시 중인 달의 공휴일 로드 (구간 채우기 제외 판정 + 빨간 표시)
 const loadPickerHolidays = async () => {

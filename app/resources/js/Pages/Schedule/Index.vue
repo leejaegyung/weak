@@ -74,6 +74,27 @@
           </button>
         </div>
 
+        <!-- 추가 일정 전송 (오늘 내 일정을 팀 채널에 공유) -->
+        <button v-if="notifyEnabled" type="button" @click="sendNotify"
+          :disabled="notifySending"
+          v-tooltip="'오늘 내 일정을 팀 채널에 전송합니다'"
+          :style="{
+            display:'inline-flex', alignItems:'center', gap:'6px',
+            background:'#fff', color:'#1A1100',
+            border:'2px solid #1A1100', borderRadius:'10px', padding:'7px 14px',
+            fontSize:'13px', fontWeight:'700', fontFamily:'inherit',
+            boxShadow:'2px 2px 0 #1A1100', transition:'all 0.1s',
+            opacity: notifySending ? 0.5 : 1,
+            cursor: notifySending ? 'not-allowed' : 'pointer',
+          }"
+          @mouseenter="e=>{ if(!notifySending){ e.currentTarget.style.background='#FFF0A0'; e.currentTarget.style.transform='translate(-1px,-1px)'; e.currentTarget.style.boxShadow='3px 3px 0 #1A1100'; } }"
+          @mouseleave="e=>{ e.currentTarget.style.background='#fff'; e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='2px 2px 0 #1A1100'; }">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {{ notifySending ? '전송 중...' : '추가 일정 전송' }}
+        </button>
+
         <!-- 일정 추가 버튼 -->
         <button type="button" @click="openModal(null, '')"
           style="display:inline-flex;align-items:center;gap:6px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
@@ -1770,6 +1791,23 @@ const submitModal = () => {
 const canNotify = computed(() =>
   props.notifyEnabled && modalDates.value.includes(today)
 )
+
+// 헤더 버튼 — 저장된 오늘 일정을 그대로 팀 채널에 전송
+const notifySending = ref(false)
+
+const sendNotify = async () => {
+  if (notifySending.value) return
+  notifySending.value = true
+  try {
+    const { data } = await window.axios.post('/schedules/notify', { date: today })
+    showSaveToast(data.message ?? '팀에 알렸습니다')
+  } catch (e) {
+    showSaveToast(e?.response?.data?.message ?? '알림 전송에 실패했습니다')
+    console.error('팀 알림 실패', e)
+  } finally {
+    notifySending.value = false
+  }
+}
 
 const saveAndNotify = async () => {
   const saved = await submitModal()

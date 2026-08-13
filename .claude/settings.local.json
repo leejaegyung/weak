@@ -112,7 +112,8 @@
       "Bash(grep -v \"//\")",
       "Bash(PGPASSWORD=weeklyrpt123 psql -h 127.0.0.1 -p 5432 -U weeklyrpt_user -d weeklyrpt -c \"SELECT u.name, s.content FROM schedules s JOIN users u ON u.id = s.user_id WHERE s.date = '2026-06-11' AND s.content IS NOT NULL AND s.content != '' ORDER BY u.sort_order;\")",
       "Bash(php -r ' *)",
-      "PowerShell(git *)"
+      "PowerShell(git *)",
+      "Bash(npx vite *)"
     ]
   },
   "hooks": {

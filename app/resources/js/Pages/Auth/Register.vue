@@ -42,7 +42,9 @@
           <!-- 이메일 -->
           <div>
             <label style="font-size:11px;font-weight:700;color:#9A8F7A;display:block;margin-bottom:5px;">이메일</label>
-            <input v-model="form.email" type="email" class="input-field" placeholder="example@company.com" />
+            <input v-model="form.email" type="email" class="input-field" placeholder="example@company.com"
+              :style="form.errors.email ? 'border-color:#FD4401;' : ''" />
+            <p v-if="form.errors.email" style="font-size:11px;color:#FD4401;margin-top:4px;">{{ form.errors.email }}</p>
           </div>
 
           <!-- 비밀번호 -->

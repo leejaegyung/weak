@@ -52,7 +52,7 @@ class AuthController extends Controller
             'username'              => ['required', 'string', 'max:30', 'unique:users,username'],
             'password'              => ['required', 'string', 'min:6', 'confirmed'],
             'position'              => ['nullable', 'string', 'max:30'],
-            'email'                 => ['nullable', 'email', 'max:100'],
+            'email'                 => ['nullable', 'email', 'max:100', 'unique:users,email'],
         ], [
             'name.required'         => '이름을 입력해주세요.',
             'username.required'     => '아이디를 입력해주세요.',
@@ -60,14 +60,17 @@ class AuthController extends Controller
             'password.required'     => '비밀번호를 입력해주세요.',
             'password.min'          => '비밀번호는 최소 6자 이상이어야 합니다.',
             'password.confirmed'    => '비밀번호가 일치하지 않습니다.',
+            'email.email'           => '올바른 이메일 형식이 아닙니다.',
+            'email.unique'          => '이미 사용 중인 이메일입니다.',
         ]);
 
         User::create([
             'name'                => $request->name,
             'username'            => $request->username,
             'password'            => Hash::make($request->password),
-            'position'            => $request->position,
-            'email'               => $request->email,
+            // 미입력 항목은 빈 문자열 대신 NULL 로 저장한다
+            'position'            => $request->position ?: null,
+            'email'               => $request->email ?: null,
             'role'                => 'user',
             'is_active'           => false,
             'registration_status' => 'pending',

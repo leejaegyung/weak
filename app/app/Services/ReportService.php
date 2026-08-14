@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -170,6 +171,49 @@ class ReportService
         $all = $notSubmitted + $draft + $submitted;
 
         return compact('all', 'draft', 'notSubmitted', 'submitted');
+    }
+
+    /**
+     * 미제출 알림 대상자 조회 (Webhook·카카오 알림 공용).
+     *
+     * 대상 = 해당 주차 보고서가 아예 없는 사용자(미제출) + 보고서를 작성 중(draft)인 사용자.
+     * 작성만 해두고 제출하지 않은 인원도 실제로는 미제출 상태이므로 알림 대상에 포함한다.
+     * 제출됨·검토완료·반려됨은 이미 제출한 것으로 보고 제외하며,
+     * 비활성·숨김 계정은 항상 제외한다.
+     *
+     * @return Collection<int, array{user: User, state: string, label: string}>
+     */
+    public function notifyTargets(string $weekStart): Collection
+    {
+        $weekStr = $this->weekString($weekStart);
+
+        // 제출 완료로 간주하여 알림에서 제외할 사용자 (draft 이외 상태)
+        $submittedUserIds = WeeklyReport::where('week', $weekStr)
+            ->where('status', '!=', 'draft')
+            ->pluck('user_id');
+
+        // 작성 중인 사용자 — 알림 대상에 포함하되 상태를 구분해 표기
+        $draftUserIds = WeeklyReport::where('week', $weekStr)
+            ->where('status', 'draft')
+            ->pluck('user_id')
+            ->all();
+
+        return User::where('is_active', true)
+            ->where('is_hidden', false)
+            ->whereNotIn('id', $submittedUserIds)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $user) use ($draftUserIds) {
+                $isDraft = in_array($user->id, $draftUserIds, true);
+
+                return [
+                    'user'  => $user,
+                    'state' => $isDraft ? 'draft' : 'not_submitted',
+                    'label' => $isDraft ? '작성 중' : '미제출',
+                ];
+            })
+            ->values();
     }
 
     public function create(array $data, int $userId, bool $submitNow = false): WeeklyReport

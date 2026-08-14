@@ -197,6 +197,7 @@
         </div>
         <p style="font-size:12px;color:#9A8F7A;margin-bottom:16px;line-height:1.7;">
           해당 주차 미제출자의 카카오톡으로 각자에게 직접 알림을 발송합니다.<br>
+          <strong style="color:#D97706;">보고서를 작성 중(임시저장)인 팀원도 대상에 포함됩니다.</strong><br>
           <strong style="color:#D97706;">카카오 미연동 팀원은 발송에서 제외됩니다.</strong>
         </p>
 

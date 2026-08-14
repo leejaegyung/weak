@@ -178,7 +178,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           미제출 알림 발송
         </div>
-        <p style="font-size:12px;color:#9A8F7A;margin-bottom:16px;">해당 주차에 보고서를 제출하지 않은 팀원에게 Webhook 알림을 발송합니다.</p>
+        <p style="font-size:12px;color:#9A8F7A;margin-bottom:16px;line-height:1.7;">
+          해당 주차에 보고서를 제출하지 않은 팀원에게 Webhook 알림을 발송합니다.<br>
+          <strong style="color:#D97706;">보고서를 작성 중(임시저장)인 팀원도 대상에 포함됩니다.</strong>
+        </p>
 
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div style="flex:1;min-width:160px;">
@@ -280,7 +283,10 @@ const sendAlert = async () => {
   alertLoading.value = true
   alertMessage.value = ''
   try {
-    const res = await window.axios.post('/admin/settings/notify-not-submitted', { week_start: alertWeekStart.value })
+    const res = await window.axios.post('/admin/settings/notify-not-submitted', {
+      week_start: alertWeekStart.value,
+      channels:   'webhook',
+    })
     alertOk.value      = res.data.ok
     alertMessage.value = res.data.message
   } catch { alertMessage.value = '발송 실패. Webhook 설정을 확인해 주세요.' }

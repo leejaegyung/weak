@@ -54,9 +54,17 @@ class ReportController extends Controller
         $reports = $this->reportService->list($userId, $status, $search, $weekStart);
         $counts  = $this->reportService->statusCounts($userId, $weekStart);
 
+        // 미제출 알림 발송 대상 (관리자 전용) — 미제출자 + 작성 중 인원
+        $alertTargets = $user->isAdmin()
+            ? $this->reportService->notifyTargets($weekStart)
+                ->map(fn($t) => ['name' => $t['user']->name, 'label' => $t['label']])
+                ->toArray()
+            : [];
+
         return Inertia::render('Report/Index', [
             'reports'       => $reports,
             'counts'        => $counts,
+            'alertTargets'  => $alertTargets,
             'isAdmin'       => $user->isAdmin(),
             'filters'       => ['status' => $status, 'search' => $search, 'week' => $weekStart],
             'weekStart'     => $weekStart,

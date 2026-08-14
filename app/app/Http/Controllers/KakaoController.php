@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\WeeklyReport;
 use App\Services\KakaoService;
+use App\Services\ReportService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +15,10 @@ use Inertia\Response;
 
 class KakaoController extends Controller
 {
-    public function __construct(private KakaoService $kakaoService) {}
+    public function __construct(
+        private KakaoService  $kakaoService,
+        private ReportService $reportService,
+    ) {}
 
     /** 카카오 연동 설정 페이지 */
     public function show(): Response
@@ -62,19 +65,12 @@ class KakaoController extends Controller
 
         // 입력 날짜가 무슨 요일이든 그 주 월요일로 정규화
         $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
-        $weekEnd   = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
 
-        $submittedIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])
-            ->pluck('user_id');
+        // 미제출자 + 작성 중(draft) 인원을 모두 알림 대상으로 산정
+        $targets = $this->reportService->notifyTargets($weekStart);
 
-        $notSubmitted = User::where('is_active', true)
-            ->whereNotIn('id', $submittedIds)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-
-        if ($notSubmitted->isEmpty()) {
-            return response()->json(['ok' => true, 'message' => '미제출자가 없습니다.']);
+        if ($targets->isEmpty()) {
+            return response()->json(['ok' => true, 'message' => '알림 대상자가 없습니다.']);
         }
 
         $monday    = Carbon::parse($weekStart);
@@ -84,8 +80,14 @@ class KakaoController extends Controller
         $successNames = [];
         $failNames    = [];
 
-        foreach ($notSubmitted as $user) {
-            $text = "📋 [{$weekLabel}] 주간보고 미제출 알림\n{$user->name}님, 아직 이번 주 보고서를 제출하지 않으셨습니다.\n\n→ 보고서 작성: {$appUrl}/reports/create";
+        foreach ($targets as $target) {
+            $user = $target['user'];
+
+            $body = $target['state'] === 'draft'
+                ? "{$user->name}님, 작성 중인 보고서가 아직 제출되지 않았습니다."
+                : "{$user->name}님, 아직 이번 주 보고서를 제출하지 않으셨습니다.";
+
+            $text = "📋 [{$weekLabel}] 주간보고 미제출 알림\n{$body}\n\n→ 보고서 작성: {$appUrl}/reports/create";
             $ok   = $this->kakaoService->sendToUser($user, $text);
             if ($ok) $successNames[] = $user->name;
             else     $failNames[]    = $user->name;

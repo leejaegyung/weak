@@ -209,6 +209,28 @@
           </div>
         </div>
 
+        <!-- 발송 대상 (미제출 + 작성 중) -->
+        <div style="border:2px solid #E8E0D0;border-radius:12px;padding:12px 14px;margin-bottom:16px;background:#FFFBF3;">
+          <div style="font-size:12px;font-weight:700;color:#1A1100;margin-bottom:8px;">
+            발송 대상 {{ alertTargets.length }}명
+            <span v-if="alertTargets.length" style="font-weight:500;color:#9A8F7A;">
+              (미제출 {{ alertTargetCounts.notSubmitted }} · 작성 중 {{ alertTargetCounts.draft }})
+            </span>
+          </div>
+          <div v-if="alertTargets.length" style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span v-for="t in alertTargets" :key="t.name"
+              :style="{
+                fontSize:'11px', fontWeight:'700', borderRadius:'6px', padding:'2px 7px',
+                border: '1px solid ' + (t.label === '작성 중' ? '#16A34A' : '#D97706'),
+                color:  t.label === '작성 중' ? '#166534' : '#92400E',
+                background: t.label === '작성 중' ? '#F0FDF4' : '#FFF0A0',
+              }">
+              {{ t.name }} · {{ t.label }}
+            </span>
+          </div>
+          <div v-else style="font-size:12px;color:#9A8F7A;">전원 제출을 완료했습니다.</div>
+        </div>
+
         <!-- 채널 선택 -->
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
           <label v-for="opt in alertChannelOptions" :key="opt.value"
@@ -236,8 +258,9 @@
         <div style="display:flex;gap:8px;justify-content:flex-end;">
           <button @click="showAlertModal=false" class="btn-secondary" :disabled="alertSending">취소</button>
           <button @click="sendNotSubmittedAlert"
-            :disabled="alertSending"
-            style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;">
+            :disabled="alertSending || !alertTargets.length"
+            style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;"
+            :style="{ opacity: (alertSending || !alertTargets.length) ? 0.45 : 1, cursor: (alertSending || !alertTargets.length) ? 'not-allowed' : 'pointer' }">
             <svg v-if="alertSending" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity=".25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
             {{ alertSending ? '발송 중...' : '알림 발송' }}
           </button>
@@ -593,6 +616,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
   reports:       { type: Array,   default: () => [] },
   counts:        { type: Object,  default: () => ({}) },
+  alertTargets:  { type: Array,   default: () => [] },
   filters:       { type: Object,  default: () => ({}) },
   weekStart:     { type: String,  default: '' },
   weekEnd:       { type: String,  default: '' },
@@ -655,6 +679,12 @@ const statusBadge = (s) => ({
 const showAlertModal = ref(false)
 const alertSending   = ref(false)
 const alertChannel   = ref('both')
+
+// 발송 대상 내역 (미제출 / 작성 중)
+const alertTargetCounts = computed(() => ({
+  notSubmitted: props.alertTargets.filter(t => t.label === '미제출').length,
+  draft:        props.alertTargets.filter(t => t.label === '작성 중').length,
+}))
 
 const alertChannelOptions = [
   { value: 'both',    label: '전체 전송',       desc: 'Webhook 팀 알림 + 카카오톡 개인 메시지 동시 발송' },

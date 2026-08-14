@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Mail\WeeklyReportMail;
 use App\Models\Setting;
-use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Services\KakaoService;
 use App\Services\MailService;
+use App\Services\ReportService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +22,7 @@ class SettingController extends Controller
         private WebhookService $webhookService,
         private KakaoService   $kakaoService,
         private MailService    $mailService,
+        private ReportService  $reportService,
     ) {}
 
     // ═══════════════════════════════════════════════
@@ -89,20 +90,12 @@ class SettingController extends Controller
         $channels = $request->input('channels', 'both');
 
         $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
-        $weekEnd   = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
 
-        $submittedUserIds = WeeklyReport::whereBetween('curr_start', [$weekStart, $weekEnd])
-            ->pluck('user_id');
+        // 미제출자 + 작성 중(draft) 인원을 모두 알림 대상으로 산정
+        $targets = $this->reportService->notifyTargets($weekStart);
 
-        $notSubmittedUsers = User::where('is_active', true)
-            ->where('is_hidden', false)  // 숨김 계정 제외
-            ->whereNotIn('id', $submittedUserIds)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-
-        if ($notSubmittedUsers->isEmpty()) {
-            return response()->json(['ok' => true, 'message' => '미제출자가 없습니다.']);
+        if ($targets->isEmpty()) {
+            return response()->json(['ok' => true, 'message' => '알림 대상자가 없습니다.']);
         }
 
         $monday    = Carbon::parse($weekStart);
@@ -115,20 +108,32 @@ class SettingController extends Controller
         $kakaoFailed = 0;
 
         if (in_array($channels, ['webhook', 'both'])) {
-            $this->webhookService->notifyNotSubmitted($notSubmittedUsers->pluck('name')->toArray(), $weekLabel);
+            // 작성 중인 팀원은 이름 뒤에 상태를 표기해 구분
+            $names = $targets->map(fn($t) => $t['state'] === 'draft'
+                ? "{$t['user']->name}(작성 중)"
+                : $t['user']->name
+            )->toArray();
+
+            $this->webhookService->notifyNotSubmitted($names, $weekLabel);
             $webhookSent = 1;
         }
 
         if (in_array($channels, ['kakao', 'both'])) {
-            foreach ($notSubmittedUsers as $user) {
+            foreach ($targets as $target) {
+                $user = $target['user'];
                 if (empty($user->kakao_id)) continue;
-                $text = "📋 [{$weekLabel}] 주간보고 미제출 알림\n\n{$user->name}님, 이번 주 주간보고가 아직 제출되지 않았습니다.\n\n빠른 시간 내에 보고서를 제출해 주세요.";
+
+                $body = $target['state'] === 'draft'
+                    ? "{$user->name}님, 작성 중인 주간보고가 아직 제출되지 않았습니다."
+                    : "{$user->name}님, 이번 주 주간보고가 아직 제출되지 않았습니다.";
+
+                $text = "📋 [{$weekLabel}] 주간보고 미제출 알림\n\n{$body}\n\n빠른 시간 내에 보고서를 제출해 주세요.";
                 $ok   = $this->kakaoService->sendToUser($user, $text);
                 $ok ? $kakaoSent++ : $kakaoFailed++;
             }
         }
 
-        $total = $notSubmittedUsers->count();
+        $total = $targets->count();
         $parts = [];
         if ($webhookSent) $parts[] = 'Webhook 전송 완료';
         if ($kakaoSent || $kakaoFailed) {

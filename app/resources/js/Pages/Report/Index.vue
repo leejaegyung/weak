@@ -123,9 +123,18 @@
           style="font-size:11px;font-weight:800;color:#166534;background:#fff;border:2px solid #16A34A;border-radius:99px;padding:4px 12px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
           {{ mailLog.send_count }}회 전송
         </span>
-        <span style="font-size:12px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.02em;border-radius:99px;padding:5px 16px;border:2px solid #1A1100;box-shadow:2px 2px 0 #1A1100;color:#fff;white-space:nowrap;"
-          :style="{ background: mailLog ? '#16A34A' : '#FD4401' }">
-          {{ mailLog ? '전송됨' : '미전송' }}
+
+        <!-- 미전송 뱃지: 클릭하면 메일 전송 모달로 연결 (관리자 전용) -->
+        <button v-if="!mailLog" @click="onMailPillClick"
+          v-tooltip="isAdmin ? '클릭하여 주간보고 메일 전송' : '관리자만 전송할 수 있습니다'"
+          style="background:#FD4401;color:#fff;font-size:12px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.02em;border-radius:99px;padding:5px 16px;border:2px solid #1A1100;box-shadow:2px 2px 0 #1A1100;white-space:nowrap;cursor:pointer;transition:all 0.1s;"
+          @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
+          @mouseleave="e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='2px 2px 0 #1A1100';}">
+          미전송
+        </button>
+        <span v-else
+          style="background:#16A34A;color:#fff;font-size:12px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.02em;border-radius:99px;padding:5px 16px;border:2px solid #1A1100;box-shadow:2px 2px 0 #1A1100;white-space:nowrap;">
+          전송됨
         </span>
       </div>
     </div>
@@ -505,6 +514,31 @@
       </div>
     </div>
 
+    <!-- 관리자 전용 안내 모달 -->
+    <div v-if="showAdminOnlyAlert"
+      style="position:fixed;inset:0;background:rgba(26,17,0,0.45);display:flex;align-items:center;justify-content:center;z-index:120;backdrop-filter:blur(3px);padding:16px;"
+      @click.self="showAdminOnlyAlert=false">
+      <div class="card" style="width:380px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px;text-align:center;">
+        <div style="width:48px;height:48px;background:#FEF3C7;border:2px solid #F59E0B;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#1A1100;margin-bottom:8px;">
+          관리자만 전송할 수 있습니다
+        </div>
+        <div style="font-size:13px;color:#9A8F7A;line-height:1.7;margin-bottom:22px;">
+          주간보고 메일 전송은 관리자 권한이 필요합니다.<br>관리자에게 전송을 요청해 주세요.
+        </div>
+        <div style="display:flex;justify-content:center;">
+          <button @click="showAdminOnlyAlert=false"
+            style="background:#FD4401;color:#fff;border:2px solid #FD4401;border-radius:10px;padding:8px 28px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #B91C1C;transition:all 0.1s;">
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 코멘트 팝업 모달 (2단 레이아웃) -->
     <div v-if="commentModal.show"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);padding:12px;"
@@ -814,6 +848,18 @@ const openMailModal = async () => {
     }
   }
   showMailModal.value = true
+}
+
+// 관리자 전용 안내 모달 (일반 사용자가 미전송 뱃지를 눌렀을 때)
+const showAdminOnlyAlert = ref(false)
+
+/** 미전송 뱃지 클릭 — 관리자면 메일 전송 모달, 아니면 권한 안내 */
+const onMailPillClick = () => {
+  if (!isAdmin.value) {
+    showAdminOnlyAlert.value = true
+    return
+  }
+  openMailModal()
 }
 
 // 미제출 전송 확인 모달

@@ -89,27 +89,23 @@
     <!-- 메일 전송 상태 (전 팀원 공유) -->
     <div class="mail-status-bar"
       :style="{
-        display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap',
-        background: mailLog ? '#DCFCE7' : '#F5EDDB',
-        border:'2px solid #1A1100', borderRadius:'12px',
-        padding:'11px 16px', marginBottom:'20px', boxShadow:'3px 3px 0 #1A1100',
+        display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap',
+        background: mailLog ? '#DCFCE7' : '#FFF0A0',
+        border:'2px solid #1A1100', borderRadius:'14px',
+        padding:'14px 18px', marginBottom:'20px', boxShadow:'4px 4px 0 #1A1100',
       }">
-      <div :style="{ width:'30px', height:'30px', borderRadius:'8px', border:'2px solid #1A1100', background: mailLog ? '#16A34A' : '#E8E0D0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }">
-        <svg v-if="mailLog" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <!-- 상태 아이콘 -->
+      <div :style="{ width:'40px', height:'40px', borderRadius:'11px', border:'2px solid #1A1100', background: mailLog ? '#16A34A' : '#FDCB40', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'2px 2px 0 #1A1100' }">
+        <svg v-if="mailLog" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       </div>
 
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:13px;font-weight:800;color:#1A1100;">
-            {{ mailLog ? `${weekLabel} 메일 전송 완료` : `${weekLabel} 메일 미전송` }}
-          </span>
-          <span v-if="mailLog && mailLog.send_count > 1"
-            style="font-size:10px;font-weight:700;color:#166534;background:#BBF7D0;border:1.5px solid #16A34A;border-radius:99px;padding:1px 8px;">
-            {{ mailLog.send_count }}회 전송
-          </span>
+      <!-- 상태 문구 -->
+      <div style="flex:1;min-width:180px;">
+        <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;color:#1A1100;letter-spacing:-0.02em;">
+          {{ weekLabel }} 메일 {{ mailLog ? '전송 완료' : '미전송' }}
         </div>
-        <div style="font-size:11.5px;color:#4A3F2A;margin-top:3px;line-height:1.5;">
+        <div style="font-size:12.5px;font-weight:600;color:#4A3F2A;margin-top:3px;line-height:1.5;">
           <template v-if="mailLog">
             {{ mailLog.sent_at }} · {{ mailLog.sender_name }} → {{ mailLog.to_email }}
             <template v-if="mailLog.cc_emails?.length"> (참조 {{ mailLog.cc_emails.length }}명)</template>
@@ -119,6 +115,18 @@
             아직 이 주차 보고서 메일이 전송되지 않았습니다.
           </template>
         </div>
+      </div>
+
+      <!-- 상태 뱃지 -->
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <span v-if="mailLog && mailLog.send_count > 1"
+          style="font-size:11px;font-weight:800;color:#166534;background:#fff;border:2px solid #16A34A;border-radius:99px;padding:4px 12px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
+          {{ mailLog.send_count }}회 전송
+        </span>
+        <span style="font-size:12px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.02em;border-radius:99px;padding:5px 16px;border:2px solid #1A1100;box-shadow:2px 2px 0 #1A1100;color:#fff;white-space:nowrap;"
+          :style="{ background: mailLog ? '#16A34A' : '#FD4401' }">
+          {{ mailLog ? '전송됨' : '미전송' }}
+        </span>
       </div>
     </div>
 

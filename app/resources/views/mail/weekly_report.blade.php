@@ -1,232 +1,134 @@
+{{--
+  주간업무보고 메일 템플릿
+
+  메일 클라이언트(Gmail·Outlook 등)는 flexbox·grid·인라인 SVG·<style> 태그를
+  지원하지 않거나 제거한다. 따라서 레이아웃은 table, 스타일은 전부 인라인,
+  아이콘은 이모지로 작성한다. (수정 시 이 규칙을 반드시 유지할 것)
+--}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ $data['subject'] }}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', Arial, sans-serif;
-      background: #FFF8EE;
-      color: #1A1100;
-      -webkit-font-smoothing: antialiased;
-    }
-    .wrapper {
-      max-width: 600px;
-      margin: 32px auto;
-      background: #ffffff;
-      border: 2px solid #1A1100;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 4px 4px 0 #1A1100;
-    }
-    /* 헤더 */
-    .header {
-      background: #FD4401;
-      padding: 24px 32px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .header-icon {
-      width: 40px;
-      height: 40px;
-      background: #FDCB40;
-      border: 2px solid #1A1100;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .header-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: -0.02em;
-    }
-    .header-sub {
-      font-size: 12px;
-      color: rgba(255,255,255,0.75);
-      margin-top: 2px;
-    }
-    /* 바디 */
-    .body {
-      padding: 32px;
-    }
-    .greeting {
-      font-size: 15px;
-      color: #1A1100;
-      line-height: 1.7;
-      margin-bottom: 24px;
-    }
-    /* 기간 뱃지 */
-    .week-badge {
-      display: inline-block;
-      background: #FFF0A0;
-      border: 2px solid #1A1100;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 800;
-      color: #1A1100;
-      margin-bottom: 24px;
-    }
-    /* 구분선 */
-    .divider {
-      border: none;
-      border-top: 2px solid #1A1100;
-      margin: 0 0 20px 0;
-    }
-    /* 보고서 본문 목록 */
-    .report-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    /* 보고서 이름 링크 행 */
-    .report-link-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #FDFAF5;
-      border: 1.5px solid #E8E0D0;
-      border-radius: 12px;
-      padding: 12px 16px;
-      text-decoration: none;
-      color: #1A1100;
-    }
-    .report-name-link {
-      font-size: 15px;
-      font-weight: 800;
-      color: #FD4401;
-      text-decoration: underline;
-    }
-    .report-arrow {
-      margin-left: auto;
-      font-size: 12px;
-      font-weight: 700;
-      color: #1A1100;
-      white-space: nowrap;
-    }
-    .avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #FDCB40;
-      border: 2px solid #1A1100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 800;
-      color: #1A1100;
-      flex-shrink: 0;
-    }
-    .report-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: #1A1100;
-    }
-    .report-position {
-      font-size: 11px;
-      color: #9A8F7A;
-    }
-    .report-colon {
-      font-size: 14px;
-      font-weight: 700;
-      color: #9A8F7A;
-    }
-    .report-link {
-      display: inline-block;
-      background: #1A1100;
-      color: #FDCB40;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-    /* 푸터 */
-    .footer {
-      background: #F5EDDB;
-      border-top: 2px solid #1A1100;
-      padding: 18px 32px;
-      text-align: center;
-      font-size: 11px;
-      color: #9A8F7A;
-      line-height: 1.6;
-    }
-    .footer strong {
-      color: #4A3F2A;
-    }
-  </style>
 </head>
-<body>
-  <div class="wrapper">
+<body style="margin:0;padding:0;background:#FFF8EE;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',Arial,sans-serif;color:#1A1100;">
 
-    <!-- 헤더 -->
-    <div class="header">
-      <div class="header-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-        </svg>
-      </div>
-      <div>
-        <div class="header-title">주간업무보고</div>
-        <div class="header-sub">SE팀 주간보고 시스템</div>
-      </div>
-    </div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFF8EE;padding:32px 12px;">
+  <tr>
+    <td align="center">
 
-    <!-- 바디 -->
-    <div class="body">
-      <p class="greeting">
-        {!! nl2br(e($data['body_intro'] ?? "안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.")) !!}
-      </p>
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border:2px solid #1A1100;border-radius:16px;overflow:hidden;">
 
-      @if (!empty($data['body_main']))
-      <div style="background:#FFFBEF;border:1.5px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:24px;font-size:14px;color:#1A1100;line-height:1.7;">
-        {!! nl2br(e($data['body_main'])) !!}
-      </div>
-      @endif
+        <!-- 헤더 -->
+        <tr>
+          <td style="background:#FD4401;padding:22px 28px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="44" style="width:44px;padding-right:12px;vertical-align:middle;">
+                  <div style="width:40px;height:40px;line-height:40px;background:#FDCB40;border:2px solid #1A1100;border-radius:10px;text-align:center;font-size:20px;">📋</div>
+                </td>
+                <td style="vertical-align:middle;">
+                  <div style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">주간업무보고</div>
+                  <div style="font-size:12px;color:#FFE0D2;margin-top:3px;">SE팀 주간보고 시스템</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
 
-      <div class="week-badge">
-        📅 {{ \Carbon\Carbon::parse($data['week_start'])->format('Y.m.d') }}
-        ({{ ['일','월','화','수','목','금','토'][\Carbon\Carbon::parse($data['week_start'])->dayOfWeek] }})
-        &nbsp;~&nbsp;
-        {{ \Carbon\Carbon::parse($data['week_end'])->format('m.d') }}
-        ({{ ['일','월','화','수','목','금','토'][\Carbon\Carbon::parse($data['week_end'])->dayOfWeek] }})
-      </div>
+        <!-- 바디 -->
+        <tr>
+          <td style="padding:30px 28px;">
 
-      <hr class="divider">
+            <!-- 인사말 -->
+            <div style="font-size:15px;color:#1A1100;line-height:1.7;margin-bottom:22px;">
+              {!! nl2br(e($data['body_intro'] ?? "안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.")) !!}
+            </div>
 
-      <!-- 보고서 목록 (팀 일정판 순서: 이름 클릭 시 보고서로 이동) -->
-      <div class="report-list">
-        @foreach ($data['reports'] as $report)
-        <a href="{{ $report['url'] }}" class="report-link-row" target="_blank">
-          <span class="avatar">{{ mb_substr($report['name'], 0, 1) }}</span>
-          <span class="report-name-link">{{ $report['name'] }}</span>
-          @if (!empty($report['position']))
-          <span class="report-position">{{ $report['position'] }}</span>
-          @endif
-          <span class="report-arrow">바로가기 →</span>
-        </a>
-        @endforeach
-      </div>
+            @if (!empty($data['body_main']))
+            <!-- 본문 내용 -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px;">
+              <tr>
+                <td style="background:#FFFBEF;border:1.5px solid #E8E0D0;border-radius:10px;padding:16px 18px;font-size:14px;color:#1A1100;line-height:1.7;">
+                  {!! nl2br(e($data['body_main'])) !!}
+                </td>
+              </tr>
+            </table>
+            @endif
 
-      <p style="font-size:13px;color:#9A8F7A;line-height:1.7;">
-        {!! nl2br(e($data['body_outro'] ?? '감사합니다.')) !!}
-      </p>
-    </div>
+            <!-- 기간 뱃지 -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="background:#FFF0A0;border:2px solid #1A1100;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;color:#1A1100;white-space:nowrap;">
+                  📅 {{ \Carbon\Carbon::parse($data['week_start'])->format('Y.m.d') }}({{ ['일','월','화','수','목','금','토'][\Carbon\Carbon::parse($data['week_start'])->dayOfWeek] }})
+                  ~ {{ \Carbon\Carbon::parse($data['week_end'])->format('m.d') }}({{ ['일','월','화','수','목','금','토'][\Carbon\Carbon::parse($data['week_end'])->dayOfWeek] }})
+                </td>
+              </tr>
+            </table>
 
-    <!-- 푸터 -->
-    <div class="footer">
-      <strong>주간업무보고 시스템</strong><br>
-      이 메일은 시스템에서 자동 발송된 메일입니다.
-    </div>
-  </div>
+            <!-- 구분선 -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+              <tr><td style="border-top:2px solid #1A1100;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+
+            <!-- 통합 바로가기 버튼 -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+              <tr>
+                <td align="center">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="background:#FD4401;border:2px solid #1A1100;border-radius:12px;">
+                        <a href="{{ $data['list_url'] }}" target="_blank"
+                           style="display:block;padding:15px 34px;font-size:15px;font-weight:800;color:#ffffff;text-decoration:none;letter-spacing:-0.01em;">
+                          주간업무보고 전체 보기 &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- 포함된 보고서 목록 -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:12px;padding:16px 18px;">
+                  <div style="font-size:11px;font-weight:700;color:#9A8F7A;letter-spacing:0.06em;margin-bottom:10px;">
+                    이번 주 제출 {{ count($data['reports']) }}명
+                  </div>
+                  <div style="font-size:0;line-height:0;">
+                    @foreach ($data['reports'] as $report)
+                    <span style="display:inline-block;background:#FFF0A0;border:1.5px solid #1A1100;border-radius:99px;padding:5px 13px;margin:0 6px 6px 0;font-size:13px;font-weight:700;color:#1A1100;line-height:1.4;">
+                      {{ $report['name'] }}@if (!empty($report['position']))<span style="font-size:11px;font-weight:500;color:#4A3F2A;">&nbsp;{{ $report['position'] }}</span>@endif
+                    </span>
+                    @endforeach
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- 맺음말 -->
+            <div style="font-size:13px;color:#9A8F7A;line-height:1.7;">
+              {!! nl2br(e($data['body_outro'] ?? '감사합니다.')) !!}
+            </div>
+
+          </td>
+        </tr>
+
+        <!-- 푸터 -->
+        <tr>
+          <td style="background:#F5EDDB;border-top:2px solid #1A1100;padding:18px 28px;text-align:center;font-size:11px;color:#9A8F7A;line-height:1.6;">
+            <strong style="color:#4A3F2A;">주간업무보고 시스템</strong><br>
+            이 메일은 시스템에서 자동 발송된 메일입니다.
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>

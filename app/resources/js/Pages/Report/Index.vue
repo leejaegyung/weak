@@ -391,9 +391,9 @@
             <textarea v-model="mailForm.bodyMain" rows="3" class="input-field" style="resize:vertical;line-height:1.6;" placeholder="예) 이번 주 특이사항을 입력하세요. 비워두면 표시되지 않습니다."></textarea>
           </div>
 
-          <!-- 보고서 링크 목록 미리보기 (자동 구성) -->
+          <!-- 메일에 이름이 표기되는 제출자 미리보기 (링크는 주차 목록 하나로 통합) -->
           <div style="background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:10px;padding:14px 16px;">
-            <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">첨부되는 보고서 링크</div>
+            <div style="font-size:11px;color:#9A8F7A;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">메일에 포함되는 제출자</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <div v-for="r in submittedReports" :key="r.id"
                 style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #E8E0D0;border-radius:8px;padding:8px 12px;">
@@ -405,11 +405,13 @@
                   <span style="font-size:12px;font-weight:700;color:#1A1100;">{{ r.user?.name }}</span>
                   <span v-if="r.user?.position" style="font-size:11px;color:#9A8F7A;">{{ r.user?.position }}</span>
                   <span :class="statusBadge(r.status)">{{ r.status_label }}</span>
-                  <span style="font-size:12px;font-weight:700;color:#9A8F7A;">:</span>
                 </div>
-                <span v-if="r.submitted_at" style="font-size:11px;font-weight:700;color:#16A34A;flex-shrink:0;">금주 리포트 링크 →</span>
+                <span v-if="r.submitted_at" style="font-size:11px;font-weight:700;color:#16A34A;flex-shrink:0;">메일 포함</span>
                 <span v-else style="font-size:11px;font-weight:700;color:#B45309;flex-shrink:0;">메일 미포함</span>
               </div>
+            </div>
+            <div style="font-size:11px;color:#9A8F7A;margin-top:10px;line-height:1.6;">
+              메일에는 개별 보고서 링크 대신 <strong style="color:#4A3F2A;">{{ weekLabel }} 보고서 목록</strong> 링크 하나가 들어갑니다.
             </div>
           </div>
 

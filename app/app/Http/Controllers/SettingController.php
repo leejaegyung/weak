@@ -252,7 +252,7 @@ class SettingController extends Controller
             ], 422);
         }
 
-        // 보고서 링크 목록 구성 (팀 일정판과 동일한 정렬: sort_order → name)
+        // 제출자 목록 구성 (팀 일정판과 동일한 정렬: sort_order → name)
         $baseUrl = rtrim(config('app.url'), '/');
         $reports = $submittedReports
             ->sort(fn($a, $b) =>
@@ -263,7 +263,6 @@ class SettingController extends Controller
             ->map(fn($r) => [
                 'name'     => $r->user->name     ?? '-',
                 'position' => $r->user->position ?? '',
-                'url'      => "{$baseUrl}/reports/{$r->id}",
             ])->toArray();
 
         $data = [
@@ -276,6 +275,8 @@ class SettingController extends Controller
             'week'        => $week,
             'week_start'  => $weekStart,
             'week_end'    => $weekEnd,
+            // 메일에는 개별 보고서 링크 대신 해당 주차 목록 링크 하나만 넣는다
+            'list_url'    => "{$baseUrl}/reports?week={$weekStart}",
             'reports'     => $reports,
         ];
 

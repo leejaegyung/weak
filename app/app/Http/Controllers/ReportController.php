@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateReportRequest;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Services\KakaoService;
+use App\Services\MailService;
 use App\Services\NotificationService;
 use App\Services\ReportService;
 use App\Services\ScheduleService;
@@ -27,6 +28,7 @@ class ReportController extends Controller
         private WebhookService      $webhookService,
         private KakaoService        $kakaoService,
         private ScheduleService     $scheduleService,
+        private MailService         $mailService,
     ) {}
 
     public function index(Request $request): Response
@@ -61,10 +63,14 @@ class ReportController extends Controller
                 ->toArray()
             : [];
 
+        // 해당 주차 메일 전송 이력 (전 팀원 공유용 — 전송된 적 없으면 null)
+        $mailLog = $this->mailService->weekLog($this->reportService->weekString($weekStart));
+
         return Inertia::render('Report/Index', [
             'reports'       => $reports,
             'counts'        => $counts,
             'alertTargets'  => $alertTargets,
+            'mailLog'       => $mailLog,
             'isAdmin'       => $user->isAdmin(),
             'filters'       => ['status' => $status, 'search' => $search, 'week' => $weekStart],
             'weekStart'     => $weekStart,

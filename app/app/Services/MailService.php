@@ -4,9 +4,12 @@ namespace App\Services;
 
 use App\Mail\WeeklyReportMail;
 use App\Models\Setting;
+use App\Models\WeeklyMailLog;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MailService
 {
@@ -52,12 +55,13 @@ class MailService
             'from'       => $fromAddr,
         ]);
     }
+
     /**
-     * 주간보고 메일 발송
+     * 주간보고 메일 발송 후 전송 이력을 남긴다.
      *
-     * @param array $data {to, cc[], subject, week_start, week_end, reports[]}
+     * @param array $data {to, cc[], subject, week, week_start, week_end, reports[]}
      */
-    public function sendWeeklyReport(array $data): void
+    public function sendWeeklyReport(array $data): WeeklyMailLog
     {
         $this->configureSmtp();
 
@@ -66,6 +70,57 @@ class MailService
             $mailer->cc(array_filter($data['cc']));
         }
         $mailer->send(new WeeklyReportMail($data));
+
+        return $this->recordSent($data);
+    }
+
+    /** 전송 성공 건을 이력 테이블에 기록 */
+    private function recordSent(array $data): WeeklyMailLog
+    {
+        $sender = Auth::user();
+
+        return WeeklyMailLog::create([
+            'week'         => $data['week'],
+            'week_start'   => $data['week_start'],
+            'sent_by'      => $sender?->id,
+            'sender_name'  => $sender?->name,
+            'to_email'     => $data['to'],
+            'cc_emails'    => array_values(array_filter($data['cc'] ?? [])),
+            'subject'      => $data['subject'],
+            'report_count' => count($data['reports'] ?? []),
+            'sent_at'      => now(),
+        ]);
+    }
+
+    /**
+     * 해당 주차의 마지막 메일 전송 이력. 전송된 적이 없으면 null.
+     * 보고서 목록 화면에서 "이번 주차 메일 전송 여부"를 표시하는 데 사용한다.
+     */
+    public function weekLog(string $week): ?array
+    {
+        if (!Schema::hasTable('weekly_mail_logs')) {
+            return null;
+        }
+
+        $log = WeeklyMailLog::with('sender')
+            ->where('week', $week)
+            ->orderByDesc('sent_at')
+            ->first();
+
+        if (!$log) {
+            return null;
+        }
+
+        return [
+            'sent_at'       => $log->sent_at->format('Y-m-d H:i'),
+            'sent_at_short' => $log->sent_at->format('m/d H:i'),
+            'sender_name'   => $log->sender_label,
+            'to_email'      => $log->to_email,
+            'cc_emails'     => $log->cc_emails ?? [],
+            'subject'       => $log->subject,
+            'report_count'  => $log->report_count,
+            'send_count'    => WeeklyMailLog::where('week', $week)->count(),
+        ];
     }
 
     /** SMTP 연결 테스트 메일 발송 */

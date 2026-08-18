@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SendWeeklyMailRequest;
 use App\Mail\WeeklyReportMail;
 use App\Models\Setting;
 use App\Models\WeeklyReport;
@@ -225,19 +226,8 @@ class SettingController extends Controller
     // ═══════════════════════════════════════════════
 
     /** 주간보고 메일 전송 (관리자 수동 트리거) */
-    public function sendWeeklyMail(Request $request): JsonResponse
+    public function sendWeeklyMail(SendWeeklyMailRequest $request): JsonResponse
     {
-        $request->validate([
-            'week_start' => ['required', 'date'],
-            'to'         => ['required', 'email'],
-            'cc'         => ['nullable', 'array'],
-            'cc.*'       => ['email'],
-            'subject'    => ['required', 'string', 'max:200'],
-            'body_intro' => ['nullable', 'string', 'max:2000'],
-            'body_main'  => ['nullable', 'string', 'max:5000'],
-            'body_outro' => ['nullable', 'string', 'max:2000'],
-        ]);
-
         if (!$this->mailService->isConfigured()) {
             return response()->json([
                 'ok'      => false,
@@ -247,10 +237,11 @@ class SettingController extends Controller
 
         $weekStart = Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd   = Carbon::parse($weekStart)->addDays(4)->format('Y-m-d');
+        $week      = $this->reportService->weekString($weekStart);
 
         // 제출된 보고서 조회 (미제출자가 있어도 제출분만 포함하여 상시 전송 가능)
         $submittedReports = WeeklyReport::with('user')
-            ->whereBetween('curr_start', [$weekStart, $weekEnd])
+            ->where('week', $week)
             ->whereNotNull('submitted_at')
             ->get();
 
@@ -282,14 +273,21 @@ class SettingController extends Controller
             'body_intro'  => trim((string) $request->input('body_intro', '')) ?: "안녕하세요.\n이번 주 팀원 주간업무보고를 전달드립니다.",
             'body_main'   => trim((string) $request->input('body_main', '')),
             'body_outro'  => trim((string) $request->input('body_outro', '')) ?: '감사합니다.',
+            'week'        => $week,
             'week_start'  => $weekStart,
             'week_end'    => $weekEnd,
             'reports'     => $reports,
         ];
 
         try {
-            $this->mailService->sendWeeklyReport($data);
-            return response()->json(['ok' => true, 'message' => '메일을 성공적으로 전송했습니다.']);
+            $log = $this->mailService->sendWeeklyReport($data);
+
+            return response()->json([
+                'ok'       => true,
+                'message'  => '메일을 성공적으로 전송했습니다.',
+                'sent_at'  => $log->sent_at->format('Y-m-d H:i'),
+                'mail_log' => $this->mailService->weekLog($week),
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'ok'      => false,

@@ -86,6 +86,42 @@
       </div>
     </div>
 
+    <!-- 메일 전송 상태 (전 팀원 공유) -->
+    <div class="mail-status-bar"
+      :style="{
+        display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap',
+        background: mailLog ? '#DCFCE7' : '#F5EDDB',
+        border:'2px solid #1A1100', borderRadius:'12px',
+        padding:'11px 16px', marginBottom:'20px', boxShadow:'3px 3px 0 #1A1100',
+      }">
+      <div :style="{ width:'30px', height:'30px', borderRadius:'8px', border:'2px solid #1A1100', background: mailLog ? '#16A34A' : '#E8E0D0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }">
+        <svg v-if="mailLog" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:13px;font-weight:800;color:#1A1100;">
+            {{ mailLog ? `${weekLabel} 메일 전송 완료` : `${weekLabel} 메일 미전송` }}
+          </span>
+          <span v-if="mailLog && mailLog.send_count > 1"
+            style="font-size:10px;font-weight:700;color:#166534;background:#BBF7D0;border:1.5px solid #16A34A;border-radius:99px;padding:1px 8px;">
+            {{ mailLog.send_count }}회 전송
+          </span>
+        </div>
+        <div style="font-size:11.5px;color:#4A3F2A;margin-top:3px;line-height:1.5;">
+          <template v-if="mailLog">
+            {{ mailLog.sent_at }} · {{ mailLog.sender_name }} → {{ mailLog.to_email }}
+            <template v-if="mailLog.cc_emails?.length"> (참조 {{ mailLog.cc_emails.length }}명)</template>
+            · 보고서 {{ mailLog.report_count }}건 포함
+          </template>
+          <template v-else>
+            아직 이 주차 보고서 메일이 전송되지 않았습니다.
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- 검색 + 필터 탭 -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
       <div style="position:relative;flex:1;max-width:280px;">
@@ -286,6 +322,17 @@
 
         <!-- 모달 바디 -->
         <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;min-height:0;">
+          <!-- 이미 전송된 주차 안내 (중복 전송 방지) -->
+          <div v-if="mailLog"
+            style="display:flex;align-items:flex-start;gap:8px;background:#DCFCE7;border:1.5px solid #16A34A;border-radius:10px;padding:12px 14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+            <div style="font-size:12px;color:#166534;line-height:1.6;">
+              <strong>이 주차는 이미 메일이 전송되었습니다.</strong>
+              <br>{{ mailLog.sent_at }} · {{ mailLog.sender_name }} → {{ mailLog.to_email }}
+              <br>그대로 전송하면 재전송으로 기록됩니다.
+            </div>
+          </div>
+
           <!-- 미제출 경고 -->
           <div v-if="notSubmittedCount > 0"
             style="display:flex;align-items:flex-start;gap:8px;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 14px;">
@@ -617,6 +664,7 @@ const props = defineProps({
   reports:       { type: Array,   default: () => [] },
   counts:        { type: Object,  default: () => ({}) },
   alertTargets:  { type: Array,   default: () => [] },
+  mailLog:       { type: Object,  default: null },
   filters:       { type: Object,  default: () => ({}) },
   weekStart:     { type: String,  default: '' },
   weekEnd:       { type: String,  default: '' },
@@ -800,6 +848,8 @@ const doSendWeeklyMail = async () => {
     })
     showMailModal.value = false
     mailResult.value = { show: true, ok: true, message: res.data.message ?? '메일을 성공적으로 전송했습니다.' }
+    // 전송 이력 배지를 즉시 갱신 (팀원 모두가 전송 여부를 확인할 수 있도록)
+    router.reload({ only: ['mailLog'] })
   } catch (e) {
     mailResult.value = { show: true, ok: false, message: e.response?.data?.message ?? '메일 전송 실패. SMTP 설정을 확인해 주세요.' }
   } finally {

@@ -24,7 +24,9 @@ class IssueController extends Controller
             ->through(fn($i) => [
                 'id'              => $i->id,
                 'user_id'         => $i->user_id,
-                'user_name'       => $i->user?->name ?? '알 수 없음',
+                'user_name'       => $i->author_label,
+                'author_position' => $i->user?->position ?? $i->author_position ?? '',
+                'author_deleted'  => $i->author_deleted,
                 'title'           => $i->title,
                 'content'         => $i->content,
                 'status'          => $i->status,
@@ -145,7 +147,7 @@ class IssueController extends Controller
                 $num = $issue->id;
                 $md .= "### #{$num} — {$issue->title}\n\n";
                 $md .= "| 항목 | 내용 |\n|------|------|\n";
-                $md .= "| **작성자** | " . ($issue->user?->name ?? '알 수 없음') . " |\n";
+                $md .= "| **작성자** | " . $issue->author_label . " |\n";
                 $md .= "| **상태** | " . ($statusLabel[$issue->status] ?? $issue->status) . " |\n";
                 $md .= "| **등록일** | " . $issue->created_at->format('Y-m-d H:i') . " |\n\n";
 

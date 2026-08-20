@@ -87,6 +87,12 @@
                 {{ issue.user_name?.charAt(0) ?? '?' }}
               </div>
               <span style="font-size:12px;font-weight:600;color:#4A3F2A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ issue.user_name }}</span>
+              <!-- 계정이 삭제된 작성자 — 요구/이슈는 그대로 남는다 -->
+              <span v-if="issue.author_deleted"
+                v-tooltip="'계정이 삭제된 작성자입니다. 요구/이슈는 그대로 보관됩니다.'"
+                style="font-size:9px;font-weight:700;color:#6B7280;background:#F3F4F6;border:1.5px solid #D1D5DB;border-radius:99px;padding:1px 6px;white-space:nowrap;flex-shrink:0;">
+                퇴사
+              </span>
             </div>
 
             <!-- 상태 -->

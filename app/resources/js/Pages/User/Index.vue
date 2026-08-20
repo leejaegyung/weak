@@ -248,10 +248,10 @@
         </div>
 
         <!-- 보존되는 데이터 -->
-        <div v-if="deleteTarget?.report_count"
+        <div v-if="keptWithUser.length"
           style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px;text-align:left;font-size:12px;color:#166534;line-height:1.7;">
-          <strong>주간보고 {{ deleteTarget.report_count }}건은 그대로 남습니다</strong><br>
-          <span style="color:#15803D;">작성자 이름은 유지되며, 열람·인쇄·엑셀 출력 모두 가능합니다.</span>
+          <strong>{{ keptWithUser.join(' · ') }}은(는) 그대로 남습니다</strong><br>
+          <span style="color:#15803D;">작성자 이름은 '퇴사' 표시와 함께 유지되며, 열람·인쇄·엑셀 출력 모두 가능합니다.</span>
         </div>
 
         <!-- 함께 삭제되는 데이터 -->
@@ -378,16 +378,26 @@ const toggleHidden = (u) => router.post(`/admin/users/${u.id}/toggle-hidden`)
 const deleteTarget = ref(null)
 const confirmDelete = (u) => { deleteTarget.value = u }
 
-// 계정과 함께 사라지는 데이터 (주간보고는 보존되므로 제외)
+// 계정과 함께 사라지는 데이터 (주간보고·요구/이슈는 보존되므로 제외)
 const deletedWithUser = computed(() => {
   const t = deleteTarget.value
   if (!t) return []
   return [
-    t.schedule_count ? `일정 ${t.schedule_count}건`   : '',
-    t.comment_count  ? `코멘트 ${t.comment_count}건`  : '',
-    t.issue_count    ? `이슈 ${t.issue_count}건`      : '',
+    t.schedule_count ? `일정 ${t.schedule_count}건`  : '',
+    t.comment_count  ? `코멘트 ${t.comment_count}건` : '',
   ].filter(Boolean)
 })
+
+// 계정이 삭제돼도 남는 데이터
+const keptWithUser = computed(() => {
+  const t = deleteTarget.value
+  if (!t) return []
+  return [
+    t.report_count ? `주간보고 ${t.report_count}건` : '',
+    t.issue_count  ? `요구/이슈 ${t.issue_count}건` : '',
+  ].filter(Boolean)
+})
+
 const doDelete = () => {
   if (!deleteTarget.value) return
   router.delete(`/admin/users/${deleteTarget.value.id}`, {

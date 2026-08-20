@@ -345,11 +345,11 @@ class ReportController extends Controller
         );
 
         // Webhook 발송
-        $this->webhookService->notifyRejected($report->user->name ?? '알 수 없음', $report->week, $reason);
+        $this->webhookService->notifyRejected($report->user?->name ?? '알 수 없음', $report->week, $reason);
 
         // 카카오 알림 발송
-        if (!empty($report->user->kakao_id)) {
-            $kakaoText = "⚠️ [{$report->week}] 주간보고 반려 알림\n{$report->user->name}님의 보고서가 반려되었습니다. 수정 후 재제출해 주세요.{$reasonText}";
+        if (!empty($report->user?->kakao_id)) {
+            $kakaoText = "⚠️ [{$report->week}] 주간보고 반려 알림\n{$report->author_label}님의 보고서가 반려되었습니다. 수정 후 재제출해 주세요.{$reasonText}";
             $this->kakaoService->sendToUser($report->user, $kakaoText);
         }
 

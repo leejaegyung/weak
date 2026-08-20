@@ -192,7 +192,15 @@
             <template v-else>{{ r.user?.name?.charAt(0) ?? '?' }}</template>
           </div>
           <div>
-            <div style="font-size:13px;font-weight:700;">{{ r.user?.name ?? '-' }}</div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:13px;font-weight:700;">{{ r.user?.name ?? '-' }}</span>
+              <!-- 계정이 삭제된 작성자 — 보고서는 그대로 남는다 -->
+              <span v-if="r.user?.is_deleted"
+                v-tooltip="'계정이 삭제된 작성자입니다. 보고서는 그대로 보관됩니다.'"
+                style="font-size:10px;font-weight:700;color:#6B7280;background:#F3F4F6;border:1.5px solid #D1D5DB;border-radius:99px;padding:1px 7px;white-space:nowrap;">
+                퇴사
+              </span>
+            </div>
             <div style="font-size:11px;color:#9A8F7A;">{{ r.week_label || r.week || '-' }}</div>
           </div>
         </div>

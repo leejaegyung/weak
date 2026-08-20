@@ -35,7 +35,10 @@ class ReportService
         if ($status === 'not_submitted') {
             if (!$weekStart) return [];
             $weekStr         = $this->weekString($weekStart);
-            $existingUserIds = WeeklyReport::where('week', $weekStr)->pluck('user_id');
+            // 삭제된 계정의 보고서는 user_id가 NULL이다. NULL이 섞이면 SQL에서
+            // 'id NOT IN (NULL, ...)' 가 항상 NULL로 평가돼 한 행도 반환되지 않으므로
+            // (= 미제출 인원이 통째로 사라짐) 반드시 NULL을 걸러낸다.
+            $existingUserIds = WeeklyReport::where('week', $weekStr)->whereNotNull('user_id')->pluck('user_id');
 
             $usersQuery = User::where('is_active', true)->where('is_hidden', false)->whereNotIn('id', $existingUserIds);
             if ($userId)  $usersQuery->where('id', $userId);
@@ -102,7 +105,7 @@ class ReportService
         // 특정 주차 조회 + 상태 필터 없음 → 미제출 사용자도 포함
         if ($weekStart && !$status) {
             $weekStr         = $this->weekString($weekStart);
-            $existingUserIds = WeeklyReport::where('week', $weekStr)->pluck('user_id');
+            $existingUserIds = WeeklyReport::where('week', $weekStr)->whereNotNull('user_id')->pluck('user_id');
 
             $usersQuery = User::where('is_active', true)->where('is_hidden', false)->whereNotIn('id', $existingUserIds);
             if ($userId) $usersQuery->where('id', $userId);
@@ -156,7 +159,7 @@ class ReportService
 
         // 미제출: 활성 사용자 중 해당 주차에 보고서가 없는 수
         if ($weekStart) {
-            $existingUserIds = WeeklyReport::where('week', $this->weekString($weekStart))->pluck('user_id');
+            $existingUserIds = WeeklyReport::where('week', $this->weekString($weekStart))->whereNotNull('user_id')->pluck('user_id');
             if ($userId) {
                 // 비관리자: 본인만 체크
                 $notSubmitted = in_array($userId, $existingUserIds->toArray()) ? 0 : 1;
@@ -190,11 +193,13 @@ class ReportService
         // 제출 완료로 간주하여 알림에서 제외할 사용자 (draft 이외 상태)
         $submittedUserIds = WeeklyReport::where('week', $weekStr)
             ->where('status', '!=', 'draft')
+            ->whereNotNull('user_id')
             ->pluck('user_id');
 
         // 작성 중인 사용자 — 알림 대상에 포함하되 상태를 구분해 표기
         $draftUserIds = WeeklyReport::where('week', $weekStr)
             ->where('status', 'draft')
+            ->whereNotNull('user_id')
             ->pluck('user_id')
             ->all();
 

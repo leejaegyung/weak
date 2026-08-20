@@ -253,16 +253,17 @@ class SettingController extends Controller
         }
 
         // 제출자 목록 구성 (팀 일정판과 동일한 정렬: sort_order → name)
+        // 계정이 삭제된 작성자는 user 관계가 null이므로 스냅샷(author_*)으로 표기한다.
         $baseUrl = rtrim(config('app.url'), '/');
         $reports = $submittedReports
             ->sort(fn($a, $b) =>
-                [$a->user->sort_order ?? 9999, $a->user->name ?? '']
-                <=> [$b->user->sort_order ?? 9999, $b->user->name ?? '']
+                [$a->user?->sort_order ?? 9999, $a->author_label]
+                <=> [$b->user?->sort_order ?? 9999, $b->author_label]
             )
             ->values()
             ->map(fn($r) => [
-                'name'     => $r->user->name     ?? '-',
-                'position' => $r->user->position ?? '',
+                'name'     => $r->author_label,
+                'position' => $r->user?->position ?? $r->author_position ?? '',
             ])->toArray();
 
         $data = [

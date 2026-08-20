@@ -340,8 +340,12 @@
             <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#DC2626;font-weight:700;font-size:16px;line-height:1;">✕</button>
           </div>
         </div>
-
-        <div class="app-main-padding" style="padding:28px 32px;flex:1;min-width:0;">
+        <!-- flex:1(=basis 0, shrink 1)이면 이 래퍼가 main 높이로 고정되고,
+             안쪽 표 래퍼(overflow-x:auto → 스크롤 컨테이너)의 최소 높이가 0으로
+             잡혀 넘치는 내용이 main의 스크롤 범위에 포함되지 않는다.
+             → 아래쪽 행이 잘린 채 더 이상 스크롤되지 않음.
+             basis를 auto로 두고 shrink를 막아 항상 내용 높이를 유지한다. -->
+        <div class="app-main-padding" style="padding:28px 32px;flex:1 0 auto;min-width:0;">
           <slot />
         </div>
       </main>

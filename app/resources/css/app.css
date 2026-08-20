@@ -21,9 +21,17 @@
     color: #1A1100;
     font-family: 'Noto Sans KR', 'Space Grotesk', sans-serif;
   }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(26,17,0,0.15); border-radius: 3px; }
+  /* 스크롤바: 6px + 15% 불투명도는 사실상 보이지 않아 스크롤 가능 여부를
+     알 수 없고 드래그로 잡기도 어려웠다. 폭과 대비를 올려 조작 가능하게 한다. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #F5EDDB; }
+  ::-webkit-scrollbar-thumb {
+    background: #C8BFA8;
+    border: 2px solid #F5EDDB;
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #9A8F7A; }
+  ::-webkit-scrollbar-corner { background: #F5EDDB; }
 }
 
 @layer components {

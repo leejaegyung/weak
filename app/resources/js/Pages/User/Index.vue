@@ -391,7 +391,8 @@ const deletedWithUser = computed(() => {
 const doDelete = () => {
   if (!deleteTarget.value) return
   router.delete(`/admin/users/${deleteTarget.value.id}`, {
-    onSuccess: () => { deleteTarget.value = null },
+    // onFinish: 실패해도 오버레이가 남아 스크롤을 막지 않도록 항상 닫는다
+    onFinish: () => { deleteTarget.value = null },
   })
 }
 

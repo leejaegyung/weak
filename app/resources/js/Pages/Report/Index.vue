@@ -730,7 +730,8 @@ const confirmDelete = (r) => { deleteTarget.value = r }
 const doDelete = () => {
   if (!deleteTarget.value) return
   router.delete(`/reports/${deleteTarget.value.id}`, {
-    onSuccess: () => { deleteTarget.value = null },
+    // onFinish: 실패해도 오버레이가 남아 스크롤을 막지 않도록 항상 닫는다
+    onFinish: () => { deleteTarget.value = null },
   })
 }
 const searchInput  = ref(props.filters?.search ?? '')

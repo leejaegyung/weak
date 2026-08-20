@@ -325,7 +325,7 @@
 
       <!-- ── 메인 콘텐츠 ── -->
       <!-- min-width:0 → flex 자식이 컨테이너 밖으로 넘치지 않도록 제한 -->
-      <main class="app-main" style="flex:1;min-width:0;overflow-y:auto;overflow-x:auto;background:#FFF8EE;display:flex;flex-direction:column;">
+      <main class="app-main" style="flex:1;min-width:0;overflow-y:auto;overflow-x:auto;background:#FFF8EE;">
 
         <!-- 플래시 메시지 -->
         <div v-if="flash.success && showFlash" class="flash-wrap" style="margin:16px 32px 0;">
@@ -340,12 +340,10 @@
             <button @click="showFlash=false" style="background:none;border:none;cursor:pointer;color:#DC2626;font-weight:700;font-size:16px;line-height:1;">✕</button>
           </div>
         </div>
-        <!-- flex:1(=basis 0, shrink 1)이면 이 래퍼가 main 높이로 고정되고,
-             안쪽 표 래퍼(overflow-x:auto → 스크롤 컨테이너)의 최소 높이가 0으로
-             잡혀 넘치는 내용이 main의 스크롤 범위에 포함되지 않는다.
-             → 아래쪽 행이 잘린 채 더 이상 스크롤되지 않음.
-             basis를 auto로 두고 shrink를 막아 항상 내용 높이를 유지한다. -->
-        <div class="app-main-padding" style="padding:28px 32px;flex:1 0 auto;min-width:0;">
+        <!-- main을 flex 컨테이너로 두면 이 래퍼가 flex 아이템이 되어 높이 계산이
+             안쪽 스크롤 컨테이너(표 래퍼의 overflow-x:auto)에 영향을 받는다.
+             일반 블록 흐름으로 두어 스크롤 범위가 항상 내용 높이와 일치하게 한다. -->
+        <div class="app-main-padding" style="padding:28px 32px;min-width:0;">
           <slot />
         </div>
       </main>

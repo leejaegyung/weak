@@ -64,7 +64,11 @@ class UserController extends Controller
                 ->with('error', '자기 자신의 계정은 삭제할 수 없습니다.');
         }
 
-        $this->userService->delete($user);
+        try {
+            $this->userService->delete($user);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('admin.users.index')->with('error', $e->getMessage());
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', $user->name . ' 님의 계정이 삭제되었습니다.');

@@ -7,6 +7,7 @@ use App\Models\ReportComment;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Models\WeeklyReport;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -73,12 +74,28 @@ class UserService
     public function delete(User $user): void
     {
         DB::transaction(function () use ($user) {
-            WeeklyReport::where('user_id', $user->id)->update([
-                'author_name'     => $user->name,
-                'author_position' => $user->position,
-            ]);
+            // 보고서를 명시적으로 분리한다.
+            // FK의 ON DELETE SET NULL 에만 의존하면, keep_weekly_reports_on_user_delete
+            // 마이그레이션이 적용되지 않은 DB에서는 CASCADE 가 동작해 보고서가 조용히
+            // 삭제된다. 삭제 확인 화면은 "보고서는 그대로 남는다"고 안내하므로 그 약속이
+            // 깨진다. 아래 update 는 user_id 가 NOT NULL 이면 실패하고 트랜잭션이
+            // 되돌려지므로, 데이터가 사라지는 대신 삭제 자체가 중단된다.
+            try {
+                WeeklyReport::where('user_id', $user->id)->update([
+                    'author_name'     => $user->name,
+                    'author_position' => $user->position,
+                    'user_id'         => null,
+                ]);
+            } catch (QueryException $e) {
+                throw new \RuntimeException(
+                    '주간보고 보존 설정이 적용되지 않아 삭제를 중단했습니다. '
+                    . '서버에서 php artisan migrate 를 실행한 뒤 다시 시도해 주세요.',
+                    0,
+                    $e
+                );
+            }
 
-            $user->delete();   // weekly_reports.user_id 는 NULL 로 남는다
+            $user->delete();
         });
     }
 

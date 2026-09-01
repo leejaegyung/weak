@@ -385,6 +385,179 @@ sudo -u nginx php artisan tinker --execute="
 
 ---
 
+### 15단계 — DB 자동 백업 설정
+
+매일 새벽 3시에 PostgreSQL 덤프를 뜨고 30일치를 보관합니다.
+
+| 항목 | 값 |
+|------|-----|
+| 백업 스크립트 | `/data/weak/db_backup.sh` |
+| 저장 위치 | `/data/weak/DBbackup/` |
+| 로그 파일 | `/data/weak/DBbackup/backup.log` |
+| 실행 계정 | `root` |
+| 실행 시각 | 매일 03:00 (KST) |
+| 보관 기간 | 30일 — 경과분 자동 삭제 |
+| 덤프 형식 | `pg_dump -Fc` (custom 포맷, gzip 압축) |
+
+스크립트가 `app/.env` 에서 DB 접속 정보를 읽으므로 **비밀번호를 별도로 적어둘 필요가 없습니다.**
+`pg_dump` 경로도 `/usr/pgsql-*/bin` 까지 자동 탐색하며, `flock` 으로 중복 실행을 막고 덤프 파일 권한은 `600` 으로 설정됩니다.
+
+#### 15-1. 실행 권한 부여 및 수동 확인
+
+```bash
+cd /data/weak
+chmod +x db_backup.sh
+
+# 수동 실행
+./db_backup.sh && cat DBbackup/backup.log
+```
+
+정상이면 아래처럼 출력됩니다.
+
+```
+[2026-09-01 14:10:23] 백업 시작 -> /data/weak/DBbackup/weeklyrpt_20260901_141023.dump
+[2026-09-01 14:10:23] [성공] 백업 완료 (164K)
+```
+
+`pg_dump: command not found` 가 나오면 클라이언트를 설치합니다.
+
+```bash
+dnf install -y postgresql17
+```
+
+#### 15-2. 덤프 파일 검증
+
+백업 파일이 생겼다는 것과 복원이 된다는 것은 다릅니다. 한 번은 열어서 확인합니다.
+
+```bash
+pg_restore -l /data/weak/DBbackup/weeklyrpt_20260901_141023.dump | head -30
+```
+
+`Format: CUSTOM`, `Compression: gzip` 과 함께 테이블 목록이 나오면 정상입니다.
+헤더의 `Dumped from database version` 과 `Dumped by pg_dump version` 이 **같은지** 확인하세요.
+`pg_dump` 가 서버보다 낮은 버전이면 덤프가 불완전할 수 있습니다.
+
+```bash
+# 핵심 테이블이 담겼는지 확인
+pg_restore -l /data/weak/DBbackup/*.dump | grep -E 'TABLE public (users|reports|schedules)'
+```
+
+#### 15-3. cron 등록 (root)
+
+```bash
+cat > /etc/cron.d/weeklyrpt-backup << 'CRON'
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# 매일 03:00 DB 백업
+0 3 * * * root /data/weak/db_backup.sh
+CRON
+
+chmod 644 /etc/cron.d/weeklyrpt-backup
+chown root:root /etc/cron.d/weeklyrpt-backup
+systemctl enable --now crond
+systemctl restart crond
+```
+
+> `/etc/cron.d/` 방식은 `crontab -e` 와 달리 **시간 다섯 칸 뒤에 실행 계정(`root`)이 들어갑니다.**
+> 이 칸이 빠지거나 파일 권한이 `644` 가 아니면 cron 이 아무 말 없이 무시합니다.
+
+등록 확인:
+
+```bash
+cat /etc/cron.d/weeklyrpt-backup
+systemctl status crond
+date                              # 서버 시각이 KST 인지 확인
+```
+
+#### 15-4. 새벽 3시까지 기다리지 않고 검증
+
+cron 이 실제로 스크립트를 실행하는지(권한 · PATH · SELinux) 1분 주기로 바꿔 확인합니다.
+
+```bash
+# 임시로 매분 실행
+sed -i 's|^ *0 3 \* \* \*|*/1 * * * *|' /etc/cron.d/weeklyrpt-backup
+systemctl restart crond
+```
+
+1~2분 뒤:
+
+```bash
+tail -5 /data/weak/DBbackup/backup.log
+journalctl -u crond --since '-5 min' --no-pager
+```
+
+새 시각의 `[성공] 백업 완료` 가 찍혔으면 연동 성공입니다. **확인 즉시 원복합니다.**
+
+```bash
+sed -i 's|^\*/1 \* \* \* \*|0 3 * * *|' /etc/cron.d/weeklyrpt-backup
+systemctl restart crond
+cat /etc/cron.d/weeklyrpt-backup   # 0 3 * * * root ... 로 돌아왔는지 확인
+```
+
+> 원복을 잊으면 1분마다 백업이 쌓입니다.
+
+테스트로 생긴 덤프는 정리합니다.
+
+```bash
+ls -lt /data/weak/DBbackup/*.dump
+rm /data/weak/DBbackup/weeklyrpt_<지울파일>.dump
+```
+
+#### 15-5. 복원
+
+> 복원 전 애플리케이션을 먼저 중지합니다.
+
+**기존 DB에 덮어쓰기**
+
+```bash
+export PGPASSWORD="$(sed -n 's/^DB_PASSWORD=//p' /data/weak/app/.env | tr -d '\r"')"
+pg_restore -h 127.0.0.1 -p 5432 -U weeklyrpt_user -d weeklyrpt \
+  --clean --if-exists \
+  /data/weak/DBbackup/weeklyrpt_20260901_030000.dump
+unset PGPASSWORD
+```
+
+**새 DB로 복원 (검증용 — 운영 DB를 건드리지 않음)**
+
+```bash
+export PGPASSWORD="$(sed -n 's/^DB_PASSWORD=//p' /data/weak/app/.env | tr -d '\r"')"
+createdb -h 127.0.0.1 -U weeklyrpt_user weeklyrpt_restore
+pg_restore -h 127.0.0.1 -p 5432 -U weeklyrpt_user -d weeklyrpt_restore \
+  /data/weak/DBbackup/weeklyrpt_20260901_030000.dump
+unset PGPASSWORD
+```
+
+#### 15-6. 운영 시 주의사항
+
+- **원격 사본을 두세요.** 백업이 운영 DB와 같은 `/data` 볼륨에 쌓이므로, 디스크가 통째로 고장나면 원본과 백업이 함께 사라집니다.
+  ```
+  30 3 * * * root rsync -a --delete /data/weak/DBbackup/ backup@nas:/backup/weeklyrpt/
+  ```
+- **서버가 꺼져 있으면 그날 백업은 건너뜁니다.** 상시 가동이 아니라면 cron 대신 systemd timer 를 쓰면 부팅 후 밀린 백업을 실행합니다 (`Persistent=true`, 상세는 `DB백업_리눅스.md` §4).
+- **분기에 1회는 실제로 복원해 보세요.** 한 번도 복원해 보지 않은 백업은 백업이 아닙니다. 15-5 의 "새 DB로 복원" 이 안전합니다.
+- **실패 알림:** 스크립트가 실패하면 0이 아닌 코드로 종료하므로 root 앞으로 cron 메일이 갑니다. 메일을 쓰지 않는 환경이면 `backup.log` 를 주기적으로 확인하세요.
+- **로그 관리:** `backup.log` 가 커지면 logrotate 를 겁니다.
+  ```bash
+  cat > /etc/logrotate.d/weeklyrpt-backup << 'ROT'
+  /data/weak/DBbackup/backup.log {
+      monthly
+      rotate 12
+      compress
+      missingok
+      notifempty
+  }
+  ROT
+  ```
+
+**백업 해제:**
+
+```bash
+rm /etc/cron.d/weeklyrpt-backup && systemctl restart crond
+```
+
+---
+
 ## 업데이트 배포
 
 ```bash
@@ -439,6 +612,8 @@ chown -R nginx:nginx storage bootstrap/cache
 ```
 /data/
 └── weak/                        # 프로젝트 루트
+    ├── db_backup.sh              # DB 백업 스크립트 (root cron, 매일 03:00)
+    ├── DBbackup/                 # 백업 덤프 + backup.log (git 추적 제외)
     └── app/                      # Laravel 애플리케이션
         ├── app/
         │   ├── Http/Controllers/
@@ -467,6 +642,10 @@ chown -R nginx:nginx storage bootstrap/cache
 | SELinux Permission Denied | SELinux 컨텍스트 미적용 | 12단계 SELinux 설정 재실행 |
 | npm run build 실패 | Node.js 버전 낮음 | Node.js 22 이상 설치 확인 |
 | 세션 만료가 너무 빠름 | `SESSION_LIFETIME` 기본값 | `.env`에서 `SESSION_LIFETIME=480` 설정 |
+| `pg_dump: command not found` | PostgreSQL 클라이언트 미설치 | `dnf install -y postgresql17` |
+| cron이 백업을 실행하지 않음 | `/etc/cron.d` 파일 권한이 `644`가 아니거나 실행 계정(`root`) 칸 누락 | `chmod 644` 적용, 시간 5칸 뒤 `root` 가 있는지 확인 |
+| 03:00 백업이 건너뛰어짐 | 해당 시각에 서버가 꺼져 있었음 | `systemctl status crond` 확인, 상시 가동이 아니면 systemd timer(`Persistent=true`)로 전환 |
+| 백업 디스크 부족 | 보관 기간이 길거나 DB가 커짐 | `db_backup.sh` 의 `KEEP_DAYS` 조정, `BACKUP_DIR` 을 별도 볼륨으로 지정 |
 
 ---
 

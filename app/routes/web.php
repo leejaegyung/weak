@@ -30,6 +30,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::get('/auth/kakao',          [KakaoAuthController::class, 'redirect'])->name('auth.kakao.redirect');
 Route::get('/auth/kakao/callback', [KakaoAuthController::class, 'callback'])->name('auth.kakao.callback');
 
+// 미연동 카카오로 로그인했을 때 — 본인 확인 후 기존 계정에 연결 (또는 신규 가입 신청)
+Route::get('/auth/kakao/link',      [KakaoAuthController::class, 'showLink'])->name('auth.kakao.link');
+Route::post('/auth/kakao/link',     [KakaoAuthController::class, 'link'])->name('auth.kakao.link.submit');
+Route::post('/auth/kakao/register', [KakaoAuthController::class, 'registerFromKakao'])->name('auth.kakao.register');
+
 Route::middleware('auth')->group(function () {
     // 보고서 CRUD
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

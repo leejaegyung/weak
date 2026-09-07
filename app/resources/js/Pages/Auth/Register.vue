@@ -91,7 +91,7 @@
         </svg>
         카카오로 간편 가입
       </a>
-      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">카카오 닉네임으로 자동 가입 신청 → 관리자 승인 후 이용</p>
+      <p style="font-size:11px;color:#9A8F7A;text-align:center;margin-top:8px;">이미 계정이 있으면 본인 확인 후 연결 → 없으면 가입 신청 (관리자 승인 후 이용)</p>
 
       <!-- 로그인 링크 -->
       <div style="text-align:center;margin-top:14px;">

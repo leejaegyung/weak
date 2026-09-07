@@ -15,6 +15,12 @@
         ✓ {{ $page.props.flash.success }}
       </div>
 
+      <!-- 카카오 인증 실패 등 오류 메시지 -->
+      <div v-if="$page.props.flash?.error"
+        style="background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#DC2626;font-weight:600;text-align:center;">
+        ⚠ {{ $page.props.flash.error }}
+      </div>
+
       <!-- 로그인 폼 -->
       <div style="background:#fff;border:2px solid #1A1100;border-radius:16px;box-shadow:4px 4px 0 #1A1100;padding:28px;">
         <form @submit.prevent="submit" style="display:flex;flex-direction:column;gap:16px;">
@@ -58,7 +64,7 @@
         </svg>
         카카오 로그인
       </a>
-      <p style="font-size:11px;font-weight:600;color:#4A3F2A;text-align:center;margin-top:8px;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">처음이라면 자동으로 가입 신청됩니다 (관리자 승인 필요)</p>
+      <p style="font-size:11px;font-weight:600;color:#4A3F2A;text-align:center;margin-top:8px;text-shadow:0 0 5px #FFF8EE,0 1px 2px rgba(255,255,255,0.9);">처음이라면 본인 확인 후 기존 계정에 연결됩니다</p>
 
       <!-- 회원가입 링크 -->
       <div style="text-align:center;margin-top:14px;">

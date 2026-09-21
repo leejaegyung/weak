@@ -1,5 +1,5 @@
 <template>
-  <AppLayout page-title="API 키 관리">
+  <AppLayout page-title="API 키 관리" back-href="/admin/users">
 
     <!-- 헤더 -->
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;max-width:760px;margin-left:auto;margin-right:auto;">

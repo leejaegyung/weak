@@ -240,3 +240,15 @@
   .app-main video,
   .app-main pre { max-width: 100% !important; }
 }
+
+/* ===========================================================
+   모바일 전용 / 데스크톱 전용 블록 전환 (≤768px 기준)
+   - 모바일 킷(카드 피드)은 표를 접지 않고 별도 마크업으로 그린다
+   - .mob-only 는 기본 숨김, .desk-only 는 모바일에서 숨김
+   =========================================================== */
+.mob-only { display: none !important; }
+
+@media (max-width: 768px) {
+  .mob-only  { display: block !important; }
+  .desk-only { display: none !important; }
+}

@@ -1,7 +1,7 @@
 <template>
   <AppLayout page-title="보고서 목록">
     <!-- 헤더 -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+    <div class="desk-only" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
           <img src="/favicon.svg" alt="SE"
@@ -68,6 +68,33 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           보고서 작성
         </Link>
+      </div>
+    </div>
+
+    <!-- ── 모바일 헤더: 주차 페이저 + 관리자 액션 ── -->
+    <div class="mob-only" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" @click="goWeek(prevWeek)" class="mob-pager-btn" aria-label="이전 주">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div style="flex:1;background:#FFF0A0;border:2px solid #1A1100;border-radius:10px;padding:6px 14px;text-align:center;box-shadow:2px 2px 0 #1A1100;">
+          <div style="font-size:13px;font-weight:800;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ weekLabel }}</div>
+          <div style="font-size:10px;color:#9A8F7A;">{{ fmtShort(weekStart) }} ~ {{ fmtShort(weekEnd) }}</div>
+        </div>
+        <button type="button" @click="goWeek(nextWeek)" class="mob-pager-btn" aria-label="다음 주">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <button v-if="!isCurrentWeek" type="button" @click="goWeek('')"
+        style="width:100%;margin-top:8px;background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+        이번 주로 이동
+      </button>
+
+      <!-- 관리자 액션 -->
+      <div v-if="isAdmin" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px;">
+        <button type="button" @click="showAlertModal=true" class="btn-secondary btn-sm" style="justify-content:center;">미제출 알림</button>
+        <button type="button" @click="openMailModal" class="btn-secondary btn-sm" style="justify-content:center;">메일 전송</button>
+        <a :href="`/export/weekly?curr_start=${weekStart}`" class="btn-secondary btn-sm" style="justify-content:center;text-decoration:none;">Excel</a>
       </div>
     </div>
 
@@ -139,8 +166,29 @@
       </div>
     </div>
 
+    <!-- ── 모바일: 검색 + 가로 스크롤 필터 칩 ── -->
+    <div class="mob-only" style="margin-bottom:14px;">
+      <div style="position:relative;margin-bottom:10px;">
+        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;display:flex;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+        </span>
+        <input v-model="searchInput" @input="onSearch" placeholder="이름 검색..." class="input-field" style="padding-left:32px;" />
+      </div>
+      <div class="mob-chip-scroll">
+        <div style="display:flex;gap:6px;width:max-content;">
+          <button v-for="f in filterBtns" :key="f.val" type="button" @click="setFilter(f.val)"
+            :style="{
+              padding:'7px 14px', borderRadius:'99px', fontSize:'12px', fontWeight:'700', fontFamily:'inherit', cursor:'pointer',
+              border:'2px solid #1A1100', whiteSpace:'nowrap',
+              background: activeFilter===f.val ? '#1A1100' : '#fff',
+              color: activeFilter===f.val ? '#FDCB40' : '#1A1100',
+            }">{{ f.label }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 검색 + 필터 탭 -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+    <div class="desk-only" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
       <div style="position:relative;flex:1;max-width:280px;">
         <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
@@ -167,8 +215,56 @@
         }">{{ f.label }}</button>
     </div>
 
+    <!-- ── 모바일: 사람 = 카드 (7열 표 대체) ── -->
+    <div class="mob-only">
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div v-for="r in reports" :key="r.id ?? `ns-${r.user?.id}`"
+          @click="r.status !== 'not_submitted' && router.get(`/reports/${r.id}`)"
+          :style="mobCardStyle(r)">
+          <div :style="{ display:'flex', alignItems:'center', gap:'10px', marginBottom: r.status === 'not_submitted' ? 0 : '11px' }">
+            <div :style="mobAvatarStyle(r)">
+              <img v-if="r.user?.avatar_image_url" :src="r.user.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+              <template v-else>{{ r.user?.name?.charAt(0) ?? '?' }}</template>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                {{ r.user?.name ?? '-' }}
+                <span v-if="r.user?.position" style="font-size:11px;color:#9A8F7A;font-weight:600;">{{ r.user.position }}</span>
+                <span v-if="r.user?.is_deleted"
+                  style="font-size:10px;font-weight:700;color:#6B7280;background:#F3F4F6;border:1.5px solid #D1D5DB;border-radius:99px;padding:1px 7px;">퇴사</span>
+              </div>
+              <div style="font-size:11px;color:#9A8F7A;margin-top:1px;">
+                {{ r.submitted_at ? `제출 ${String(r.submitted_at).substring(0,10)}` : '제출일 없음' }}
+              </div>
+            </div>
+            <span :class="statusBadge(r.status)" style="flex-shrink:0;">{{ r.status_label }}</span>
+          </div>
+
+          <div v-if="r.status !== 'not_submitted'" style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;gap:6px;flex:1;min-width:0;">
+              <div v-for="stat in mobStats(r)" :key="stat.label"
+                style="flex:1;min-width:0;background:#FDFAF5;border:1.5px solid #E8E0D0;border-radius:9px;padding:6px 4px;text-align:center;">
+                <div class="mob-stat-num" :style="{ color: stat.value ? '#1A1100' : '#C8BFA8' }">{{ stat.value }}</div>
+                <div style="font-size:9.5px;color:#9A8F7A;font-weight:700;">{{ stat.label }}</div>
+              </div>
+            </div>
+            <button type="button" @click.stop="openCommentModal(r)" aria-label="코멘트"
+              :style="{ background:'none', border:'none', cursor:'pointer', padding:'8px', display:'flex', flexShrink:0, color: commentCountFor(r) > 0 ? '#7C3AED' : '#D0C9BC' }">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button v-if="isAdmin || r.user_id === currentUserId" type="button" @click.stop="confirmDelete(r)" aria-label="삭제"
+              style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:8px;display:flex;flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="reports.length === 0" style="padding:48px 20px;text-align:center;color:#9A8F7A;font-size:13px;">검색 결과가 없습니다</div>
+      </div>
+    </div>
+
     <!-- 테이블 -->
-    <div class="card table-card" style="overflow:hidden;padding:0;">
+    <div class="card table-card desk-only" style="overflow:hidden;padding:0;">
       <div class="table-scroll-wrap" style="overflow-x:auto;min-width:0;">
       <div style="min-width:580px;">
       <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr 1.5fr 88px;padding:10px 20px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
@@ -768,6 +864,31 @@ const filterBtns = [
 
 const fmt = (d) => d ? String(d).substring(0, 10) : '-'
 
+// ── 모바일 카드 ──
+// 미제출자는 점선 카드로 비워 두고, 제출된 보고서만 그림자로 들어 올린다
+const mobCardStyle = (r) => {
+  const empty = r.status === 'not_submitted'
+  return {
+    background: empty ? '#FFFBF0' : '#fff',
+    border: empty ? '1.5px dashed #D6CEBE' : '2px solid #1A1100',
+    borderRadius: '14px', padding: '13px',
+    boxShadow: empty ? 'none' : '4px 4px 0 #1A1100',
+    cursor: empty ? 'default' : 'pointer',
+  }
+}
+const mobAvatarStyle = (r) => ({
+  background: r.user?.avatar_image_url ? 'transparent' : avatarColor(r.user?.id ?? r.user_id),
+  width: '34px', height: '34px', borderRadius: '50%', border: '2px solid #1A1100',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  color: '#fff', fontSize: '13px', fontWeight: '700', flexShrink: 0, overflow: 'hidden',
+  fontFamily: "'Space Grotesk',sans-serif",
+})
+const mobStats = (r) => [
+  { label: '업무',   value: r.curr_work?.filter(i => i.category === '지원').length ?? 0 },
+  { label: 'Todo',   value: r.todo_items?.length ?? 0 },
+  { label: '코멘트', value: commentCountFor(r) },
+]
+
 const statusBadge = (s) => ({
   draft:         'badge-draft',
   submitted:     'badge-submitted',
@@ -1062,11 +1183,29 @@ const applyFilter = () => {
    보고서 목록 반응형
    =========================== */
 
-/* 통계 그리드: 모바일에서 2열 */
+/* 모바일 주차 페이저 버튼 */
+.mob-pager-btn {
+  background: #fff; border: 2px solid #1A1100; border-radius: 9px;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; box-shadow: 2px 2px 0 #1A1100; padding: 0;
+}
+/* 필터 칩: 본문 패딩 밖까지 가로 스크롤 */
+.mob-chip-scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px; -webkit-overflow-scrolling: touch; }
+.mob-chip-scroll::-webkit-scrollbar { display: none; }
+.mob-stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 800; line-height: 1.2; }
+
+/* 통계 그리드: 모바일에서 2×2 타일 */
 @media (max-width: 768px) {
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
   }
+  .stats-grid > .card { padding: 12px 13px !important; gap: 11px !important; border-radius: 14px !important; }
+  .stats-grid > .card > div { width: 38px !important; height: 38px !important; }
+  .stats-grid > .card > div > span { font-size: 18px !important; }
+  .stats-grid > .card > span { font-size: 12.5px !important; white-space: nowrap; }
+  .mail-status-bar { padding: 13px 15px !important; margin-bottom: 14px !important; }
   /* 헤더 상단 버튼 영역 */
   .index-header-actions {
     width: 100% !important;

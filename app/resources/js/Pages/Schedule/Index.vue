@@ -1,7 +1,7 @@
 <template>
   <AppLayout page-title="팀 일정판">
     <!-- 헤더 -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+    <div class="desk-only" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
           <div style="background:#FDCB40;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -106,8 +106,116 @@
       </div>
     </div>
 
+    <!-- ── 모바일: 팀원 카드 피드 (표 대신 사람 = 카드, 가로 스크롤 없음) ── -->
+    <div class="mob-only">
+      <!-- 주차 이동 -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+        <Link :href="`/schedules?week=${prevWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </Link>
+        <Link v-if="!isCurrentWeek" href="/schedules"
+          style="flex:1;text-align:center;background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none;">
+          오늘로 이동
+        </Link>
+        <div v-else style="flex:1;text-align:center;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:800;">이번 주</div>
+        <Link :href="`/schedules?week=${nextWeek}`" class="btn-secondary btn-sm" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </Link>
+      </div>
+
+      <!-- 금주 / 차주 세그먼트 -->
+      <div style="display:flex;border:2px solid #1A1100;border-radius:10px;overflow:hidden;box-shadow:2px 2px 0 #1A1100;margin-bottom:12px;">
+        <button v-for="(opt, i) in [['curr', `금주 ${fmtRange(currDates[0], currDates[4])}`], ['next', `차주 ${fmtRange(nextDates[0], nextDates[4])}`]]" :key="opt[0]"
+          type="button" @click="mobWeek = opt[0]"
+          :style="{
+            flex:1, padding:'10px 6px', fontSize:'12px', fontWeight:'800', cursor:'pointer',
+            fontFamily:'\'Space Grotesk\',\'Noto Sans KR\',sans-serif', color:'#1A1100', border:'none',
+            borderRight: i === 0 ? '2px solid #1A1100' : 'none',
+            background: mobWeek === opt[0] ? '#FDCB40' : '#fff',
+          }">{{ opt[1] }}</button>
+      </div>
+
+      <!-- 액션 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button type="button" @click="openModal(null, '')"
+          style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          일정 추가
+        </button>
+        <button v-if="notifyEnabled" type="button" @click="sendNotify" :disabled="notifySending"
+          :style="{
+            flex:1, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'6px',
+            background:'#B8284F', color:'#fff', border:'2px solid #1A1100', borderRadius:'10px', padding:'9px 12px',
+            fontSize:'13px', fontWeight:'700', fontFamily:'inherit', boxShadow:'2px 2px 0 #1A1100',
+            opacity: notifySending ? 0.5 : 1, cursor: notifySending ? 'not-allowed' : 'pointer',
+          }">
+          {{ notifySending ? '전송 중...' : '추가 일정 전송' }}
+        </button>
+      </div>
+
+      <!-- 팀원 카드 -->
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div v-for="user in orderedUsers" :key="user.id"
+          style="background:#fff;border:2px solid #1A1100;border-radius:14px;box-shadow:4px 4px 0 #1A1100;padding:12px 13px;">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+            <div :style="{
+              width:'30px', height:'30px', borderRadius:'50%', flexShrink:0, overflow:'hidden',
+              background: avatarImg(user.id) ? 'transparent' : avatarColor(user.id),
+              border: user.id === currentUserId ? '2.5px solid #FD4401' : '2px solid #1A1100',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              color:'#fff', fontSize:'12px', fontWeight:'700', fontFamily:'\'Space Grotesk\',sans-serif',
+            }">
+              <img v-if="avatarImg(user.id)" :src="avatarImg(user.id)" style="width:100%;height:100%;object-fit:cover;" />
+              <template v-else>{{ user.name.charAt(0) }}</template>
+            </div>
+            <div style="flex:1;min-width:0;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;">
+              {{ user.name }}
+              <span v-if="user.position" style="font-size:11px;color:#9A8F7A;font-weight:600;">{{ user.position }}</span>
+              <span v-if="user.id === currentUserId"
+                style="font-size:9px;font-weight:800;font-family:'Space Grotesk',sans-serif;background:#1A1100;color:#FDCB40;border-radius:4px;padding:1px 6px;">나</span>
+            </div>
+            <Link v-if="weekReportMap[user.id]" :href="`/reports/${weekReportMap[user.id]}`"
+              style="font-size:11px;font-weight:700;color:#1A1100;background:#FFF0A0;border:1.5px solid #1A1100;border-radius:99px;padding:3px 9px;text-decoration:none;flex-shrink:0;">
+              보고서 ›
+            </Link>
+          </div>
+
+          <!-- 월~금 미니 스트립 -->
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;">
+            <button v-for="(date, di) in (mobWeek === 'curr' ? currDates : nextDates)" :key="date" type="button"
+              @click="user.id === currentUserId
+                ? openModal(date, localSchedules[user.id][date])
+                : (localSchedules[user.id]?.[date] ? openViewModal(user, date, localSchedules[user.id][date]) : null)"
+              :style="mobCellStyle(user, date)">
+              <span :style="{ fontFamily:'\'Space Grotesk\',sans-serif', fontSize:'10px', fontWeight:'800', color: weekHolidayName(date) ? '#DC2626' : '#9A8F7A' }">
+                {{ DAY_KR[di] }}
+              </span>
+              <template v-if="mobCellSummary(user, date)">
+                <span style="font-size:13px;line-height:1;">{{ mobCellSummary(user, date).icon }}</span>
+                <span :style="{ fontSize:'9px', fontWeight:'700', color: mobCellSummary(user, date).color, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%' }">
+                  {{ mobCellSummary(user, date).label }}
+                </span>
+              </template>
+              <span v-else-if="weekHolidayName(date)" style="font-size:9px;font-weight:700;color:#DC2626;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">
+                {{ weekHolidayName(date) }}
+              </span>
+              <span v-else style="font-size:12px;color:#D6CEBE;line-height:1;">
+                {{ user.id === currentUserId ? '+' : '·' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="orderedUsers.length === 0" style="padding:48px 16px;text-align:center;color:#9A8F7A;font-size:13px;">등록된 팀원이 없습니다</div>
+      </div>
+
+      <p style="font-size:11.5px;color:#9A8F7A;line-height:1.6;margin-top:14px;text-align:center;">
+        내 칸을 눌러 일정을 등록하거나 수정합니다
+      </p>
+    </div>
+
     <!-- 안내 -->
-    <p style="font-size:12px;color:#9A8F7A;margin-bottom:12px;">
+    <p class="desk-only" style="font-size:12px;color:#9A8F7A;margin-bottom:12px;">
       본인 일정 셀을 클릭하거나 <strong style="color:#1A1100;">일정 추가</strong> 버튼으로 일정을 등록할 수 있습니다
       <span v-if="isAdmin" style="margin-left:8px;color:#FDCB40;background:#1A1100;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">
         ≡ 드래그하여 순서 변경 가능
@@ -115,7 +223,7 @@
     </p>
 
     <!-- ── 월간 달력 뷰 ── -->
-    <div v-if="viewMode === 'month'" class="card" style="padding:0;overflow:hidden;">
+    <div v-if="viewMode === 'month'" class="card desk-only" style="padding:0;overflow:hidden;">
       <!-- 월간 헤더 -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#F5EDDB;border-bottom:2px solid #1A1100;">
         <button type="button" @click="changeMonth(-1)"
@@ -220,7 +328,7 @@
     </div>
 
     <!-- 팀 일정 그리드 (주간) -->
-    <div v-if="viewMode === 'week'" class="card" style="padding:0;overflow:hidden;">
+    <div v-if="viewMode === 'week'" class="card desk-only" style="padding:0;overflow:hidden;">
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <table style="border-collapse:collapse;min-width:1050px;width:100%;table-layout:fixed;">
         <!-- 주차 헤더 -->
@@ -1092,6 +1200,35 @@ for (const user of props.users) {
 const fmtRange = (start, end) => {
   if (!start || !end) return ''
   return start.substring(5).replace('-', '/') + ' – ' + end.substring(5).replace('-', '/')
+}
+
+// ── 모바일 카드 피드 ────────────────────────────────────
+// 표 10열을 접지 않고 금주/차주 중 한 주만 월~금 5칸 스트립으로 보여준다
+const mobWeek = ref('curr')  // 'curr' | 'next'
+
+// 칸 요약 — 첫 슬롯의 상태(이모지+라벨), 상태가 없으면 사이트/내용 첫 단어
+const mobCellSummary = (user, date) => {
+  const raw = localSchedules[user.id]?.[date]
+  if (!raw) return null
+  const { slots, content } = parsedCell(raw)
+  const first = slots[0]
+  const tag = first?.status && STATUS_STYLE_MAP[first.status]
+  if (tag) return { icon: tag.icon, label: slots.length > 1 ? `${tag.label} +${slots.length - 1}` : tag.label, color: tag.color, tag }
+  const label = first ? [...first.sites, first.content].filter(Boolean)[0] : content
+  return { icon: '📋', label: label || '일정', color: '#0E7490', tag: null }
+}
+
+const mobCellStyle = (user, date) => {
+  const summary = mobCellSummary(user, date)
+  const tag = summary?.tag
+  return {
+    border: `1.5px solid ${tag ? tag.border : (summary ? '#67E8F9' : '#E8E0D0')}`,
+    background: summary ? (tag ? tag.bg : '#CFFAFE') : (weekHolidayName(date) ? HOLIDAY_BG : '#FDFAF5'),
+    borderRadius: '8px', padding: '5px 3px', minHeight: '54px', fontFamily: 'inherit',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', overflow: 'hidden',
+    boxShadow: isToday(date) ? 'inset 0 0 0 2px #FD4401' : 'none',
+    cursor: (user.id === props.currentUserId || summary) ? 'pointer' : 'default',
+  }
 }
 
 // ── 주간/월간 뷰 전환 ──────────────────────────────────

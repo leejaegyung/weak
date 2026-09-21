@@ -5,10 +5,19 @@
     <header style="height:56px;background:#FD4401;border-bottom:2px solid #1A1100;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:30;position:relative;">
       <!-- 로고 -->
       <div style="display:flex;align-items:center;gap:12px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <img src="/favicon.svg" alt="SE"
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <!-- 모바일 드릴다운 화면: 로고 자리에 뒤로가기 -->
+          <Link v-if="backHref" :href="backHref" class="header-back-btn"
+            style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;width:30px;height:30px;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </Link>
+          <img src="/favicon.svg" alt="SE" :class="{ 'header-logo-backable': backHref }"
             style="width:30px;height:30px;border-radius:8px;border:2px solid #1A1100;flex-shrink:0;" />
-          <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;">주간업무보고</span>
+          <span class="header-app-name" style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;">주간업무보고</span>
+          <!-- 모바일: 앱 이름 대신 현재 화면 제목 -->
+          <span class="header-mobile-title" style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ pageTitle || '주간업무보고' }}
+          </span>
         </div>
         <span class="header-page-chip" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;">
           {{ pageTitle || auth?.user?.name }}
@@ -406,7 +415,11 @@ const SETTINGS_SUBMENU_PATHS = ['/admin/settings/webhook', '/admin/settings/kaka
 const settingsOpen    = ref(SETTINGS_SUBMENU_PATHS.some(p => window.location.pathname.startsWith(p)))
 const isSettingsActive = SETTINGS_SUBMENU_PATHS.some(p => window.location.pathname.startsWith(p))
 
-defineProps({ pageTitle: { type: String, default: '' } })
+defineProps({
+  pageTitle: { type: String, default: '' },
+  // 모바일에서 로고 대신 뒤로가기 버튼을 띄울 경로 (드릴다운 화면용)
+  backHref:  { type: String, default: '' },
+})
 
 // ── 사이드바 접힘 토글 (localStorage 영속) ──
 const collapsed = ref(localStorage.getItem('sidebarCollapsed') === '1')
@@ -541,6 +554,10 @@ const logout = () => router.post('/logout')
 
 <style scoped>
 .notif-drop-enter-active, .notif-drop-leave-active { transition: all 0.18s ease; }
+
+/* 모바일 전용 헤더 요소 — 기본 숨김 (≤768px 에서만 노출) */
+.header-mobile-title { display: none; }
+.header-back-btn { display: none; }
 .notif-drop-enter-from, .notif-drop-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* ===========================
@@ -662,8 +679,12 @@ const logout = () => router.post('/logout')
   .app-main-padding { padding: 16px 16px 80px 16px !important; }
   .flash-wrap { margin: 12px 16px 0 !important; }
 
-  /* 헤더 페이지 칩 숨김 */
+  /* 헤더 페이지 칩 숨김 → 앱 이름 자리에 화면 제목 */
   .header-page-chip { display: none !important; }
+  .header-app-name { display: none !important; }
+  .header-mobile-title { display: inline !important; }
+  .header-back-btn { display: flex !important; }
+  .header-logo-backable { display: none !important; }
 
   /* 유저 정보 버튼 숨김 (내정보는 하단 네비에서) */
   .header-user-info { display: none !important; }

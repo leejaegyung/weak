@@ -15,7 +15,7 @@
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div class="desk-only" style="display:flex;gap:8px;">
         <Link :href="`/reports/${report.id}`" class="btn-secondary">취소</Link>
         <button type="button" @click="submit" :disabled="submitting || form.processing" class="btn-primary"
           :style="{ opacity: (submitting || form.processing) ? 0.7 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }">
@@ -50,8 +50,31 @@
           </svg>
         </div>
 
+        <!-- 모바일: 5열 그리드 대신 요일 리스트 -->
+        <div v-if="showSchedule" class="mob-only" style="padding:12px 14px;">
+          <div v-for="group in [['금주', currDates], ['차주', nextDates]]" :key="group[0]" style="margin-bottom:14px;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;margin-bottom:7px;">{{ group[0] }}</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div v-for="(date, di) in group[1]" :key="group[0] + date" @click="openSchedModal(date, group[0])"
+                :style="{ display:'flex', alignItems:'center', gap:'10px', border:'1.5px solid #E8E0D0', borderRadius:'9px', padding:'8px 11px', background: schedules[date] ? '#FFFBF0' : '#fff', cursor:'pointer' }">
+                <span style="width:38px;flex-shrink:0;">
+                  <span style="display:block;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:12px;font-weight:800;">{{ ['월','화','수','목','금'][di] }}</span>
+                  <span style="display:block;font-size:10px;color:#9A8F7A;">{{ fmtDateOnly(date) }}</span>
+                </span>
+                <span :style="{ flex:1, minWidth:0, fontSize:'12.5px', fontWeight: schedules[date] ? 700 : 500, color: schedules[date] ? '#1A1100' : '#C5BAA8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }">
+                  {{ schedules[date] ? schedSummary(schedules[date]) : '+ 추가' }}
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8BFA8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path v-if="schedules[date]" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  <path v-else d="M12 5v14M5 12h14"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 일정 그리드 테이블 (토글) -->
-        <table v-if="showSchedule" style="width:100%;border-collapse:collapse;">
+        <table v-if="showSchedule" class="desk-only" style="width:100%;border-collapse:collapse;">
           <colgroup>
             <col style="width:56px;" />
             <col /><col /><col /><col /><col />
@@ -455,12 +478,33 @@
         </div>
       </div>
     </form>
+
+    <!-- ── 모바일 하단 고정 액션바 (상단 툴바 대체, 하단 네비 바로 위) ── -->
+    <div class="mob-action-bar">
+      <Link :href="`/reports/${report.id}`" class="btn-secondary" style="flex:1;justify-content:center;">취소</Link>
+      <button type="button" @click="submit" :disabled="submitting || form.processing" class="btn-primary"
+        style="flex:2;justify-content:center;"
+        :style="{ opacity: (submitting || form.processing) ? 0.7 : 1 }">
+        {{ (submitting || form.processing) ? '저장 중...' : '수정 저장' }}
+      </button>
+    </div>
   </AppLayout>
 </template>
 
 <style scoped>
 .sched-modal-fade-enter-active, .sched-modal-fade-leave-active { transition: all 0.2s ease; }
 .sched-modal-fade-enter-from, .sched-modal-fade-leave-to { opacity: 0; transform: scale(0.97); }
+
+/* 모바일 하단 고정 액션바 — 하단 네비(62px) 바로 위 */
+.mob-action-bar { display: none; }
+@media (max-width: 768px) {
+  .mob-action-bar {
+    display: flex; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 62px; z-index: 90;
+    padding: 10px 16px; background: #FFF8EE; border-top: 2px solid #1A1100;
+  }
+  form { padding-bottom: 72px; }
+}
 </style>
 
 <script setup>
@@ -495,6 +539,18 @@ const props = defineProps({
 
 // ── 내 주간 일정 ──────────────────────────────────────
 const showSchedule = ref(false)
+
+// 모바일 요일 리스트용 한 줄 요약 — "🏢 외근 · SBS 목동" 형태
+const schedSummary = (raw) => {
+  const { slots, content } = parsedSchedCell(raw)
+  const parts = slots.map(slot => {
+    const tag = slot.status && SCHED_STATUS_MAP[slot.status]
+    const label = [slot.status, slot.sites.join(', ')].filter(Boolean).join(' · ')
+    return tag ? `${tag.icon} ${label}` : label
+  }).filter(Boolean)
+  if (content) parts.push(`📋 ${content}`)
+  return parts.join(' / ') || raw
+}
 const schedules    = ref({ ...props.mySchedules })
 
 const fmtLocalDate = (d) =>

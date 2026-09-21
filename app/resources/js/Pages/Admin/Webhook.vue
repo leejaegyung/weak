@@ -1,5 +1,5 @@
 <template>
-  <AppLayout page-title="알림 설정">
+  <AppLayout page-title="알림 설정" back-href="/admin/users">
     <!-- 헤더 -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;max-width:680px;margin-left:auto;margin-right:auto;">
       <div style="background:#F5F3FF;border:2px solid #1A1100;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">

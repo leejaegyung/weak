@@ -1,5 +1,5 @@
 <template>
-  <AppLayout page-title="카카오 연동">
+  <AppLayout page-title="카카오 연동" back-href="/admin/users">
 
     <!-- 헤더 -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto;">

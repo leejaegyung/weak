@@ -16,14 +16,14 @@
           <template v-else>가입 승인 대기 중인 사용자 {{ pending.length }}명</template>
         </p>
       </div>
-      <button v-if="activeTab === 'users'" @click="openCreate" class="btn-primary">
+      <button v-if="activeTab === 'users'" @click="openCreate" class="btn-primary desk-only">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         사용자 추가
       </button>
     </div>
 
     <!-- 탭 네비게이션 -->
-    <div style="display:flex;gap:0;margin-bottom:20px;border:2px solid #1A1100;border-radius:12px;overflow:hidden;width:fit-content;box-shadow:3px 3px 0 #1A1100;">
+    <div class="user-tabs" style="display:flex;gap:0;margin-bottom:20px;border:2px solid #1A1100;border-radius:12px;overflow:hidden;width:fit-content;box-shadow:3px 3px 0 #1A1100;">
       <!-- 사용자 관리 탭 -->
       <button @click="activeTab='users'"
         style="display:flex;align-items:center;gap:8px;padding:10px 20px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;transition:all 0.12s;border-right:2px solid #1A1100;"
@@ -61,8 +61,84 @@
 
     <!-- ── 사용자 관리 탭 ── -->
     <template v-if="activeTab === 'users'">
+      <!-- ── 모바일: 카드 하나에 토글·수정·삭제를 흡수 (카드 그리드 + 표 대체) ── -->
+      <div class="mob-only">
+        <button type="button" @click="openCreate"
+          style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#FD4401;color:#fff;border:2px solid #1A1100;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;margin-bottom:14px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          사용자 추가
+        </button>
+
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div v-for="(u, i) in users" :key="'m-' + u.id" class="card"
+            :style="{ padding:'15px', background: cardColors[i % cardColors.length] }">
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+              <div :style="{ width:'44px', height:'44px', borderRadius:'50%', background: u.avatar_image_url ? 'transparent' : avatarColor(u), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'18px', fontWeight:'700', flexShrink:0, overflow:'hidden' }">
+                <img v-if="u.avatar_image_url" :src="u.avatar_image_url" style="width:100%;height:100%;object-fit:cover;" />
+                <template v-else>{{ u.name.charAt(0) }}</template>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:16px;font-weight:700;">{{ u.name }}</div>
+                <div style="font-size:12px;color:#4A3F2A;margin-top:1px;overflow:hidden;text-overflow:ellipsis;">@{{ u.username }}</div>
+                <div v-if="u.last_login_at" style="font-size:10.5px;color:#9A8F7A;margin-top:3px;">마지막 접속 {{ u.last_login_at }}</div>
+              </div>
+              <span :style="u.is_active ? 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;' : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'"
+                style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;flex-shrink:0;">{{ u.is_active ? '활성' : '비활성' }}</span>
+            </div>
+
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
+              <span style="background:#FD4401;color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;border:1.5px solid #1A1100;font-family:'Space Grotesk',sans-serif;">{{ u.role === 'admin' ? '관리자' : '일반 사용자' }}</span>
+              <span v-if="u.position" style="background:rgba(26,17,0,0.06);color:#4A3F2A;font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;border:1.5px solid rgba(26,17,0,0.15);">{{ u.position }}</span>
+            </div>
+
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" @click="toggleHidden(u)"
+                style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:6px 11px;border-radius:99px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;"
+                :style="u.is_hidden ? 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;' : 'background:#EFF6FF;color:#2563EB;border:1.5px solid #93C5FD;'">
+                <svg v-if="u.is_hidden" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                {{ u.is_hidden ? '숨김' : '표시중' }}
+              </button>
+              <button type="button" @click="toggleActive(u)"
+                style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:6px 11px;border-radius:99px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;"
+                :style="u.is_active ? 'background:#DCFCE7;color:#16A34A;border:1.5px solid #16A34A;' : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #D1D5DB;'">
+                <span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;" :style="u.is_active ? 'background:#16A34A;' : 'background:#9CA3AF;'"></span>
+                {{ u.is_active ? '활성' : '비활성' }}
+              </button>
+              <button type="button" @click="openEdit(u)" aria-label="수정"
+                style="margin-left:auto;background:none;border:none;cursor:pointer;color:#9A8F7A;padding:6px;display:flex;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button type="button" @click="confirmDelete(u)" aria-label="삭제"
+                style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:6px;display:flex;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
+          </div>
+          <div v-if="users.length === 0" style="padding:48px 20px;text-align:center;color:#9A8F7A;font-size:13px;">등록된 사용자가 없습니다</div>
+        </div>
+
+        <!-- 관리자 설정 드릴다운 (사이드바 '알림 설정' 서브메뉴 대체) -->
+        <div style="margin-top:18px;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;margin-bottom:8px;">관리자 설정</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <Link v-for="item in SETTINGS_LINKS" :key="item.href" :href="item.href"
+              style="display:flex;align-items:center;gap:11px;background:#fff;border:2px solid #1A1100;border-radius:12px;padding:12px 13px;box-shadow:2px 2px 0 #1A1100;text-decoration:none;color:#1A1100;">
+              <span :style="{ width:'32px', height:'32px', borderRadius:'9px', border:'2px solid #1A1100', background:item.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }">
+                <svg width="15" height="15" :viewBox="item.viewBox" :fill="item.fill ? item.stroke : 'none'" :stroke="item.fill ? 'none' : item.stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon"/></svg>
+              </span>
+              <span style="flex:1;min-width:0;">
+                <span style="display:block;font-size:13px;font-weight:700;">{{ item.label }}</span>
+                <span style="display:block;font-size:11px;color:#9A8F7A;margin-top:1px;">{{ item.desc }}</span>
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8BFA8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </Link>
+          </div>
+        </div>
+      </div>
+
       <!-- 유저 카드 그리드 -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px;">
+      <div class="desk-only" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px;">
         <div v-for="(u, i) in users" :key="u.id"
           class="card"
           :style="{ padding:'20px', cursor:'pointer', transition:'transform 0.1s,box-shadow 0.1s', background: cardColors[i % cardColors.length] }"
@@ -90,7 +166,7 @@
       </div>
 
       <!-- 전체 목록 테이블 -->
-      <div class="card" style="overflow:hidden;padding:0;">
+      <div class="card desk-only" style="overflow:hidden;padding:0;">
         <div style="padding:14px 20px;border-bottom:2px solid #1A1100;display:flex;justify-content:space-between;align-items:center;background:#F5EDDB;">
           <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">전체 목록</span>
           <span style="font-size:12px;color:#9A8F7A;font-weight:600;">{{ users.length }}명</span>
@@ -179,7 +255,35 @@
 
     <!-- ── 가입 승인 탭 ── -->
     <template v-else>
-      <div class="card" style="overflow:hidden;padding:0;">
+      <!-- 모바일: 신청자 카드 -->
+      <div class="mob-only">
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div v-for="u in pending" :key="'m-' + u.id" class="card" style="padding:15px;">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;">
+              <div :style="{ width:'34px', height:'34px', borderRadius:'50%', background: pendingAvatarColor(u.id), border:'2px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'13px', fontWeight:'700', flexShrink:0 }">
+                {{ u.name?.charAt(0) ?? '?' }}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13.5px;font-weight:700;">{{ u.name }} <span v-if="u.position" style="font-size:11px;color:#9A8F7A;font-weight:600;">{{ u.position }}</span></div>
+                <div style="font-size:11px;color:#9A8F7A;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@{{ u.username }} · {{ u.email || '이메일 없음' }}</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:#9A8F7A;margin-bottom:11px;">신청 {{ u.created_at }}</div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" @click="approve(u.id)"
+                style="flex:1;background:#DCFCE7;color:#16A34A;border:2px solid #16A34A;border-radius:9px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #16A34A;">✓ 승인</button>
+              <button type="button" @click="rejectReg(u.id)"
+                style="flex:1;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:9px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #DC2626;">✕ 거절</button>
+            </div>
+          </div>
+          <div v-if="pending.length === 0" class="card" style="padding:56px 20px;text-align:center;color:#9A8F7A;font-size:13px;">
+            <div style="font-size:32px;margin-bottom:8px;">✓</div>
+            대기 중인 가입 신청이 없습니다
+          </div>
+        </div>
+      </div>
+
+      <div class="card desk-only" style="overflow:hidden;padding:0;">
         <!-- 컬럼 헤더 -->
         <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1.5fr 1.5fr;padding:10px 20px;border-bottom:2px solid #1A1100;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;background:#F5EDDB;">
           <span>이름</span><span>아이디</span><span>직급</span><span>신청일시</span><span>처리</span>
@@ -326,7 +430,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
@@ -338,6 +442,18 @@ const activeTab = ref('users')
 
 const AVATAR_COLORS = ['#FD4401','#16a34a','#2563eb','#9333ea','#d97706','#0891b2','#dc2626','#65a30d']
 const cardColors    = ['#FFF0A0','#EEF2FF','#F0FDF4','#FFF0F3','#F5F3FF','#FFF8EE']
+
+// 모바일 관리 탭 하단 드릴다운 — 사이드바 '알림 설정' 서브메뉴를 대신한다
+const SETTINGS_LINKS = [
+  { href: '/admin/settings/webhook', label: 'Webhook', desc: 'Mattermost / Slack 연동', bg: '#F5F3FF', stroke: '#7C3AED', viewBox: '0 0 24 24',
+    icon: 'M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2M6 17l3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06M12 6l3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8' },
+  { href: '/admin/settings/kakao', label: '카카오 연동', desc: '팀원 연동 현황 · 알림 발송', bg: '#FEF9C3', stroke: '#1A1100', viewBox: '0 0 512 512', fill: true,
+    icon: 'M255.5 48C141.1 48 48 126.1 48 222.3c0 64.3 40.5 120.8 101.3 153.2l-21.7 80.6c-1.9 7.2 5.8 13.1 12.2 9.1L233.8 401c7.1.8 14.4 1.2 21.7 1.2 114.4 0 207.5-78.1 207.5-174.3S369.9 48 255.5 48z' },
+  { href: '/admin/settings/smtp', label: '메일(SMTP) 설정', desc: '서버 · 발신자 · 기본 수신자', bg: '#DCFCE7', stroke: '#16A34A', viewBox: '0 0 24 24',
+    icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6' },
+  { href: '/admin/settings/api', label: 'API 키 관리', desc: 'AI 제공자 · 추가 API 서비스', bg: '#EDE9FE', stroke: '#7C3AED', viewBox: '0 0 24 24',
+    icon: 'M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4' },
+]
 
 const avatarColor        = (u) => u.avatar_color || AVATAR_COLORS[u.id % AVATAR_COLORS.length]
 const pendingAvatarColor = (id) => AVATAR_COLORS[(id ?? 0) % AVATAR_COLORS.length]
@@ -411,6 +527,11 @@ const rejectReg = (id) => router.post(`/admin/users/${id}/reject-registration`)
 </script>
 
 <style scoped>
+/* 모바일: 탭을 전체 폭으로 */
+@media (max-width: 768px) {
+  .user-tabs { width: 100% !important; margin-bottom: 16px !important; }
+  .user-tabs > button { flex: 1; justify-content: center; padding: 11px 12px !important; font-size: 12.5px !important; white-space: nowrap; }
+}
 /* 사용자 테이블 스크롤 */
 .user-table-scroll { -webkit-overflow-scrolling: touch; }
 .user-table-scroll::-webkit-scrollbar { height: 4px; }

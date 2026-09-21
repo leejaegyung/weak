@@ -1,7 +1,14 @@
 <template>
   <div ref="rootRef" class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-      <span>{{ title }}</span>
+    <div class="ss-head" :class="{ 'ss-head-collapsed': collapsed }"
+      style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <!-- 모바일: 제목을 누르면 섹션이 접힌다 (데스크톱은 항상 펼침) -->
+      <span class="ss-title" @click="collapsed = !collapsed">
+        {{ title }}
+        <span class="ss-count" :class="{ 'ss-count-empty': !modelValue.length }">{{ modelValue.length }}</span>
+        <svg class="ss-chevron" :style="{ transform: collapsed ? 'none' : 'rotate(180deg)' }"
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
       <div style="display:flex;gap:3px;align-items:center;">
         <!-- 복사 버튼 -->
         <button type="button" @click="handleCopy"
@@ -20,8 +27,8 @@
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
-          <span v-if="copied">복사됨!</span>
-          <span v-else>복사</span>
+          <span v-if="copied" class="ss-btn-label">복사됨!</span>
+          <span v-else class="ss-btn-label">복사</span>
         </button>
 
         <!-- 구분선 -->
@@ -48,7 +55,7 @@
             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
             <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
           </svg>
-          붙여넣기
+          <span class="ss-btn-label">붙여넣기</span>
         </button>
 
         <!-- 구분선 -->
@@ -77,12 +84,12 @@
             <path d="M10 11v6M14 11v6"/>
             <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
           </svg>
-          취소
+          <span class="ss-btn-label">취소</span>
         </button>
       </div>
     </div>
 
-    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+    <div class="ss-body" :class="{ 'ss-collapsed': collapsed }" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
 
       <!-- 항목 목록 -->
       <div v-for="(item, idx) in modelValue" :key="idx"
@@ -309,6 +316,9 @@ const props = defineProps({
   suggestions: { type: Array,   default: () => [] },
 })
 const emit = defineEmits(['update:modelValue', 'copy', 'paste', 'cancel'])
+
+// 모바일 접기 상태 (≤768px 에서만 효과가 있다)
+const collapsed = ref(false)
 
 // ── 복사 피드백 ───────────────────────────────────────
 const copied = ref(false)
@@ -606,3 +616,23 @@ const removeSubItem = (idx, sIdx) => {
   }))
 }
 </script>
+
+<style scoped>
+.ss-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+/* 항목 수 뱃지·화살표는 모바일 전용 */
+.ss-count, .ss-chevron { display: none; }
+
+@media (max-width: 768px) {
+  .ss-title { flex: 1; cursor: pointer; user-select: none; }
+  .ss-count {
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 800;
+    background: #1A1100; color: #FDCB40; border-radius: 99px; padding: 2px 9px;
+  }
+  .ss-count-empty { background: rgba(26, 17, 0, 0.12); color: #9A8F7A; }
+  .ss-chevron { display: block; margin-left: auto; flex-shrink: 0; transition: transform 0.2s; }
+  .ss-btn-label { display: none; }
+  .ss-collapsed { display: none !important; }
+  .ss-head-collapsed { border-bottom: none !important; }
+}
+</style>

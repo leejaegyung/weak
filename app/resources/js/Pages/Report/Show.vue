@@ -2,7 +2,7 @@
   <AppLayout page-title="보고서 상세">
 
     <!-- 팀원 보고서 스위처 (관리자 또는 팀원 전체 조회 가능한 경우) -->
-    <div v-if="teamUsers.length > 1"
+    <div v-if="teamUsers.length > 1" class="show-switcher"
       style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <div v-for="u in teamUsers" :key="u.id"
         @click="u.report_id && router.get(`/reports/${u.report_id}`)"
@@ -846,6 +846,17 @@ const sectionBadgeStyle = (s) => ({
 .report-body-table { min-width: 480px; }
 
 @media (max-width: 768px) {
+  /* 팀원 스위처: 줄바꿈 대신 가로 스크롤 칩 */
+  .show-switcher {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    margin: 0 -16px 14px !important;
+    padding: 0 16px 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .show-switcher::-webkit-scrollbar { display: none; }
+  .show-switcher > div { white-space: nowrap; }
+
   /* 헤더 전환 */
   .report-header-desktop { display: none !important; }
   .report-header-mobile { display: block !important; }

@@ -90,9 +90,9 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
           이전 보고서
         </button>
-        <Link href="/reports" class="btn-secondary">취소</Link>
+        <Link href="/reports" class="btn-secondary desk-only">취소</Link>
         <!-- 임시 저장 버튼 + 토스트 -->
-        <div style="display:inline-flex;align-items:center;gap:8px;position:relative;">
+        <div class="desk-only-flex" style="display:inline-flex;align-items:center;gap:8px;position:relative;">
           <button type="button" @click="saveDraft" :disabled="draftSaving || submitting"
             style="display:inline-flex;align-items:center;gap:6px;background:#F5EDDB;color:#1A1100;border:2px solid #1A1100;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
             :style="{ opacity: (draftSaving || submitting) ? 0.6 : 1, cursor: (draftSaving || submitting) ? 'not-allowed' : 'pointer' }"
@@ -114,7 +114,7 @@
           </transition>
         </div>
         <!-- 제출하기 버튼 -->
-        <button type="button" @click="submitFinal" :disabled="submitting || form.processing" class="btn-primary"
+        <button type="button" @click="submitFinal" :disabled="submitting || form.processing" class="btn-primary desk-only-flex"
           :style="{ opacity: (submitting || form.processing) ? 0.7 : 1, cursor: (submitting || form.processing) ? 'not-allowed' : 'pointer' }">
           <svg v-if="!(submitting && submitAction==='submit') && !form.processing" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           <svg v-else style="animation:spin 0.8s linear infinite;flex-shrink:0;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -132,7 +132,7 @@
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
           </svg>
           <span style="font-size:13px;font-weight:700;color:#92400E;">임시저장된 내용이 있습니다.</span>
-          <span style="font-size:11px;color:#B45309;">불러오기를 클릭하면 저장했던 내용이 채워집니다.</span>
+          <span class="desk-only" style="font-size:11px;color:#B45309;">불러오기를 클릭하면 저장했던 내용이 채워집니다.</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <button type="button" @click="discardDraft"
@@ -177,8 +177,31 @@
           </svg>
         </div>
 
+        <!-- 모바일: 5열 그리드 대신 요일 리스트 -->
+        <div v-if="showSchedule" class="mob-only" style="padding:12px 14px;">
+          <div v-for="group in [['금주', currDates], ['차주', nextDates]]" :key="group[0]" style="margin-bottom:14px;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;margin-bottom:7px;">{{ group[0] }}</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div v-for="(date, di) in group[1]" :key="group[0] + date" @click="openSchedModal(date, group[0])"
+                :style="{ display:'flex', alignItems:'center', gap:'10px', border:'1.5px solid #E8E0D0', borderRadius:'9px', padding:'8px 11px', background: schedules[date] ? '#FFFBF0' : '#fff', cursor:'pointer' }">
+                <span style="width:38px;flex-shrink:0;">
+                  <span style="display:block;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:12px;font-weight:800;">{{ ['월','화','수','목','금'][di] }}</span>
+                  <span style="display:block;font-size:10px;color:#9A8F7A;">{{ fmtDateOnly(date) }}</span>
+                </span>
+                <span :style="{ flex:1, minWidth:0, fontSize:'12.5px', fontWeight: schedules[date] ? 700 : 500, color: schedules[date] ? '#1A1100' : '#C5BAA8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }">
+                  {{ schedules[date] ? schedSummary(schedules[date]) : '+ 추가' }}
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8BFA8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path v-if="schedules[date]" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  <path v-else d="M12 5v14M5 12h14"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 일정 그리드 테이블 (토글) -->
-        <table v-if="showSchedule" style="width:100%;border-collapse:collapse;">
+        <table v-if="showSchedule" class="desk-only" style="width:100%;border-collapse:collapse;">
           <colgroup>
             <col style="width:56px;" />
             <col /><col /><col /><col /><col />
@@ -648,6 +671,21 @@
         </div>
       </div>
     </form>
+
+    <!-- ── 모바일 하단 고정 액션바 (상단 툴바 대체, 하단 네비 바로 위) ── -->
+    <div class="mob-action-bar">
+      <Link href="/reports" class="btn-secondary" style="justify-content:center;flex-shrink:0;">취소</Link>
+      <button type="button" @click="saveDraft" :disabled="draftSaving || submitting" class="btn-secondary"
+        style="flex:1;justify-content:center;background:#F5EDDB;"
+        :style="{ opacity: (draftSaving || submitting) ? 0.6 : 1 }">
+        {{ draftSaving ? '저장 중...' : (draftToast && draftToastOk ? '저장됨 ✓' : '임시 저장') }}
+      </button>
+      <button type="button" @click="submitFinal" :disabled="submitting || form.processing" class="btn-primary"
+        style="flex:1;justify-content:center;"
+        :style="{ opacity: (submitting || form.processing) ? 0.7 : 1 }">
+        {{ submitting && submitAction === 'submit' ? '제출 중...' : '제출하기' }}
+      </button>
+    </div>
     <!-- 이전 보고서 미리보기 모달 -->
     <div v-if="showPrevModal"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);padding:16px;"
@@ -866,6 +904,20 @@
 
   /* 지원 이번주/다음주 2열 → 1열 */
   .support-grid { grid-template-columns: 1fr !important; }
+
+  /* 하단 액션바 높이만큼 본문 여백 확보 */
+  form { padding-bottom: 72px; }
+}
+
+/* 모바일 하단 고정 액션바 — 하단 네비(62px) 바로 위 */
+.mob-action-bar { display: none; }
+@media (max-width: 768px) {
+  .mob-action-bar {
+    display: flex; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 62px; z-index: 90;
+    padding: 10px 16px; background: #FFF8EE; border-top: 2px solid #1A1100;
+  }
+  .desk-only-flex { display: none !important; }
 }
 </style>
 
@@ -893,6 +945,18 @@ const props = defineProps({
   mySchedules:    { type: Object, default: () => ({}) },
   mySites:        { type: Array,  default: () => [] },
 })
+
+// 모바일 요일 리스트용 한 줄 요약 — "🏢 외근 · SBS 목동" 형태
+const schedSummary = (raw) => {
+  const { slots, content } = parsedSchedCell(raw)
+  const parts = slots.map(slot => {
+    const tag = slot.status && SCHED_STATUS_MAP[slot.status]
+    const label = [slot.status, slot.sites.join(', ')].filter(Boolean).join(' · ')
+    return tag ? `${tag.icon} ${label}` : label
+  }).filter(Boolean)
+  if (content) parts.push(`📋 ${content}`)
+  return parts.join(' / ') || raw
+}
 
 // 중복 보고서 팝업 (제출 시점에만 표시)
 const showDuplicateAlert = ref(false)

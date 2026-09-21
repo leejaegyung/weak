@@ -14,7 +14,7 @@
         </div>
         <p style="color:#9A8F7A;font-size:13px;margin-left:42px;">시스템 요구사항 및 이슈를 등록하고 관리합니다</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="desk-only" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <!-- MD 내보내기 (관리자만) -->
         <a v-if="isAdmin" href="/issues/export/md"
           class="btn-secondary btn-sm"
@@ -35,8 +35,83 @@
       </div>
     </div>
 
+    <!-- ── 모바일: 액션 + 카드 아코디언 (게시판 표 대체) ── -->
+    <div class="mob-only">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <a v-if="isAdmin" href="/issues/export/md" class="btn-secondary"
+          style="flex:1;justify-content:center;text-decoration:none;font-size:12.5px;">요구사항.md</a>
+        <button type="button" @click="openWriteModal"
+          style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#7C3AED;color:#fff;border:2px solid #1A1100;border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          글쓰기
+        </button>
+      </div>
+
+      <div v-if="issues.data.length === 0" style="padding:56px 16px;text-align:center;color:#9A8F7A;">
+        <div style="font-size:28px;margin-bottom:10px;">📋</div>
+        <div style="font-size:13px;font-weight:600;">등록된 이슈/요구사항이 없습니다</div>
+      </div>
+
+      <div v-else style="display:flex;flex-direction:column;gap:10px;">
+        <div v-for="(issue, i) in issues.data" :key="'m-' + issue.id"
+          style="background:#fff;border:2px solid #1A1100;border-radius:14px;box-shadow:4px 4px 0 #1A1100;overflow:hidden;">
+          <div @click="toggleExpand(issue.id)" style="padding:12px 13px;cursor:pointer;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:flex-start;gap:8px;">
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:800;color:#9A8F7A;background:#F5EDDB;border-radius:6px;padding:3px 7px;flex-shrink:0;margin-top:1px;">{{ rowNumber(i) }}</span>
+              <span style="flex:1;min-width:0;font-size:13.5px;font-weight:700;line-height:1.45;word-break:break-word;">{{ issue.title }}</span>
+              <svg :style="{ flexShrink:0, marginTop:'3px', transform: expandedId === issue.id ? 'rotate(180deg)' : 'none', transition:'transform 0.2s' }"
+                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div v-if="expandedId !== issue.id" style="font-size:11.5px;color:#9A8F7A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:30px;">{{ issue.content }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:30px;min-width:0;">
+              <span :style="statusStyle(issue.status)" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid;white-space:nowrap;">{{ statusLabel(issue.status) }}</span>
+              <div :style="{ background: avatarColor(issue.user_id), width:'20px', height:'20px', borderRadius:'50%', border:'1.5px solid #1A1100', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'9px', fontWeight:'700', flexShrink:0 }">
+                {{ issue.user_name?.charAt(0) ?? '?' }}
+              </div>
+              <span style="font-size:11.5px;font-weight:600;color:#4A3F2A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ issue.user_name }}</span>
+              <span style="margin-left:auto;font-size:11px;color:#9A8F7A;flex-shrink:0;">{{ issue.created_at.substring(0, 10) }}</span>
+            </div>
+          </div>
+
+          <div v-if="expandedId === issue.id" style="background:#FAFAF8;border-top:1.5px solid #E8E0D0;padding:14px 13px;">
+            <div style="font-size:10px;font-weight:700;color:#9A8F7A;letter-spacing:0.06em;margin-bottom:6px;">내용</div>
+            <div style="font-size:12.5px;color:#1A1100;line-height:1.75;white-space:pre-wrap;word-break:break-word;background:#fff;border:1.5px solid #E8E0D0;border-radius:10px;padding:12px 13px;margin-bottom:12px;">{{ issue.content }}</div>
+
+            <div v-if="issue.claude_response" :style="aiBoxStyle(issue.status)"
+              style="border-radius:10px;padding:12px 13px;margin-bottom:12px;border:1.5px solid;display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-size:18px;flex-shrink:0;line-height:1.2;">🤖</span>
+              <div style="min-width:0;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:0.06em;margin-bottom:5px;opacity:0.7;">AI 검토 결과</div>
+                <div style="font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;">{{ issue.claude_response }}</div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div v-if="isAdmin" style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:12px;font-weight:700;color:#4A3F2A;flex-shrink:0;">상태 변경</span>
+                <select v-model="issue.status" @change="changeStatus(issue)"
+                  style="flex:1;min-width:0;border:2px solid #1A1100;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
+                  <option value="registered">📋 등록</option>
+                  <option value="on_hold">⏸️ 보류</option>
+                  <option value="impossible">🚫 불가</option>
+                  <option value="processing">🔄 처리 중</option>
+                  <option value="completed">✅ 적용 완료</option>
+                </select>
+              </div>
+              <div v-if="isAdmin || issue.user_id === currentUserId" style="display:flex;gap:8px;">
+                <button type="button" @click.stop="openEditModal(issue)"
+                  style="flex:1;background:#EDE9FE;color:#7C3AED;border:2px solid #7C3AED;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">수정</button>
+                <button type="button" @click.stop="doDelete(issue)"
+                  style="flex:1;background:#FEE2E2;color:#DC2626;border:2px solid #DC2626;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">삭제</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 게시판 테이블 -->
-    <div class="card" style="overflow:hidden;padding:0;">
+    <div class="card desk-only" style="overflow:hidden;padding:0;">
       <!-- 테이블 헤더 -->
       <div class="issue-grid" style="display:grid;grid-template-columns:60px 1fr 100px 120px 90px 44px;padding:10px 20px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9A8F7A;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">
         <span class="issue-col-num" style="text-align:center;">번호</span>

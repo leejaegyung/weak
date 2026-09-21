@@ -1,15 +1,13 @@
 <template>
   <div ref="rootRef" class="card" style="padding:0;overflow:hidden;">
-    <div class="ss-head" :class="{ 'ss-head-collapsed': collapsed }"
+    <div class="ss-head"
       style="padding:10px 14px 10px 18px;border-bottom:2px solid #1A1100;background:#F5EDDB;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-      <!-- 모바일: 제목을 누르면 섹션이 접힌다 (데스크톱은 항상 펼침) -->
-      <span class="ss-title" @click="collapsed = !collapsed">
-        {{ title }}
+      <!-- 모바일: 제목 옆에 항목 수 뱃지 -->
+      <span class="ss-title">
+        <span class="ss-title-text">{{ title }}</span>
         <span class="ss-count" :class="{ 'ss-count-empty': !modelValue.length }">{{ modelValue.length }}</span>
-        <svg class="ss-chevron" :style="{ transform: collapsed ? 'none' : 'rotate(180deg)' }"
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8F7A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </span>
-      <div style="display:flex;gap:3px;align-items:center;">
+      <div class="ss-tools" style="display:flex;gap:3px;align-items:center;">
         <!-- 복사 버튼 -->
         <button type="button" @click="handleCopy"
           v-tooltip="copied ? '복사됨!' : '항목 전체 복사'"
@@ -32,7 +30,7 @@
         </button>
 
         <!-- 구분선 -->
-        <span style="width:1px;height:14px;background:#C5BAA8;border-radius:1px;margin:0 2px;"></span>
+        <span class="ss-sep" style="width:1px;height:14px;background:#C5BAA8;border-radius:1px;margin:0 2px;"></span>
 
         <!-- 붙여넣기 버튼 -->
         <button type="button" @click="handlePaste"
@@ -59,7 +57,7 @@
         </button>
 
         <!-- 구분선 -->
-        <span style="width:1px;height:14px;background:#C5BAA8;border-radius:1px;margin:0 2px;"></span>
+        <span class="ss-sep" style="width:1px;height:14px;background:#C5BAA8;border-radius:1px;margin:0 2px;"></span>
 
         <!-- 취소(비우기) 버튼 -->
         <button type="button" @click="handleCancel"
@@ -89,15 +87,32 @@
       </div>
     </div>
 
-    <div class="ss-body" :class="{ 'ss-collapsed': collapsed }" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+    <div class="ss-body" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
 
       <!-- 항목 목록 -->
       <div v-for="(item, idx) in modelValue" :key="idx"
+        class="ss-item"
         style="border:1.5px solid #E8E0D0;border-radius:10px;padding:10px 12px 8px;background:#FDFAF5;">
+
+        <!-- 모바일 제어 줄 — 한 줄에 번호·입력칸·자동완성·↑·↓·✕ 6개가 몰려 입력칸이 눌리던 문제 -->
+        <div class="ss-ctrl-row">
+          <span style="flex:1;min-width:0;font-size:10.5px;font-family:'Space Grotesk',sans-serif;font-weight:800;color:#9A8F7A;letter-spacing:0.04em;">항목 {{ idx + 1 }}</span>
+          <button type="button" @click="moveItem(idx, -1)" :disabled="idx === 0" class="ss-ctrl-btn" aria-label="위로 이동"
+            :style="{ color: idx === 0 ? '#E0D7C4' : '#9A8F7A' }">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button type="button" @click="moveItem(idx, 1)" :disabled="idx === modelValue.length - 1" class="ss-ctrl-btn" aria-label="아래로 이동"
+            :style="{ color: idx === modelValue.length - 1 ? '#E0D7C4' : '#9A8F7A' }">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button type="button" @click="removeItem(idx)" class="ss-ctrl-btn" aria-label="항목 삭제" style="color:#C8BFA8;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
 
         <!-- 번호 + 항목명 입력 -->
         <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;">
-          <span style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">
+          <span class="ss-desk-ctrl" style="font-size:11px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:700;flex-shrink:0;min-width:18px;text-align:right;">
             {{ idx + 1 }}.
           </span>
 
@@ -134,7 +149,7 @@
           </div>
 
           <!-- 항목 순서 이동 버튼 (위/아래) -->
-          <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+          <div class="ss-desk-ctrl" style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
             <button type="button" @click="moveItem(idx, -1)" :disabled="idx === 0"
               v-tooltip="'위로 이동'"
               :style="{
@@ -162,7 +177,7 @@
           </div>
 
           <!-- 항목 삭제 버튼 -->
-          <button type="button" @click="removeItem(idx)"
+          <button type="button" @click="removeItem(idx)" class="ss-desk-ctrl"
             style="background:none;border:none;cursor:pointer;color:#D0C9BC;padding:4px;border-radius:6px;flex-shrink:0;transition:color 0.1s;"
             @mouseenter="e=>e.currentTarget.style.color='#DC2626'"
             @mouseleave="e=>e.currentTarget.style.color='#D0C9BC'">
@@ -171,7 +186,7 @@
         </div>
 
         <!-- 내용(sub_items) 목록 -->
-        <div style="margin-left:25px;display:flex;flex-direction:column;gap:4px;">
+        <div class="ss-subs" style="margin-left:25px;display:flex;flex-direction:column;gap:4px;">
           <div v-for="(sub, sIdx) in normalizeSubItems(item.sub_items)" :key="sIdx">
             <!-- 내용 행 -->
             <div style="display:flex;gap:6px;align-items:flex-start;">
@@ -192,7 +207,7 @@
               </button>
             </div>
             <!-- details 하위 목록 -->
-            <div style="margin-left:26px;margin-top:2px;display:flex;flex-direction:column;gap:3px;">
+            <div class="ss-details" style="margin-left:26px;margin-top:2px;display:flex;flex-direction:column;gap:3px;">
               <div v-for="(detail, dIdx) in (sub.details || [])" :key="dIdx"
                 style="display:flex;gap:6px;align-items:flex-start;">
                 <span style="color:#C5BAA8;font-size:11px;flex-shrink:0;margin-top:7px;width:10px;">└</span>
@@ -317,8 +332,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'copy', 'paste', 'cancel'])
 
-// 모바일 접기 상태 (≤768px 에서만 효과가 있다)
-const collapsed = ref(false)
 
 // ── 복사 피드백 ───────────────────────────────────────
 const copied = ref(false)
@@ -619,20 +632,42 @@ const removeSubItem = (idx, sIdx) => {
 
 <style scoped>
 .ss-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-/* 항목 수 뱃지·화살표는 모바일 전용 */
-.ss-count, .ss-chevron { display: none; }
+/* 항목 수 뱃지 · 제어 줄은 모바일 전용 */
+.ss-count, .ss-ctrl-row { display: none; }
 
 @media (max-width: 768px) {
-  .ss-title { flex: 1; cursor: pointer; user-select: none; }
+  .ss-title { flex: 1; }
+  .ss-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ss-count {
-    display: inline-block;
+    display: inline-block; flex-shrink: 0;
     font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 800;
     background: #1A1100; color: #FDCB40; border-radius: 99px; padding: 2px 9px;
   }
   .ss-count-empty { background: rgba(26, 17, 0, 0.12); color: #9A8F7A; }
-  .ss-chevron { display: block; margin-left: auto; flex-shrink: 0; transition: transform 0.2s; }
-  .ss-btn-label { display: none; }
-  .ss-collapsed { display: none !important; }
-  .ss-head-collapsed { border-bottom: none !important; }
+
+  /* 헤더 도구: 라벨 없는 30px 정사각 아이콘 버튼 */
+  .ss-tools { gap: 4px !important; flex-shrink: 0; }
+  .ss-tools > button {
+    width: 30px; height: 30px; padding: 0 !important; justify-content: center;
+    border: 1.5px solid #E0D7C4 !important; border-radius: 8px !important; background: #fff !important;
+  }
+  .ss-btn-label, .ss-sep { display: none; }
+
+  /* 항목 카드: 제어 줄을 위에 따로 두고 입력칸은 전체 폭 */
+  .ss-item { padding: 0 0 10px !important; border-radius: 11px !important; overflow: hidden; }
+  .ss-item > div:not(.ss-ctrl-row) { margin-left: 12px; margin-right: 12px; }
+  .ss-ctrl-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+    padding: 5px 6px 5px 11px; background: rgba(26, 17, 0, 0.045); border-bottom: 1.5px solid #EFE7D8;
+  }
+  .ss-ctrl-btn {
+    width: 28px; height: 26px; background: none; border: none; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0;
+  }
+  .ss-ctrl-btn:disabled { cursor: not-allowed; }
+  .ss-desk-ctrl { display: none !important; }
+
+  .ss-subs { margin-left: 14px !important; padding-left: 10px; border-left: 2px solid #EDE4D3; }
+  .ss-details { margin-left: 14px !important; }
 }
 </style>

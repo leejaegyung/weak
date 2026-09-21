@@ -82,7 +82,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <!-- 이전 보고서 미리보기 아이콘 -->
-        <button v-if="prevReports?.length" type="button" @click="showPrevModal = true"
+        <button v-if="prevReports?.length" type="button" @click="showPrevModal = true" class="desk-only-flex"
           v-tooltip="'이전 보고서 불러오기'"
           style="background:#FFF0A0;border:2px solid #1A1100;border-radius:10px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;color:#1A1100;font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:2px 2px 0 #1A1100;transition:all 0.1s;"
           @mouseenter="e=>{e.currentTarget.style.transform='translate(-1px,-1px)';e.currentTarget.style.boxShadow='3px 3px 0 #1A1100';}"
@@ -123,9 +123,48 @@
       </div>
     </div>
 
+    <!-- ── 모바일: 임시저장 복원 카드 + 이전 보고서 드릴다운 카드 ── -->
+    <div class="mob-only" style="margin-bottom:14px;">
+      <div v-if="hasDraft && !props.existingReport"
+        style="background:#FFF8EE;border:2px solid #FDCB40;border-radius:12px;padding:12px 13px;box-shadow:2px 2px 0 #1A1100;margin-bottom:9px;">
+        <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;">
+          <span style="width:26px;height:26px;background:#FDCB40;border:2px solid #1A1100;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </span>
+          <span style="flex:1;min-width:0;">
+            <span style="display:block;font-size:13px;font-weight:700;color:#92400E;">임시저장된 내용이 있습니다</span>
+            <span style="display:block;font-size:11px;color:#B45309;margin-top:2px;">{{ draftMetaLabel }}</span>
+          </span>
+        </div>
+        <div style="display:flex;gap:7px;">
+          <button type="button" @click="loadDraft"
+            style="flex:1;background:#FDCB40;color:#1A1100;border:2px solid #1A1100;border-radius:9px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #1A1100;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+            불러오기
+          </button>
+          <button type="button" @click="discardDraft"
+            style="flex-shrink:0;background:transparent;color:#B45309;border:1.5px solid #FDE68A;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            무시
+          </button>
+        </div>
+      </div>
+
+      <button v-if="prevReports?.length" type="button" @click="showPrevModal = true"
+        style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:2px solid #1A1100;border-radius:12px;padding:12px 13px;box-shadow:3px 3px 0 #1A1100;cursor:pointer;font-family:inherit;">
+        <span style="width:32px;height:32px;background:#EDE9FE;border:2px solid #1A1100;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </span>
+        <span style="flex:1;min-width:0;">
+          <span style="display:block;font-size:13.5px;font-weight:700;color:#1A1100;">이전 보고서 불러오기</span>
+          <span style="display:block;font-size:11px;color:#9A8F7A;margin-top:2px;">지난주 계획을 이번주 결과로 가져옵니다</span>
+        </span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8BFA8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+
     <!-- 임시저장 불러오기 배너 -->
     <Transition name="draft-banner">
-      <div v-if="hasDraft && !props.existingReport"
+      <div v-if="hasDraft && !props.existingReport" class="desk-only"
         style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FFF8EE;border:2px solid #FDCB40;border-radius:12px;padding:10px 16px;margin-bottom:16px;box-shadow:2px 2px 0 #1A1100;">
         <div style="display:flex;align-items:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -686,8 +725,125 @@
         {{ submitting && submitAction === 'submit' ? '제출 중...' : '제출하기' }}
       </button>
     </div>
-    <!-- 이전 보고서 미리보기 모달 -->
-    <div v-if="showPrevModal"
+    <!-- ── 모바일: 이전 보고서 불러오기 (주차 선택 → 미리보기 → 가져올 범위) ── -->
+    <div v-if="showPrevModal" class="prev-sheet" @click.self="closePrevModal">
+      <div class="card" style="width:100%;max-width:520px;max-height:calc(100dvh - 32px);padding:0;overflow:hidden;display:flex;flex-direction:column;">
+        <div style="padding:14px 16px;border-bottom:2px solid #1A1100;background:#F5EDDB;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <span style="width:38px;height:38px;background:#FFF0A0;border:2px solid #1A1100;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+          </span>
+          <span style="flex:1;min-width:0;">
+            <span style="display:block;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:15px;font-weight:800;">이전 보고서 불러오기</span>
+            <span style="display:block;font-size:11px;color:#9A8F7A;margin-top:1px;">지난 주 내용을 이번 주 보고서로 가져옵니다</span>
+          </span>
+          <button type="button" @click="closePrevModal" aria-label="닫기"
+            style="background:none;border:none;cursor:pointer;color:#9A8F7A;padding:4px;display:flex;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div style="padding:16px;overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:18px;">
+          <!-- 1. 주차 선택 -->
+          <div>
+            <div class="prev-step-label">1. 어느 주차를 가져올까요?</div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <button v-for="r in prevReports" :key="'m-' + r.id" type="button" @click="selectPrev(r)"
+                :style="prevOptionStyle(previewReport?.id === r.id)">
+                <span :style="{ width:'18px', height:'18px', borderRadius:'50%', border: `2px solid ${previewReport?.id === r.id ? '#1A1100' : '#D0C9BC'}`, background: previewReport?.id === r.id ? '#FDCB40' : '#fff', flexShrink:0, marginTop:'2px', display:'flex', alignItems:'center', justifyContent:'center' }">
+                    <span v-if="previewReport?.id === r.id" style="width:7px;height:7px;border-radius:50%;background:#1A1100;"></span>
+                  </span>
+                <span style="flex:1;min-width:0;">
+                  <span style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+                    <span style="font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-size:13.5px;font-weight:800;white-space:nowrap;">{{ r.label }}</span>
+                    <span style="font-size:11px;color:#9A8F7A;white-space:nowrap;">{{ fmtShort(r.curr_start) }} ~ {{ fmtShort(r.curr_end) }}</span>
+                  </span>
+                  <span v-if="previewReport?.id === r.id && previewData" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+                    <span v-for="c in prevSectionCounts.filter(c => c.count > 0)" :key="c.key"
+                      style="font-size:10px;font-weight:700;background:#F5EDDB;color:#6B5E4A;border:1px solid #E0D7C4;border-radius:6px;padding:2px 6px;white-space:nowrap;">{{ c.key }} {{ c.count }}</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. 미리보기 — 표 대신 이번 주 결과 / 다음 주 계획을 위아래로 쌓아 한 줄씩 읽힌다 -->
+          <div>
+            <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px;flex-wrap:wrap;">
+              <span class="prev-step-label" style="margin-bottom:0;">2. 미리보기</span>
+              <span v-if="previewReport" style="font-size:11px;color:#C5BAA8;">{{ previewReport.label }} · 지원</span>
+            </div>
+            <div v-if="!previewReport" class="prev-empty">위에서 주차를 선택하세요</div>
+            <div v-else-if="previewLoading" class="prev-empty">불러오는 중...</div>
+            <div v-else-if="previewError" class="prev-empty" style="color:#B91C1C;">보고서를 불러오지 못했습니다. 다시 시도해 주세요.</div>
+            <div v-else-if="previewData" style="border:2px solid #E8E0D0;border-radius:12px;overflow:hidden;background:#FDFAF5;">
+              <div v-for="(band, bi) in [
+                  { label: '이번 주 결과', rows: previewCurr['지원'] ?? [], tint: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+                  { label: '다음 주 계획', rows: previewNext['지원'] ?? [], tint: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
+                ]" :key="band.label"
+                :style="{ padding:'10px 13px 11px', borderTop: bi ? '1.5px dashed #E8E0D0' : 'none' }">
+                <span :style="{ display:'inline-block', fontSize:'10.5px', fontWeight:'800', fontFamily:'\'Space Grotesk\',\'Noto Sans KR\',sans-serif', background:band.tint, color:band.color, border:`1.5px solid ${band.border}`, borderRadius:'99px', padding:'2px 10px', marginBottom:'8px', whiteSpace:'nowrap' }">{{ band.label }}</span>
+                <div v-if="band.rows.length" style="display:flex;flex-direction:column;gap:7px;">
+                  <div v-for="(item, i) in band.rows" :key="i">
+                    <div style="display:flex;gap:7px;align-items:flex-start;">
+                      <span style="font-size:10.5px;color:#9A8F7A;font-family:'Space Grotesk',sans-serif;font-weight:800;flex-shrink:0;margin-top:2px;min-width:13px;">{{ i + 1 }}.</span>
+                      <span style="font-size:12.5px;font-weight:700;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;">{{ item.title || item.content }}</span>
+                    </div>
+                    <div v-for="(sub, si) in (item.sub_items ?? [])" :key="si" style="margin-left:20px;margin-top:2px;display:flex;gap:6px;align-items:flex-start;">
+                      <span style="color:#9A8F7A;flex-shrink:0;font-size:11px;">-</span>
+                      <span style="font-size:11.5px;color:#4A3F2A;line-height:1.55;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;" v-html="autoLink(typeof sub === 'string' ? sub : (sub?.content ?? ''))"></span>
+                    </div>
+                  </div>
+                </div>
+                <div v-else style="font-size:12px;color:#D0C9BC;">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. 가져올 범위 -->
+          <div>
+            <div class="prev-step-label">3. 무엇을 가져올까요?</div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <button v-for="opt in PREV_SCOPES" :key="opt.key" type="button" @click="prevScope = opt.key"
+                :style="prevOptionStyle(prevScope === opt.key)">
+                <span :style="{ width:'18px', height:'18px', borderRadius:'50%', border: `2px solid ${prevScope === opt.key ? '#1A1100' : '#D0C9BC'}`, background: prevScope === opt.key ? '#FDCB40' : '#fff', flexShrink:0, marginTop:'2px', display:'flex', alignItems:'center', justifyContent:'center' }">
+                    <span v-if="prevScope === opt.key" style="width:7px;height:7px;border-radius:50%;background:#1A1100;"></span>
+                  </span>
+                <span style="flex:1;min-width:0;">
+                  <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="font-size:13px;font-weight:700;">{{ opt.label }}</span>
+                    <span v-if="opt.badge" style="font-size:10px;font-weight:800;background:#FDCB40;color:#1A1100;border:1.5px solid #1A1100;border-radius:99px;padding:1px 8px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;">{{ opt.badge }}</span>
+                  </span>
+                  <span style="display:block;font-size:11px;color:#9A8F7A;margin-top:3px;line-height:1.5;">{{ opt.desc }}</span>
+                </span>
+              </button>
+            </div>
+
+            <div v-if="prevScope === 'pick'" style="margin-top:9px;margin-left:13px;padding-left:14px;border-left:2px solid #E8E0D0;display:flex;flex-direction:column;gap:6px;">
+              <label v-for="c in prevSectionCounts" :key="c.key" style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600;">
+                <input type="checkbox" v-model="prevPickSections[c.key]" style="accent-color:#FD4401;width:17px;height:17px;cursor:pointer;flex-shrink:0;" />
+                {{ c.key }}
+                <span v-if="previewData" style="font-size:11px;color:#C5BAA8;">{{ c.count }}건</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="background:#FFF8EE;border:1.5px solid #FDE68A;border-radius:10px;padding:10px 13px;font-size:11.5px;color:#92400E;line-height:1.7;">
+            ⚠ 가져오면 <strong>현재 작성 중인 해당 섹션을 덮어씁니다.</strong> 저장 전까지는 되돌릴 수 있습니다.
+          </div>
+        </div>
+
+        <div style="padding:12px 16px;border-top:2px solid #1A1100;background:#F5EDDB;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
+          <button type="button" @click="closePrevModal" class="btn-secondary">취소</button>
+          <button type="button" @click="applyPrev(prevScope)" :disabled="!previewData || !canApplyPrev" class="btn-primary"
+            :style="{ opacity: (!previewData || !canApplyPrev) ? 0.55 : 1, cursor: (!previewData || !canApplyPrev) ? 'not-allowed' : 'pointer' }">
+            이 내용으로 불러오기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 이전 보고서 미리보기 모달 (데스크톱) -->
+    <div v-if="showPrevModal" class="desk-only"
       style="position:fixed;inset:0;background:rgba(26,17,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);padding:16px;"
       @click.self="showPrevModal=false;isFullscreen=false">
       <div class="card" :style="isFullscreen
@@ -907,6 +1063,24 @@
 
   /* 하단 액션바 높이만큼 본문 여백 확보 */
   form { padding-bottom: 72px; }
+}
+
+/* 모바일 이전 보고서 불러오기 시트 */
+.prev-sheet { display: none; }
+.prev-step-label {
+  font-size: 11px; font-weight: 800; color: #9A8F7A; letter-spacing: 0.05em; margin-bottom: 8px;
+  font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+}
+.prev-empty {
+  border: 2px dashed #E8E0D0; border-radius: 12px; padding: 18px 12px;
+  text-align: center; font-size: 12px; color: #9A8F7A;
+}
+@media (max-width: 768px) {
+  .prev-sheet {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 200; padding: 16px;
+    background: rgba(26, 17, 0, 0.45); backdrop-filter: blur(3px);
+  }
 }
 
 /* 모바일 하단 고정 액션바 — 하단 네비(62px) 바로 위 */
@@ -1180,6 +1354,7 @@ const saveToLocal = () => {
   const snapshot = {}
   formFields.forEach(k => { snapshot[k] = form[k] })
   snapshot.__draftId = draftId.value
+  snapshot.__savedAt = new Date().toISOString()
   try { localStorage.setItem(LS_KEY, JSON.stringify(snapshot)) } catch {}
 }
 
@@ -1195,6 +1370,20 @@ const hasDraft = ref(false)
 // 사용자가 불러오기 전에 폼을 건드려도 저장본이 유실되지 않도록 한다.
 const unloadedDraft = ref(false)
 
+// 모바일 복원 카드에 보여줄 저장 시각 · 건수
+const draftMeta = ref({ savedAt: null, jiwon: 0, todo: 0 })
+const draftMetaLabel = computed(() => {
+  const m = draftMeta.value
+  const parts = []
+  if (m.savedAt) {
+    const d = new Date(m.savedAt)
+    const pad = (n) => String(n).padStart(2, '0')
+    parts.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}에 저장됨`)
+  }
+  parts.push(`지원 ${m.jiwon}건`, `Todo ${m.todo}건`)
+  return parts.join(' · ')
+})
+
 const checkLocalDraft = () => {
   if (props.existingReport) { hasDraft.value = false; unloadedDraft.value = false; return }
   try {
@@ -1207,6 +1396,11 @@ const checkLocalDraft = () => {
     }
     hasDraft.value = !!(saved.__draftId || saved.week)
     unloadedDraft.value = hasDraft.value
+    draftMeta.value = {
+      savedAt: saved.__savedAt ?? null,
+      jiwon:   (saved.jiWon_curr?.length ?? 0) + (saved.jiWon_next?.length ?? 0),
+      todo:    (saved.todo_items ?? []).filter(t => (t.content || '').trim()).length,
+    }
   } catch { hasDraft.value = false; unloadedDraft.value = false }
 }
 
@@ -1532,21 +1726,77 @@ const previewNext = computed(() => {
   return map
 })
 
-const applyPrev = async () => {
+// ── 모바일 불러오기 시트: 가져올 범위 ──
+const PREV_SCOPES = [
+  { key: 'recommend', label: '지난주 ‘다음 주 계획’ → 이번 주 결과', desc: '가장 많이 쓰는 방식입니다', badge: '추천' },
+  { key: 'all',       label: '보고서 전체 복사', desc: '모든 섹션을 그대로 가져옵니다' },
+  { key: 'pick',      label: '섹션 골라서 가져오기', desc: '지원 · 내부작업 · Todo · 공유 중 선택' },
+]
+const prevScope        = ref('recommend')
+const prevPickSections = reactive({ 지원: true, 내부작업: true, Todo: true, 공유: false })
+const canApplyPrev     = computed(() =>
+  prevScope.value !== 'pick' || Object.values(prevPickSections).some(Boolean))
+
+const prevSectionCounts = computed(() => [
+  { key: '지원',     count: (previewNext.value['지원'] ?? []).length },
+  { key: '내부작업', count: (previewCurr.value['내부작업'] ?? []).length },
+  { key: 'Todo',     count: (previewData.value?.todo_items ?? []).filter(t => (t.content || '').trim()).length },
+  { key: '공유',     count: (previewCurr.value['공유'] ?? []).length },
+])
+
+const prevOptionStyle = (on) => ({
+  display: 'flex', alignItems: 'flex-start', gap: '11px', width: '100%', textAlign: 'left',
+  cursor: 'pointer', fontFamily: 'inherit', color: '#1A1100',
+  background: on ? '#FFF8EE' : '#fff', border: `2px solid ${on ? '#1A1100' : '#E8E0D0'}`,
+  borderRadius: '12px', padding: '11px 13px', boxShadow: on ? '2px 2px 0 #1A1100' : 'none',
+})
+
+const closePrevModal = () => { showPrevModal.value = false; isFullscreen.value = false }
+
+// 모바일에서 열면 가장 최근 주차를 바로 선택해 미리보기를 채운다
+watch(showPrevModal, (open) => {
+  if (open && !previewReport.value && props.prevReports?.length
+      && window.matchMedia('(max-width: 768px)').matches) {
+    selectPrev(props.prevReports[0])
+  }
+})
+
+const incompleteTodos = (todos) => (todos ?? [])
+  .filter(t => !t.done && (t.content || '').trim())
+  .map(t => ({ ...t, done: false }))
+
+// scope: 'recommend'(기본·데스크톱) | 'all' | 'pick' — 버튼 이벤트 객체가 넘어오면 기본값으로 본다
+const applyPrev = async (scope) => {
   if (!previewData.value) return
   const r = previewData.value
-  // 이전 보고서의 '금주 업무(next_plan)' → 새 보고서 '전주 업무(jiWon_curr)'
-  form.jiWon_curr = splitByCat(r.next_plan, '지원')
-  // 다음 주 계획은 비워서 새로 작성하도록
-  form.jiWon_next = []
-  // 내부작업·공유·기타는 이전 curr_work에서 참고용으로 불러옴
-  form.naebu      = splitByCat(r.curr_work, '내부작업')
-  form.gongyu     = splitByCat(r.curr_work, '공유')
-  form.gita       = splitByCat(r.curr_work, '기타')
-  // 미완료 Todo만 이어받기
-  if (r.todo_items) form.todo_items = r.todo_items
-    .filter(t => !t.done && (t.content || '').trim())
-    .map(t => ({ ...t, done: false }))
+  const mode = typeof scope === 'string' ? scope : 'recommend'
+
+  if (mode === 'all') {
+    // 보고서를 그대로 복사
+    form.jiWon_curr = splitByCat(r.curr_work, '지원')
+    form.jiWon_next = splitByCat(r.next_plan, '지원')
+    form.naebu      = splitByCat(r.curr_work, '내부작업')
+    form.gongyu     = splitByCat(r.curr_work, '공유')
+    form.gita       = splitByCat(r.curr_work, '기타')
+    form.todo_items = (r.todo_items ?? []).filter(t => (t.content || '').trim()).map(t => ({ ...t }))
+  } else if (mode === 'pick') {
+    // 고른 섹션만 추천 방식으로 가져온다
+    if (prevPickSections['지원'])     form.jiWon_curr = splitByCat(r.next_plan, '지원')
+    if (prevPickSections['내부작업']) form.naebu      = splitByCat(r.curr_work, '내부작업')
+    if (prevPickSections['Todo'])     form.todo_items = incompleteTodos(r.todo_items)
+    if (prevPickSections['공유'])     form.gongyu     = splitByCat(r.curr_work, '공유')
+  } else {
+    // 이전 보고서의 '금주 업무(next_plan)' → 새 보고서 '전주 업무(jiWon_curr)'
+    form.jiWon_curr = splitByCat(r.next_plan, '지원')
+    // 다음 주 계획은 비워서 새로 작성하도록
+    form.jiWon_next = []
+    // 내부작업·공유·기타는 이전 curr_work에서 참고용으로 불러옴
+    form.naebu      = splitByCat(r.curr_work, '내부작업')
+    form.gongyu     = splitByCat(r.curr_work, '공유')
+    form.gita       = splitByCat(r.curr_work, '기타')
+    // 미완료 Todo만 이어받기
+    if (r.todo_items) form.todo_items = incompleteTodos(r.todo_items)
+  }
   showPrevModal.value = false
   previewReport.value = null
   previewData.value   = null

@@ -170,7 +170,7 @@
 
     <!-- 보고서 본문 (Excel 스타일) -->
     <div class="report-scroll-wrap">
-    <div class="card report-card" :style="{ overflow:'hidden', padding:0, zoom: fontScale }">
+    <div class="card report-card" :style="{ overflow:'hidden', padding:0, zoom: fontScale, '--report-scale': fontScale }">
 
       <!-- 보고서 헤더 (데스크탑) -->
       <div class="report-header-desktop" style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #1A1100;background:#fff;">
@@ -229,8 +229,72 @@
         </div>
       </div>
 
+      <!-- ── 모바일 본문: 3열 표 대신 섹션 띠를 세로로 쌓는다 (좌우 스크롤 없음) ── -->
+      <div class="mob-only">
+        <div class="rs-band">
+          <div class="rs-band-label">지원</div>
+          <div class="rs-sub">
+            <span class="rs-period" style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE;">
+              <b>전주 업무</b><span>{{ fmtShort(report.curr_start) }} ~ {{ fmtShort(report.curr_end) }}</span>
+            </span>
+            <ReportItemList :items="currByCategory['지원']" />
+          </div>
+          <div class="rs-sub" style="border-top:1.5px dashed #E8E0D0;">
+            <span class="rs-period" style="background:#F0FDF4;color:#15803D;border-color:#BBF7D0;">
+              <b>금주 업무</b><span>{{ fmtShort(report.next_start) }} ~ {{ fmtShort(report.next_end) }}</span>
+            </span>
+            <ReportItemList :items="nextByCategory['지원']" />
+          </div>
+        </div>
+
+        <div class="rs-band">
+          <div class="rs-band-label">내부작업</div>
+          <div class="rs-body"><ReportItemList :items="currByCategory['내부작업']" /></div>
+        </div>
+
+        <div class="rs-band">
+          <div class="rs-band-label">Todo</div>
+          <div class="rs-body">
+            <div v-if="report.todo_items?.length" style="display:flex;flex-direction:column;gap:9px;">
+              <div v-for="(t, i) in report.todo_items" :key="i">
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                  <span style="font-size:15px;flex-shrink:0;line-height:1.35;" :style="{ color: t.done ? '#16A34A' : '#9A8F7A' }">{{ t.done ? '☑' : '☐' }}</span>
+                  <span style="font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;"
+                    :style="{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#9A8F7A' : '#1A1100' }">{{ t.content }}</span>
+                </div>
+                <div v-for="(sub, si) in (t.sub_items ?? [])" :key="si" style="margin-left:23px;margin-top:3px;display:flex;gap:6px;align-items:flex-start;">
+                  <span style="color:#9A8F7A;flex-shrink:0;font-size:12px;">-</span>
+                  <span style="font-size:12px;line-height:1.5;color:#1A1100;white-space:pre-wrap;overflow-wrap:anywhere;">{{ typeof sub === 'string' ? sub : sub?.content }}</span>
+                </div>
+              </div>
+            </div>
+            <span v-else style="color:#D0C9BC;font-size:12px;">-</span>
+          </div>
+        </div>
+
+        <div class="rs-band">
+          <div class="rs-band-label">공유</div>
+          <div class="rs-body"><ReportItemList :items="currByCategory['공유']" /></div>
+        </div>
+
+        <div class="rs-band">
+          <div class="rs-band-label">기타</div>
+          <div class="rs-body"><ReportItemList :items="currByCategory['기타']" /></div>
+        </div>
+
+        <div v-if="report.notes" class="rs-band">
+          <div class="rs-band-label">특이사항</div>
+          <div class="rs-body rs-text">{{ report.notes }}</div>
+        </div>
+
+        <div v-if="report.requests" class="rs-band">
+          <div class="rs-band-label">요청사항</div>
+          <div class="rs-body rs-text">{{ report.requests }}</div>
+        </div>
+      </div>
+
       <!-- 본문 테이블 -->
-      <div class="report-table-scroll"><table class="report-body-table" style="width:100%;border-collapse:collapse;">
+      <div class="report-table-scroll desk-only"><table class="report-body-table" style="width:100%;border-collapse:collapse;">
         <thead>
           <tr style="background:#F5EDDB;border-bottom:2px solid #1A1100;">
             <th style="width:72px;padding:10px 8px;text-align:center;font-size:11px;font-weight:700;color:#9A8F7A;border-right:2px solid #1A1100;font-family:'Space Grotesk','Noto Sans KR',sans-serif;letter-spacing:0.04em;">구분</th>
@@ -633,6 +697,7 @@ import { ref, computed, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { autoLink } from '@/utils/autoLink.js'
+import ReportItemList from '@/Components/ReportItemList.vue'
 
 const props = defineProps({
   report:          { type: Object, required: true },
@@ -837,6 +902,24 @@ const sectionBadgeStyle = (s) => ({
   }
 }
 
+/* 모바일 섹션 띠 */
+.rs-band { border-bottom: 2px solid #1A1100; }
+.rs-band:last-child { border-bottom: none; }
+.rs-band-label {
+  background: #F5EDDB; border-bottom: 1.5px solid #E0D7C4; padding: 6px 14px;
+  font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.06em; color: #6B5E4A;
+}
+.rs-sub { padding: 10px 14px 12px; }
+.rs-body { padding: 11px 14px; }
+.rs-text { font-size: 12.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; color: #1A1100; }
+.rs-period {
+  display: inline-flex; align-items: baseline; gap: 6px; margin-bottom: 9px;
+  border: 1.5px solid; border-radius: 99px; padding: 3px 11px;
+}
+.rs-period b { font-size: 11px; font-weight: 800; font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif; }
+.rs-period span { font-size: 10px; opacity: 0.8; }
+
 /* 테이블 스크롤 감싸개 */
 .report-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .report-table-scroll::-webkit-scrollbar { height: 4px; }
@@ -846,16 +929,11 @@ const sectionBadgeStyle = (s) => ({
 .report-body-table { min-width: 480px; }
 
 @media (max-width: 768px) {
-  /* 팀원 스위처: 줄바꿈 대신 가로 스크롤 칩 */
-  .show-switcher {
-    flex-wrap: nowrap !important;
-    overflow-x: auto;
-    margin: 0 -16px 14px !important;
-    padding: 0 16px 2px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .show-switcher::-webkit-scrollbar { display: none; }
+  /* 팀원 스위처 칩: 이름이 잘리지 않도록 */
   .show-switcher > div { white-space: nowrap; }
+
+  /* 글자 크기를 키워도 폭이 넘치지 않도록 카드 폭을 배율의 역수로 */
+  .report-card { width: calc(100% / var(--report-scale, 1)); }
 
   /* 헤더 전환 */
   .report-header-desktop { display: none !important; }

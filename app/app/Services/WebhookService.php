@@ -63,7 +63,7 @@ class WebhookService
 
         $carbon = Carbon::parse($date);
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
-        $title  = "### 🔔 일정 변경 — {$carbon->format('n월 j일')}({$dayKr})";
+        $title  = "### 📅 일정 변경 — {$carbon->format('n월 j일')}({$dayKr})";
 
         $entries = $this->parseContent($content ?? '')['entries'];
 
@@ -221,7 +221,7 @@ class WebhookService
         $carbon = Carbon::parse($date);
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
 
-        $lines = [$title ?? "### 📅 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
+        $lines = [$title ?? "### 🗓️ 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
 
         // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가 표 안에 넣는다.
         $sections = [

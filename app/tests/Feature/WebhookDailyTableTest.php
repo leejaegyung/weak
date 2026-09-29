@@ -51,7 +51,7 @@ class WebhookDailyTableTest extends TestCase
             '휴가' => ['설지섭' => $this->person('설지섭')],
         ]);
 
-        $this->assertStringContainsString('### 📅 금일 근무 현황 — 9월 29일(화)', $out);
+        $this->assertStringContainsString('### 🗓️ 금일 근무 현황 — 9월 29일(화)', $out);
         $this->assertStringContainsString('#### 🏢 외근 · 1명', $out);
         $this->assertStringContainsString('#### 🌴 휴가 · 1명', $out);
     }
@@ -144,7 +144,7 @@ class WebhookDailyTableTest extends TestCase
     }
 
     /** 일정 원문을 buildUserDayMessage 와 같은 경로로 표까지 렌더링한다 */
-    private function renderRaw(string $content, string $title = '### 🔔 일정 변경 — 9월 29일(화)'): ?string
+    private function renderRaw(string $content, string $title = '### 📅 일정 변경 — 9월 29일(화)'): ?string
     {
         $svc = new WebhookService();
 
@@ -167,7 +167,7 @@ class WebhookDailyTableTest extends TestCase
     {
         $out = $this->renderRaw('[오후]외근:Talos 재난 KBS');
 
-        $this->assertStringContainsString('### 🔔 일정 변경 — 9월 29일(화)', $out);
+        $this->assertStringContainsString('### 📅 일정 변경 — 9월 29일(화)', $out);
         $this->assertStringContainsString('#### 🏢 외근 · 1명', $out);
         $this->assertStringContainsString('| 인원 | 장소 / 내용 |', $out);
         $this->assertStringContainsString('| 이재경 `오후` | Talos 재난 KBS |', $out);

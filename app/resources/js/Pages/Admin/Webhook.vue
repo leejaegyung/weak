@@ -116,7 +116,7 @@
           <!-- 발송 형식 예시 -->
           <div style="margin-top:12px;background:#fff;border:1.5px solid #BAE6FD;border-radius:8px;padding:10px 12px;font-size:11px;color:#1A1100;line-height:1.8;">
             <div style="color:#0369A1;font-weight:700;margin-bottom:4px;">발송 형식 예시</div>
-            <div>📅 <strong>금일 근무 현황 — 5월 19일(월)</strong></div>
+            <div>🗓️ <strong>금일 근무 현황 — 5월 19일(월)</strong></div>
             <div style="margin-top:6px;font-weight:700;">🏢 외근 · 2명</div>
             <table style="width:100%;border-collapse:collapse;margin:3px 0 6px;font-size:10.5px;">
               <tr style="background:#F0F9FF;">

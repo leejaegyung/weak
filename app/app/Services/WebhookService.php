@@ -99,7 +99,11 @@ class WebhookService
     //  매일 아침 팀 일정 자동 발송
     // ═══════════════════════════════════════════════
 
-    /** 당일 팀 일정 메시지 텍스트 생성 (Webhook·카카오 공용) */
+    /**
+     * 당일 팀 일정 메시지 텍스트 생성 — 줄글 형식 (카카오 전용)
+     * 카카오톡은 마크다운 표를 렌더링하지 못하고 200자 제한이 있어 이 형식을 쓴다.
+     * Webhook 은 buildDailyTableMessage() 의 표 형식을 쓴다.
+     */
     public function buildDailyMessage(string $date): ?string
     {
         $schedules = Schedule::with('user')
@@ -207,11 +211,202 @@ class WebhookService
         return $person['name'] . '(' . implode(', ', $times) . ')';
     }
 
+    /**
+     * 당일 팀 일정 — 표 형식 메시지 (Webhook 전용)
+     *
+     * 상태별로 묶어 마크다운 표로 낸다. 카카오톡은 마크다운 표를 렌더링하지 못하고
+     * 200자 제한도 있어, 카카오는 buildDailyMessage() 의 줄글 형식을 그대로 쓴다.
+     */
+    public function buildDailyTableMessage(string $date): ?string
+    {
+        $groups = $this->collectDailyGroups($date);
+        if (empty($groups)) return null;
+
+        return $this->renderDailyTable($groups, $date);
+    }
+
+    /** 상태별 그룹을 마크다운 표로 렌더링 */
+    private function renderDailyTable(array $groups, string $date): ?string
+    {
+        $carbon = Carbon::parse($date);
+        $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
+
+        $lines = ["### 📅 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
+
+        // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가 표 안에 넣는다.
+        $sections = [
+            ['label' => '외근', 'icon' => '🚗', 'place' => true,  'from' => ['외근']],
+            ['label' => '출장', 'icon' => '✈️', 'place' => true,  'from' => ['출장']],
+            ['label' => '휴가', 'icon' => '🌴', 'place' => false, 'from' => ['휴가', '반차']],
+        ];
+
+        foreach ($sections as $section) {
+            $rows = $this->sectionRows($groups, $section['from']);
+            if (empty($rows)) continue;
+
+            $count = count($rows);
+            $lines[] = '';
+            $lines[] = "#### {$section['icon']} {$section['label']} · {$count}명";
+            $lines[] = '';
+            $lines[] = $section['place'] ? '| 인원 | 장소 / 내용 |' : '| 인원 | 시간 |';
+            $lines[] = '| --- | --- |';
+
+            foreach ($rows as $row) {
+                $times = $this->sortTimes($row['times']);
+
+                if ($section['place']) {
+                    $lines[] = '| ' . $this->nameCell($row['name'], $times)
+                             . ' | ' . $this->placeCell($row['sites'], $times) . ' |';
+                } else {
+                    $lines[] = '| ' . $this->escapeCell($row['name'])
+                             . ' | ' . $this->leaveCell($row['statuses'], $times) . ' |';
+                }
+            }
+        }
+
+        return count($lines) > 1 ? implode("\n", $lines) : null;
+    }
+
+    /**
+     * 당일 일정을 상태별 · 인물별로 묶는다.
+     * 반환: [ 상태 => [ 이름 => ['name', 'times' => [], 'sites' => [['site','time'], ...]] ] ]
+     */
+    private function collectDailyGroups(string $date): array
+    {
+        $schedules = Schedule::with('user')
+            ->where('date', $date)
+            ->whereNotNull('content')
+            ->where('content', '!=', '')
+            ->get()
+            ->filter(fn($s) => $s->user && $s->user->is_active && !$s->user->is_hidden)
+            ->sortBy(fn($s) => $s->user->sort_order ?? 9999)
+            ->values();
+
+        $groups = [];
+
+        foreach ($schedules as $sched) {
+            $name = $sched->user->name ?? '?';
+
+            foreach ($this->parseContent($sched->content ?? '')['entries'] as $entry) {
+                $time   = $entry['time']   ?? '종일';
+                $status = $entry['status'] ?? '';
+                $sites  = $entry['sites']  ?? [];
+
+                // 상태 미설정 항목은 외근으로 본다 (기존 줄글 형식과 동일한 규칙)
+                $key = ($status !== '' && in_array($status, self::STATUS_LABELS, true)) ? $status : '외근';
+
+                if (!isset($groups[$key][$name])) {
+                    $groups[$key][$name] = ['name' => $name, 'times' => [], 'sites' => []];
+                }
+                if (!in_array($time, $groups[$key][$name]['times'], true)) {
+                    $groups[$key][$name]['times'][] = $time;
+                }
+                foreach ($sites as $site) {
+                    $dup = false;
+                    foreach ($groups[$key][$name]['sites'] as $sx) {
+                        if ($sx['site'] === $site && $sx['time'] === $time) { $dup = true; break; }
+                    }
+                    if (!$dup) $groups[$key][$name]['sites'][] = ['site' => $site, 'time' => $time];
+                }
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * 한 구역에 들어갈 사람 목록을 만든다.
+     * 여러 상태를 묶는 구역(휴가 + 반차)에서는 같은 사람을 한 줄로 합친다.
+     */
+    private function sectionRows(array $groups, array $statuses): array
+    {
+        $rows = [];
+
+        foreach ($statuses as $status) {
+            foreach ($groups[$status] ?? [] as $person) {
+                $name = $person['name'];
+
+                if (!isset($rows[$name])) {
+                    $rows[$name] = ['name' => $name, 'times' => [], 'sites' => [], 'statuses' => []];
+                }
+                if (!in_array($status, $rows[$name]['statuses'], true)) {
+                    $rows[$name]['statuses'][] = $status;
+                }
+                foreach ($person['times'] as $time) {
+                    if (!in_array($time, $rows[$name]['times'], true)) $rows[$name]['times'][] = $time;
+                }
+                foreach ($person['sites'] as $site) {
+                    $rows[$name]['sites'][] = $site;
+                }
+            }
+        }
+
+        return array_values($rows);
+    }
+
+    /** 휴가 구역의 시간 칸 — 반차는 종류를 함께 적는다 */
+    private function leaveCell(array $statuses, array $times): string
+    {
+        $timeLabel = empty($times) ? '종일' : implode(', ', $times);
+
+        // 휴가(종일)와 반차가 섞이면 둘 다 적고, 반차만 있으면 '반차 오후' 처럼 낸다
+        return in_array('반차', $statuses, true)
+            ? trim('반차 ' . ($timeLabel === '종일' ? '' : $timeLabel))
+            : $timeLabel;
+    }
+
+    /** 종일을 뺀 시간대를 오전 → 오후 순으로 정렬 */
+    private function sortTimes(array $times): array
+    {
+        $filtered = array_values(array_filter($times, fn($t) => $t !== '' && $t !== '종일'));
+        if (in_array('종일', $times, true)) return [];
+
+        $order = ['오전' => 0, '오후' => 1];
+        usort($filtered, fn($a, $b) => ($order[$a] ?? 9) <=> ($order[$b] ?? 9));
+
+        return $filtered;
+    }
+
+    /** 인원 칸 — 반일 일정이면 이름 뒤에 시간대를 코드 칩으로 붙인다 */
+    private function nameCell(string $name, array $times): string
+    {
+        $cell = $this->escapeCell($name);
+        // 시간대가 둘 이상이면 장소 칸에서 각각 표기하므로 이름에는 붙이지 않는다
+        if (count($times) === 1) $cell .= ' `' . $times[0] . '`';
+
+        return $cell;
+    }
+
+    /** 장소 칸 — 시간대가 둘 이상인 사람은 장소마다 시간대를 붙인다 */
+    private function placeCell(array $sites, array $times): string
+    {
+        if (empty($sites)) return '-';
+
+        $multi = count($times) > 1;
+        $order = ['종일' => 0, '오전' => 1, '오후' => 2];
+        usort($sites, fn($a, $b) => ($order[$a['time']] ?? 9) <=> ($order[$b['time']] ?? 9));
+
+        $parts = array_map(function ($s) use ($multi) {
+            $text = $this->escapeCell($s['site']);
+            return ($multi && $s['time'] !== '' && $s['time'] !== '종일')
+                ? '`' . $s['time'] . '` ' . $text
+                : $text;
+        }, $sites);
+
+        return implode(', ', $parts);
+    }
+
+    /** 표 칸이 깨지지 않도록 파이프·줄바꿈 정리 */
+    private function escapeCell(string $text): string
+    {
+        return trim(str_replace(['|', "\n"], ['\\|', ' '], $text));
+    }
+
     /** 당일 팀 일정 Webhook 발송 (스케줄러에서 호출) */
     public function sendDailySchedule(string $date): bool
     {
         if (!$this->isEnabled()) return false;
-        $message = $this->buildDailyMessage($date);
+        $message = $this->buildDailyTableMessage($date);
         if (!$message) return false;
         return $this->send($message);
     }

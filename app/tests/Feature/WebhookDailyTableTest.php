@@ -142,4 +142,42 @@ class WebhookDailyTableTest extends TestCase
         sort($sorted);
         $this->assertSame($sorted, $order, '구역 순서가 외근 · 출장 · 휴가 가 아닙니다');
     }
+
+    /** 일정 원문을 buildUserDayMessage 와 같은 경로로 표까지 렌더링한다 */
+    private function renderRaw(string $content, string $title = '### 🔔 일정 변경 — 9월 29일(화)'): ?string
+    {
+        $svc = new WebhookService();
+
+        $parse = new ReflectionMethod(WebhookService::class, 'parseContent');
+        $parse->setAccessible(true);
+        $entries = $parse->invoke($svc, $content)['entries'];
+
+        $add = new ReflectionMethod(WebhookService::class, 'addToGroups');
+        $add->setAccessible(true);
+        $groups = [];
+        $add->invokeArgs($svc, [&$groups, '이재경', $entries]);
+
+        $render = new ReflectionMethod(WebhookService::class, 'renderDailyTable');
+        $render->setAccessible(true);
+
+        return $render->invoke($svc, $groups, '2026-09-29', $title);
+    }
+
+    public function test_개인_일정_알림도_같은_표_형식이다(): void
+    {
+        $out = $this->renderRaw('[오후]외근:Talos 재난 KBS');
+
+        $this->assertStringContainsString('### 🔔 일정 변경 — 9월 29일(화)', $out);
+        $this->assertStringContainsString('#### 🚗 외근 · 1명', $out);
+        $this->assertStringContainsString('| 인원 | 장소 / 내용 |', $out);
+        $this->assertStringContainsString('| 이재경 `오후` | Talos 재난 KBS |', $out);
+    }
+
+    public function test_개인_일정_알림의_반차도_휴가_구역으로_간다(): void
+    {
+        $out = $this->renderRaw('[오후]반차');
+
+        $this->assertStringContainsString('#### 🌴 휴가 · 1명', $out);
+        $this->assertStringContainsString('| 이재경 | 반차 오후 |', $out);
+    }
 }

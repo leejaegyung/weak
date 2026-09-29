@@ -54,37 +54,27 @@ class WebhookService
         return $this->send($this->buildUserDayMessage($user, $date));
     }
 
-    /** 특정 사용자의 하루 일정 메시지 */
+    /**
+     * 특정 사용자의 하루 일정 메시지 — 당일 근무 현황과 같은 표 형식
+     */
     public function buildUserDayMessage(\App\Models\User $user, string $date): string
     {
         $content = Schedule::where('user_id', $user->id)->where('date', $date)->value('content');
 
         $carbon = Carbon::parse($date);
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
-        $header = "🔔 **일정 변경** — {$carbon->format('m월 d일')}({$dayKr})";
+        $title  = "### 🔔 일정 변경 — {$carbon->format('n월 j일')}({$dayKr})";
 
         $entries = $this->parseContent($content ?? '')['entries'];
 
         if (empty($entries)) {
-            return "{$header}\n- {$user->name} : 일정 없음";
+            return "{$title}\n\n{$user->name} 님의 오늘 일정이 없습니다.";
         }
 
-        $statusIcons = ['외근' => '🏢', '출장' => '✈️', '반차' => '🕐', '휴가' => '🌴'];
-        $parts       = [];
+        $groups = [];
+        $this->addToGroups($groups, $user->name, $entries);
 
-        foreach ($entries as $entry) {
-            $time   = $entry['time']   ?? '종일';
-            $status = $entry['status'] ?? '';
-            $sites  = $entry['sites']  ?? [];
-
-            $icon   = $statusIcons[$status] ?? '•';
-            $prefix = ($time !== '' && $time !== '종일') ? "({$time}) " : '';
-            $label  = trim($status . ($sites ? ' ' . implode(', ', $sites) : ''));
-
-            $parts[] = $icon . ' ' . $prefix . ($label !== '' ? $label : '일정');
-        }
-
-        return "{$header}\n- {$user->name} : " . implode(' / ', $parts);
+        return $this->renderDailyTable($groups, $date, $title) ?? "{$title}\n\n{$user->name} 님의 오늘 일정이 없습니다.";
     }
 
     /** 미제출자 일괄 알림 */
@@ -225,13 +215,13 @@ class WebhookService
         return $this->renderDailyTable($groups, $date);
     }
 
-    /** 상태별 그룹을 마크다운 표로 렌더링 */
-    private function renderDailyTable(array $groups, string $date): ?string
+    /** 상태별 그룹을 마크다운 표로 렌더링 (제목을 넘기지 않으면 당일 근무 현황 제목을 쓴다) */
+    private function renderDailyTable(array $groups, string $date, ?string $title = null): ?string
     {
         $carbon = Carbon::parse($date);
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
 
-        $lines = ["### 📅 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
+        $lines = [$title ?? "### 📅 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
 
         // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가 표 안에 넣는다.
         $sections = [
@@ -285,33 +275,41 @@ class WebhookService
         $groups = [];
 
         foreach ($schedules as $sched) {
-            $name = $sched->user->name ?? '?';
-
-            foreach ($this->parseContent($sched->content ?? '')['entries'] as $entry) {
-                $time   = $entry['time']   ?? '종일';
-                $status = $entry['status'] ?? '';
-                $sites  = $entry['sites']  ?? [];
-
-                // 상태 미설정 항목은 외근으로 본다 (기존 줄글 형식과 동일한 규칙)
-                $key = ($status !== '' && in_array($status, self::STATUS_LABELS, true)) ? $status : '외근';
-
-                if (!isset($groups[$key][$name])) {
-                    $groups[$key][$name] = ['name' => $name, 'times' => [], 'sites' => []];
-                }
-                if (!in_array($time, $groups[$key][$name]['times'], true)) {
-                    $groups[$key][$name]['times'][] = $time;
-                }
-                foreach ($sites as $site) {
-                    $dup = false;
-                    foreach ($groups[$key][$name]['sites'] as $sx) {
-                        if ($sx['site'] === $site && $sx['time'] === $time) { $dup = true; break; }
-                    }
-                    if (!$dup) $groups[$key][$name]['sites'][] = ['site' => $site, 'time' => $time];
-                }
-            }
+            $this->addToGroups(
+                $groups,
+                $sched->user->name ?? '?',
+                $this->parseContent($sched->content ?? '')['entries'],
+            );
         }
 
         return $groups;
+    }
+
+    /** 한 사람의 일정 항목들을 상태별 그룹에 담는다 */
+    private function addToGroups(array &$groups, string $name, array $entries): void
+    {
+        foreach ($entries as $entry) {
+            $time   = $entry['time']   ?? '종일';
+            $status = $entry['status'] ?? '';
+            $sites  = $entry['sites']  ?? [];
+
+            // 상태 미설정 항목은 외근으로 본다 (기존 줄글 형식과 동일한 규칙)
+            $key = ($status !== '' && in_array($status, self::STATUS_LABELS, true)) ? $status : '외근';
+
+            if (!isset($groups[$key][$name])) {
+                $groups[$key][$name] = ['name' => $name, 'times' => [], 'sites' => []];
+            }
+            if (!in_array($time, $groups[$key][$name]['times'], true)) {
+                $groups[$key][$name]['times'][] = $time;
+            }
+            foreach ($sites as $site) {
+                $dup = false;
+                foreach ($groups[$key][$name]['sites'] as $sx) {
+                    if ($sx['site'] === $site && $sx['time'] === $time) { $dup = true; break; }
+                }
+                if (!$dup) $groups[$key][$name]['sites'][] = ['site' => $site, 'time' => $time];
+            }
+        }
     }
 
     /**

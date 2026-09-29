@@ -52,7 +52,7 @@ class WebhookDailyTableTest extends TestCase
         ]);
 
         $this->assertStringContainsString('### 📅 금일 근무 현황 — 9월 29일(화)', $out);
-        $this->assertStringContainsString('#### 🚗 외근 · 1명', $out);
+        $this->assertStringContainsString('#### 🏢 외근 · 1명', $out);
         $this->assertStringContainsString('#### 🌴 휴가 · 1명', $out);
     }
 
@@ -135,7 +135,7 @@ class WebhookDailyTableTest extends TestCase
 
         $order = array_map(
             fn($label) => mb_strpos($out, '#### ' . $label),
-            ['🚗 외근', '✈️ 출장', '🌴 휴가'],
+            ['🏢 외근', '✈️ 출장', '🌴 휴가'],
         );
 
         $sorted = $order;
@@ -168,7 +168,7 @@ class WebhookDailyTableTest extends TestCase
         $out = $this->renderRaw('[오후]외근:Talos 재난 KBS');
 
         $this->assertStringContainsString('### 🔔 일정 변경 — 9월 29일(화)', $out);
-        $this->assertStringContainsString('#### 🚗 외근 · 1명', $out);
+        $this->assertStringContainsString('#### 🏢 외근 · 1명', $out);
         $this->assertStringContainsString('| 인원 | 장소 / 내용 |', $out);
         $this->assertStringContainsString('| 이재경 `오후` | Talos 재난 KBS |', $out);
     }

@@ -225,7 +225,7 @@ class WebhookService
 
         // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가 표 안에 넣는다.
         $sections = [
-            ['label' => '외근', 'icon' => '🚗', 'place' => true,  'from' => ['외근']],
+            ['label' => '외근', 'icon' => '🏢', 'place' => true,  'from' => ['외근']],
             ['label' => '출장', 'icon' => '✈️', 'place' => true,  'from' => ['출장']],
             ['label' => '휴가', 'icon' => '🌴', 'place' => false, 'from' => ['휴가', '반차']],
         ];

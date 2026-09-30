@@ -223,38 +223,48 @@ class WebhookService
 
         $lines = [$title ?? "### 🗓️ 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
 
-        // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가 표 안에 넣는다.
+        // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가에 넣는다.
         $sections = [
             ['label' => '외근', 'icon' => '🏢', 'place' => true,  'from' => ['외근']],
             ['label' => '출장', 'icon' => '✈️', 'place' => true,  'from' => ['출장']],
             ['label' => '휴가', 'icon' => '🌴', 'place' => false, 'from' => ['휴가', '반차']],
         ];
 
+        // 메타모스트는 메시지가 길면 '전체보기'로 접는다. 구역마다 제목·머리글·구분선을
+        // 따로 두면 사람 수가 조금만 늘어도 바로 접히므로, 표 하나에 모으고 구분은
+        // 이름 앞 아이콘으로 나타낸다.
+        $summary = [];
+        $rowLines = [];
+
         foreach ($sections as $section) {
             $rows = $this->sectionRows($groups, $section['from']);
             if (empty($rows)) continue;
 
-            $count = count($rows);
-            $lines[] = '';
-            $lines[] = "#### {$section['icon']} {$section['label']} · {$count}명";
-            $lines[] = '';
-            $lines[] = $section['place'] ? '| 인원 | 장소 / 내용 |' : '| 인원 | 시간 |';
-            $lines[] = '| --- | --- |';
+            $summary[] = "{$section['icon']} {$section['label']} " . count($rows);
 
             foreach ($rows as $row) {
                 $times = $this->sortTimes($row['times']);
 
-                if ($section['place']) {
-                    $lines[] = '| ' . $this->nameCell($row['name'], $times)
-                             . ' | ' . $this->placeCell($row['sites'], $times) . ' |';
-                } else {
-                    $lines[] = '| ' . $this->escapeCell($row['name'])
-                             . ' | ' . $this->leaveCell($row['statuses'], $times) . ' |';
-                }
+                $content = $section['place']
+                    ? $this->placeCell($row['sites'], $times)
+                    : $this->leaveCell($row['statuses'], $times);
+
+                $name = $section['place']
+                    ? $this->nameCell($row['name'], $times)
+                    : $this->escapeCell($row['name']);
+
+                $rowLines[] = "| {$section['icon']} {$name} | {$content} |";
             }
         }
 
-        return count($lines) > 1 ? implode("\n", $lines) : null;
+        if (empty($rowLines)) return null;
+
+        $lines[] = implode(' · ', $summary);
+        $lines[] = '';
+        $lines[] = '| 인원 | 장소 / 내용 |';
+        $lines[] = '| --- | --- |';
+
+        return implode("\n", array_merge($lines, $rowLines));
     }
 
     /**

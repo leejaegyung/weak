@@ -209,10 +209,91 @@ class WebhookService
      */
     public function buildDailyTableMessage(string $date): ?string
     {
-        $groups = $this->collectDailyGroups($date);
-        if (empty($groups)) return null;
+        $groups  = $this->collectDailyGroups($date);
+        $message = empty($groups) ? null : $this->renderDailyTable($groups, $date);
 
-        return $this->renderDailyTable($groups, $date);
+        // 주말은 스케줄러가 평일만 돌던 탓에 알림이 나가지 않았다.
+        // 금요일 알림에 이번 주말 근무를 미리 붙여 둔다.
+        $weekend = $this->buildWeekendBlock($date);
+
+        if ($message === null && $weekend === null) return null;
+
+        if ($message === null) {
+            $message = $this->dailyTitle($date) . "\n오늘 등록된 일정이 없습니다.";
+        }
+
+        return $weekend === null ? $message : $message . "\n\n" . $weekend;
+    }
+
+    /** 당일 근무 현황 제목 */
+    private function dailyTitle(string $date): string
+    {
+        $carbon = Carbon::parse($date);
+        $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
+
+        return "### 🗓️ 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})";
+    }
+
+    /** 구역 정의 — 반차는 따로 두지 않고 휴가에 넣는다 */
+    private function sections(): array
+    {
+        return [
+            ['label' => '외근', 'icon' => '🏢', 'place' => true,  'from' => ['외근']],
+            ['label' => '출장', 'icon' => '✈️', 'place' => true,  'from' => ['출장']],
+            ['label' => '휴가', 'icon' => '🌴', 'place' => false, 'from' => ['휴가', '반차']],
+        ];
+    }
+
+    /** 금요일이면 이번 주말(토·일) 근무를 모아 표로 만든다 (그 외 요일은 null) */
+    private function buildWeekendBlock(string $date): ?string
+    {
+        $carbon = Carbon::parse($date);
+        if (!$carbon->isFriday()) return null;
+
+        $byDate = [];
+        foreach ([1, 2] as $offset) {
+            $day    = $carbon->copy()->addDays($offset)->toDateString();
+            $groups = $this->collectDailyGroups($day);
+            if (!empty($groups)) $byDate[$day] = $groups;
+        }
+
+        return $this->renderWeekendTable($byDate);
+    }
+
+    /** 주말 근무 표 렌더링 — [날짜 => 상태별 그룹] */
+    private function renderWeekendTable(array $byDate): ?string
+    {
+        $rows = [];
+
+        foreach ($byDate as $day => $groups) {
+            $carbon = Carbon::parse($day);
+            $label  = $carbon->format('m/d') . '(' . ['일','월','화','수','목','금','토'][$carbon->dayOfWeek] . ')';
+
+            foreach ($this->sections() as $section) {
+                foreach ($this->sectionRows($groups, $section['from']) as $row) {
+                    $times = $this->sortTimes($row['times']);
+
+                    $name = $section['place']
+                        ? $this->nameCell($row['name'], $times)
+                        : $this->escapeCell($row['name']);
+
+                    $content = $section['place']
+                        ? $this->placeCell($row['sites'], $times)
+                        : $this->leaveCell($row['statuses'], $times);
+
+                    $rows[] = "| {$label} | {$section['icon']} {$name} | {$content} |";
+                }
+            }
+        }
+
+        if (empty($rows)) return null;
+
+        return implode("\n", array_merge([
+            '⚠️ **이번 주말 근무**',
+            '',
+            '| 날짜 | 인원 | 장소 / 내용 |',
+            '| --- | --- | --- |',
+        ], $rows));
     }
 
     /** 상태별 그룹을 마크다운 표로 렌더링 (제목을 넘기지 않으면 당일 근무 현황 제목을 쓴다) */
@@ -221,14 +302,9 @@ class WebhookService
         $carbon = Carbon::parse($date);
         $dayKr  = ['일','월','화','수','목','금','토'][$carbon->dayOfWeek];
 
-        $lines = [$title ?? "### 🗓️ 금일 근무 현황 — {$carbon->format('n월 j일')}({$dayKr})"];
+        $lines = [$title ?? $this->dailyTitle($date)];
 
-        // 구역은 외근 · 출장 · 휴가 셋이다. 반차는 따로 두지 않고 휴가에 넣는다.
-        $sections = [
-            ['label' => '외근', 'icon' => '🏢', 'place' => true,  'from' => ['외근']],
-            ['label' => '출장', 'icon' => '✈️', 'place' => true,  'from' => ['출장']],
-            ['label' => '휴가', 'icon' => '🌴', 'place' => false, 'from' => ['휴가', '반차']],
-        ];
+        $sections = $this->sections();
 
         // 메타모스트는 메시지가 길면 '전체보기'로 접는다. 구역마다 제목·머리글·구분선을
         // 따로 두면 사람 수가 조금만 늘어도 접히므로, 표 하나에 모으고 구분은 이름 앞

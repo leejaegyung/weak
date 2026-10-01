@@ -20,6 +20,7 @@ Schedule::call(function () {
 
     $now = Carbon::now()->timezone('Asia/Seoul');
     if ($now->format('H:i') !== $time) return;
+    // 주말 당일에는 보내지 않는다 — 주말 근무는 금요일 알림에 미리 함께 나간다
     if ($now->isWeekend()) return;
 
     app(WebhookService::class)->sendDailySchedule($now->toDateString());

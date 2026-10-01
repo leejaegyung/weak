@@ -109,7 +109,7 @@
                 :style="{ opacity: form.webhook_daily_enabled ? 1 : 0.45 }" />
             </div>
             <div style="font-size:11px;color:#0369A1;line-height:1.6;padding-top:16px;">
-              설정 시간에 당일 팀 일정을<br>항목별로 그룹화하여 발송합니다
+              설정 시간에 당일 팀 일정을<br>항목별로 그룹화하여 발송합니다<br>금요일에는 이번 주말 근무를 미리 함께 알립니다
             </div>
           </div>
 

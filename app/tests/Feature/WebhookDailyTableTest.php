@@ -208,6 +208,34 @@ class WebhookDailyTableTest extends TestCase
         $this->assertStringNotContainsString('| --- | --- | --- | --- |', $out);
     }
 
+    // ───────── 주말 근무 미리 알림 (금요일) ─────────
+
+    private function renderWeekend(array $byDate): ?string
+    {
+        $method = new ReflectionMethod(WebhookService::class, 'renderWeekendTable');
+        $method->setAccessible(true);
+
+        return $method->invoke(new WebhookService(), $byDate);
+    }
+
+    public function test_주말_근무를_날짜별로_모아_표로_낸다(): void
+    {
+        $out = $this->renderWeekend([
+            '2026-10-03' => ['외근' => ['김선호' => $this->person('김선호', '종일', ['포스코'])]],
+            '2026-10-04' => ['휴가' => ['설지섭' => $this->person('설지섭')]],
+        ]);
+
+        $this->assertStringContainsString('⚠️ **이번 주말 근무**', $out);
+        $this->assertStringContainsString('| 날짜 | 인원 | 장소 / 내용 |', $out);
+        $this->assertStringContainsString('| 10/03(토) | 🏢 김선호 | 포스코 |', $out);
+        $this->assertStringContainsString('| 10/04(일) | 🌴 설지섭 | 종일 |', $out);
+    }
+
+    public function test_주말에_일정이_없으면_구역을_만들지_않는다(): void
+    {
+        $this->assertNull($this->renderWeekend([]));
+    }
+
     // ───────── 개인 일정 알림 (추가 일정 전송) ─────────
 
     /** 일정 원문을 buildUserDayMessage 와 같은 경로로 표까지 렌더링한다 */

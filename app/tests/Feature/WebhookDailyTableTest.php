@@ -165,6 +165,49 @@ class WebhookDailyTableTest extends TestCase
         $this->assertCount(10, $lines);
     }
 
+    /** 외근은 왼쪽, 출장·휴가는 오른쪽 열에 나란히 채워 높이를 줄인다 */
+    public function test_출장_휴가는_표_오른쪽_열에_채운다(): void
+    {
+        $out = $this->render([
+            '외근' => [
+                '박성원' => $this->person('박성원', '종일', ['KBS 본사']),
+                '김선호' => $this->person('김선호', '종일', ['포스코']),
+                '신준수' => $this->person('신준수', '종일', ['삼성병원']),
+            ],
+            '출장' => ['서충희' => $this->person('서충희', '종일', ['부산'])],
+            '휴가' => ['설지섭' => $this->person('설지섭')],
+        ]);
+
+        $this->assertStringContainsString('| 인원 | 장소 / 내용 | 인원 | 장소 / 내용 |', $out);
+        $this->assertStringContainsString('| --- | --- | --- | --- |', $out);
+        $this->assertStringContainsString('| 🏢 박성원 | KBS 본사 | ✈️ 서충희 | 부산 |', $out);
+        $this->assertStringContainsString('| 🏢 김선호 | 포스코 | 🌴 설지섭 | 종일 |', $out);
+        // 오른쪽이 먼저 끝나면 빈 칸으로 채운다
+        $this->assertStringContainsString('| 🏢 신준수 | 삼성병원 |  |  |', $out);
+    }
+
+    /** 높이는 양쪽 중 긴 쪽을 따른다 */
+    public function test_네_열이면_높이가_절반이_된다(): void
+    {
+        $out = $this->render([
+            '외근' => ['가' => $this->person('가', '종일', ['A']), '나' => $this->person('나', '종일', ['B'])],
+            '휴가' => ['다' => $this->person('다'), '라' => $this->person('라')],
+        ]);
+
+        // 제목 · 요약 · 빈 줄 · 머리글 · 구분선(5줄) + 2줄
+        $this->assertCount(7, explode("
+", $out));
+    }
+
+    public function test_한쪽만_있으면_두_열로_낸다(): void
+    {
+        $out = $this->render(['외근' => ['신기철' => $this->person('신기철', '종일', ['영주시청'])]]);
+
+        $this->assertStringContainsString('| 인원 | 장소 / 내용 |', $out);
+        $this->assertStringNotContainsString('| 인원 | 장소 / 내용 | 인원 |', $out);
+        $this->assertStringNotContainsString('| --- | --- | --- | --- |', $out);
+    }
+
     // ───────── 개인 일정 알림 (추가 일정 전송) ─────────
 
     /** 일정 원문을 buildUserDayMessage 와 같은 경로로 표까지 렌더링한다 */

@@ -231,10 +231,11 @@ class WebhookService
         ];
 
         // 메타모스트는 메시지가 길면 '전체보기'로 접는다. 구역마다 제목·머리글·구분선을
-        // 따로 두면 사람 수가 조금만 늘어도 바로 접히므로, 표 하나에 모으고 구분은
-        // 이름 앞 아이콘으로 나타낸다.
+        // 따로 두면 사람 수가 조금만 늘어도 접히므로, 표 하나에 모으고 구분은 이름 앞
+        // 아이콘으로 나타낸다. 외근은 왼쪽, 출장·휴가는 오른쪽 열에 나란히 채워 높이를 줄인다.
         $summary = [];
-        $rowLines = [];
+        $left    = [];   // 외근
+        $right   = [];   // 출장 · 휴가
 
         foreach ($sections as $section) {
             $rows = $this->sectionRows($groups, $section['from']);
@@ -245,26 +246,53 @@ class WebhookService
             foreach ($rows as $row) {
                 $times = $this->sortTimes($row['times']);
 
-                $content = $section['place']
-                    ? $this->placeCell($row['sites'], $times)
-                    : $this->leaveCell($row['statuses'], $times);
-
                 $name = $section['place']
                     ? $this->nameCell($row['name'], $times)
                     : $this->escapeCell($row['name']);
 
-                $rowLines[] = "| {$section['icon']} {$name} | {$content} |";
+                $cells = [
+                    "{$section['icon']} {$name}",
+                    $section['place']
+                        ? $this->placeCell($row['sites'], $times)
+                        : $this->leaveCell($row['statuses'], $times),
+                ];
+
+                if ($section['label'] === '외근') {
+                    $left[] = $cells;
+                } else {
+                    $right[] = $cells;
+                }
             }
         }
 
-        if (empty($rowLines)) return null;
+        if (empty($left) && empty($right)) return null;
 
         $lines[] = implode(' · ', $summary);
         $lines[] = '';
-        $lines[] = '| 인원 | 장소 / 내용 |';
-        $lines[] = '| --- | --- |';
 
-        return implode("\n", array_merge($lines, $rowLines));
+        // 한쪽만 있으면 빈 열을 만들지 않고 2열로 낸다
+        if (empty($left) || empty($right)) {
+            $rows = $left ?: $right;
+            $lines[] = '| 인원 | 장소 / 내용 |';
+            $lines[] = '| --- | --- |';
+            foreach ($rows as $cells) {
+                $lines[] = "| {$cells[0]} | {$cells[1]} |";
+            }
+
+            return implode("\n", $lines);
+        }
+
+        $lines[] = '| 인원 | 장소 / 내용 | 인원 | 장소 / 내용 |';
+        $lines[] = '| --- | --- | --- | --- |';
+
+        $height = max(count($left), count($right));
+        for ($i = 0; $i < $height; $i++) {
+            $l = $left[$i]  ?? ['', ''];
+            $r = $right[$i] ?? ['', ''];
+            $lines[] = "| {$l[0]} | {$l[1]} | {$r[0]} | {$r[1]} |";
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
